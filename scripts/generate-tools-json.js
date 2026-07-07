@@ -3,6 +3,7 @@
 /**
  * 自动生成工具清单脚本
  * 扫描 tools/ 目录下的所有工具，提取元信息，生成 tools.json
+ * 支持任意名字的 HTML 文件，自动检测并在清单中记录具体的 HTML 文件路径
  */
 
 const fs = require('fs');
@@ -25,10 +26,30 @@ function humanizeToolName(folderName) {
 
 /**
  * 查找 HTML 文件
+ * 优先级：index.html > 其他 HTML 文件
+ * 返回: { fileName: '文件名', fullPath: '完整路径' }
  */
 function findHtmlFile(toolDir) {
     const files = fs.readdirSync(toolDir);
-    return files.find(file => file.endsWith('.html'));
+    
+    // 优先查找 index.html
+    if (files.includes('index.html')) {
+        return {
+            fileName: 'index.html',
+            fullPath: path.join(toolDir, 'index.html')
+        };
+    }
+    
+    // 否则找第一个 HTML 文件
+    const htmlFile = files.find(file => file.endsWith('.html'));
+    if (htmlFile) {
+        return {
+            fileName: htmlFile,
+            fullPath: path.join(toolDir, htmlFile)
+        };
+    }
+    
+    return null;
 }
 
 /**
@@ -75,10 +96,10 @@ function generateToolsJson() {
         }
 
         const toolDir = path.join(TOOLS_DIR, entry.name);
-        const htmlFile = findHtmlFile(toolDir);
+        const htmlFileInfo = findHtmlFile(toolDir);
 
         // 跳过没有 HTML 文件的目录
-        if (!htmlFile) {
+        if (!htmlFileInfo) {
             console.log(`⊘ 跳过: ${entry.name} (没有找到 HTML 文件)`);
             continue;
         }
@@ -86,9 +107,9 @@ function generateToolsJson() {
         // 读取 HTML 文件
         let htmlContent = '';
         try {
-            htmlContent = fs.readFileSync(path.join(toolDir, htmlFile), 'utf-8');
+            htmlContent = fs.readFileSync(htmlFileInfo.fullPath, 'utf-8');
         } catch (error) {
-            console.error(`✗ 读取文件失败: ${htmlFile}`, error.message);
+            console.error(`✗ 读取文件失败: ${htmlFileInfo.fileName}`, error.message);
             continue;
         }
 
@@ -101,14 +122,20 @@ function generateToolsJson() {
             name = humanizeToolName(entry.name);
             console.log(`ℹ 使用文件夹名作为工具名: ${entry.name} -> ${name}`);
         } else {
-            console.log(`✓ 收录工具: ${name}`);
+            console.log(`✓ 收录工具: ${name} (文件: ${htmlFileInfo.fileName})`);
         }
 
         // 构建工具对象
+        // 如果是 index.html，则路径指向目录；否则指向具体文件
+        const toolPath = htmlFileInfo.fileName === 'index.html' 
+            ? `/tools/${entry.name}/`
+            : `/tools/${entry.name}/${htmlFileInfo.fileName}`;
+
         const tool = {
             name: name,
             description: description || '',
-            path: `/tools/${entry.name}/`,
+            path: toolPath,
+            htmlFile: htmlFileInfo.fileName  // 记录 HTML 文件名供调试
         };
 
         tools.push(tool);
