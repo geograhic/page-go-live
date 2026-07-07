@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel坐标可视化地图</title>
+    <!-- 使用国内CDN加速 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- 引入MarkerCluster插件CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- 引入MarkerCluster插件JS -->
+    <script src="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .upload-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 2px dashed #ccc;
+        }
+        
+        .upload-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        
+        .upload-btn:hover {
+            background-color: #45a049;
+        }
+        
+        #file-input {
+            display: none;
+        }
+        
+        .info-panel {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f0f8ff;
+            border-radius: 8px;
+            border-left: 5px solid #4CAF50;
+        }
+        
+        #map {
+            height: 600px;
+            width: 100%;
+            border-radius: 8px;
+            margin-top: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        
+        .legend {
+            background-color: white;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin-top: 15px;
+        }
+        
+        .legend-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        
+        .color-box {
+            width: 15px;
+            height: 15px;
+            margin-right: 10px;
+            border-radius: 3px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .control-btn {
+            padding: 8px 15px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .control-btn:hover {
+            background-color: #0b7dda;
+        }
+        
+        .control-btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        .loading {
+            display: none;
+            margin: 10px 0;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .filter-panel {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+        }
+        
+        .filter-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        select, input {
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .cluster-toggle {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        
+        .cluster-toggle input {
+            width: auto;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Excel坐标数据可视化地图</h1>
+        
+        <div class="upload-section">
+            <p>上传包含坐标数据的Excel文件 (.xlsx)</p>
+            <button class="upload-btn" onclick="document.getElementById('file-input').click()">
+                选择文件
+            </button>
+            <input type="file" id="file-input" accept=".xlsx" onchange="handleFileSelect(event)">
+            
+            <div class="loading">
+                <span class="spinner"></span> 正在处理文件...
+            </div>
+            
+            <div id="status" class="status"></div>
+        </div>
+        
+        <div class="info-panel">
+            <p><strong>使用说明：</strong></p>
+            <ol>
+                <li>点击"选择文件"按钮上传包含坐标数据的Excel文件</li>
+                <li>支持的坐标格式：高德坐标(默认)、WGS84坐标</li>
+                <li>系统会自动识别经度和纬度列，并在地图上标记位置</li>
+            </ol>
+        </div>
+        
+        <div class="controls">
+            <button id="toggle-clustering" class="control-btn" disabled onclick="toggleClustering()">
+                开启聚合
+            </button>
+            <button id="export-data" class="control-btn" disabled onclick="exportData()">
+                导出数据
+            </button>
+            <button id="clear-map" class="control-btn" disabled onclick="clearMap()">
+                清空地图
+            </button>
+            <select id="coordinate-system" onchange="changeCoordinateSystem()" disabled>
+                <option value="gaode">高德坐标</option>
+                <option value="wgs84">WGS84坐标</option>
+            </select>
+        </div>
+        
+        <div id="map"></div>
+        
+        <div class="legend">
+            <div class="legend-title">图例</div>
+            <div id="legend-content">
+                <div class="legend-item">
+                    <div class="color-box" style="background-color: #ff5722;"></div>
+                    <span>位置标记</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 初始化全局变量（避免null错误）
+        let map = null;
+        let markers = null;
+        let markerLayerGroup = null;
+        let rawData = [];
+        let processedData = [];
+        let clusteringEnabled = true;
+        
+        // 颜色方案
+        const colors = [
+            '#e51c23', '#9c27b0', '#3f51b5', '#009688', '#cddc39', 
+            '#ffc107', '#ff9800', '#795548', '#607d8b', '#00bcd4',
+            '#4caf50', '#8bc34a', '#ffeb3b', '#f44336', '#673ab7'
+        ];
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initMap();
+            disableControls();
+        });
+        
+        // 初始化地图
+        function initMap() {
+            // 如果地图已存在，先销毁
+            if (map) {
+                map.remove();
+            }
+            
+            // 创建地图实例
+            map = L.map('map').setView([38.91, 121.63], 12);
+            
+            // 使用高德地图作为底图（国内访问更快）
+            const gaodeNormal = L.tileLayer(
+                'https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}', 
+                {
+                    subdomains: '1234',
+                    attribution: '高德地图'
+                }
+            ).addTo(map);
+            
+            // 创建标记层组
+            markerLayerGroup = L.layerGroup().addTo(map);
+            
+            // 创建标记集群 - 确保MarkerCluster插件已加载
+            if (typeof L.markerClusterGroup !== 'function') {
+                console.error('MarkerCluster plugin not loaded');
+                return;
+            }
+            
+            markers = L.markerClusterGroup({
+                spiderfyOnMaxZoom: true,
+                showCoverageOnHover: true,
+                zoomToBoundsOnClick: true,
+                disableClusteringAtZoom: 18
+            });
+            
+            // 添加到地图
+            map.addLayer(markers);
+        }
+        
+        // 文件处理函数
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const statusElement = document.getElementById('status');
+            const loadingElement = document.querySelector('.loading');
+            
+            // 显示加载状态
+            loadingElement.style.display = 'block';
+            statusElement.style.display = 'none';
+            
+            try {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        
+                        // 假设数据在第一个工作表中
+                        const firstSheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[firstSheetName];
+                        
+                        // 转换为JSON
+                        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                        
+                        if (jsonData.length < 2) {
+                            throw new Error("文件数据为空或格式不正确");
+                        }
+                        
+                        // 提取表头
+                        const headers = jsonData[0];
+                        
+                        // 解析数据
+                        const parsedData = parseExcelData(jsonData, headers);
+                        
+                        if (parsedData.length === 0) {
+                            throw new Error("未能从文件中解析到有效数据");
+                        }
+                        
+                        // 检查MarkerCluster插件是否可用
+                        if (typeof L.markerClusterGroup !== 'function') {
+                            throw new Error("地图标记聚合功能未加载，请检查网络连接");
+                        }
+                        
+                        // 确保markers已初始化
+                        if (!markers) {
+                            markers = L.markerClusterGroup({
+                                spiderfyOnMaxZoom: true,
+                                showCoverageOnHover: true,
+                                zoomToBoundsOnClick: true
+                            });
+                            map.addLayer(markers);
+                        }
+                        
+                        // 先赋值给rawData，再处理显示
+                        rawData = parsedData;
+                        processAndDisplayData();
+                        
+                        // 启用控制按钮
+                        enableControls();
+                        
+                        statusElement.textContent = `成功加载 ${parsedData.length} 条数据`;
+                        statusElement.className = 'status success';
+                        statusElement.style.display = 'block';
+                        
+                    } catch (error) {
+                        console.error('Error processing file:', error);
+                        statusElement.textContent = `处理文件时出错: ${error.message}`;
+                        statusElement.className = 'status error';
+                        statusElement.style.display = 'block';
+                    } finally {
+                        loadingElement.style.display = 'none';
+                    }
+                };
+                
+                reader.onerror = function() {
+                    statusElement.textContent = "读取文件时发生错误";
+                    statusElement.className = 'status error';
+                    statusElement.style.display = 'block';
+                    loadingElement.style.display = 'none';
+                };
+                
+                reader.readAsArrayBuffer(file);
+                
+            } catch (error) {
+                console.error('Error reading file:', error);
+                statusElement.textContent = `读取文件失败: ${error.message}`;
+                statusElement.className = 'status error';
+                statusElement.style.display = 'block';
+                loadingElement.style.display = 'none';
+            }
+        }
+        
+        // 解析Excel数据
+        function parseExcelData(jsonData, headers) {
+            const data = [];
+            const headerMap = {};
+            
+            // 创建表头映射
+            headers.forEach((header, index) => {
+                if (header) {
+                    // 标准化表头名称
+                    const normalizedHeader = header.toString().trim()
+                        .replace(/\s+/g, '')
+                        .replace(/[\r\n]/g, '')
+                        .toLowerCase();
+                    
+                    headerMap[normalizedHeader] = index;
+                }
+            });
+            
+            // 检查必要的列是否存在
+            const hasGaodeLng = '高德经度' in headerMap || '高德lng' in headerMap || 'gaodelng' in headerMap;
+            const hasGaodeLat = '高德纬度' in headerMap || '高德lat' in headerMap || 'gaodelat' in headerMap;
+            const hasWgs84Lng = 'wgs84经度' in headerMap || 'wgs84lng' in headerMap;
+            const hasWgs84Lat = 'wgs84纬度' in headerMap || 'wgs84lat' in headerMap;
+            
+            if (!hasGaodeLng && !hasWgs84Lng) {
+                throw new Error("文件中未找到经度列，请确保包含'高德经度'或'WGS84经度'");
+            }
+            
+            if (!hasGaodeLat && !hasWgs84Lat) {
+                throw new Error("文件中未找到纬度列，请确保包含'高德纬度'或'WGS84纬度'");
+            }
+            
+            // 从第二行开始解析数据（第一行是表头）
+            for (let i = 1; i < jsonData.length; i++) {
+                const row = jsonData[i];
+                if (!row || row.length === 0) continue;
+                
+                const item = {};
+                
+                // 提取地址信息
+                if ('地址' in headerMap && row[headerMap['地址']] !== undefined) {
+                    item.address = row[headerMap['地址']].toString().trim();
+                } else {
+                    item.address = '未知地址';
+                }
+                
+                // 提取标准化地址
+                if ('标准化地址' in headerMap && row[headerMap['标准化地址']] !== undefined) {
+                    item.standardAddress = row[headerMap['标准化地址']].toString().trim();
+                } else {
+                    item.standardAddress = item.address;
+                }
+                
+                // 提取坐标
+                let lng, lat;
+                let coordinateType = '';
+                
+                if (hasGaodeLng && hasGaodeLat) {
+                    const lngKey = Object.keys(headerMap).find(h => 
+                        h.includes('高德经度') || h.includes('高德lng') || h.includes('gaodelng')
+                    );
+                    const latKey = Object.keys(headerMap).find(h => 
+                        h.includes('高德纬度') || h.includes('高德lat') || h.includes('gaodelat')
+                    );
+                    
+                    lng = parseFloat(row[headerMap[lngKey]]);
+                    lat = parseFloat(row[headerMap[latKey]]);
+                    coordinateType = 'gaode';
+                } else if (hasWgs84Lng && hasWgs84Lat) {
+                    const lngKey = Object.keys(headerMap).find(h => 
+                        h.includes('wgs84经度') || h.includes('wgs84lng')
+                    );
+                    const latKey = Object.keys(headerMap).find(h => 
+                        h.includes('wgs84纬度') || h.includes('wgs84lat')
+                    );
+                    
+                    lng = parseFloat(row[headerMap[lngKey]]);
+                    lat = parseFloat(row[headerMap[latKey]]);
+                    coordinateType = 'wgs84';
+                }
+                
+                // 验证坐标有效性
+                if (!isNaN(lng) && !isNaN(lat) && 
+                    lng >= 73 && lng <= 135 &&  // 中国经度范围
+                    lat >= 3 && lat <= 53) {    // 中国纬度范围
+                    
+                    item.lng = lng;
+                    item.lat = lat;
+                    item.coordinateType = coordinateType;
+                    
+                    data.push(item);
+                }
+            }
+            
+            return data;
+        }
+        
+        // 处理并显示数据
+        function processAndDisplayData() {
+            processedData = [...rawData];
+            displayMarkers();
+        }
+        
+        // 显示标记
+        function displayMarkers() {
+            // 安全检查
+            if (!markers || !map) {
+                console.error('Map or markers not initialized');
+                return;
+            }
+            
+            // 安全清除现有标记
+            if (markers && typeof markers.clearLayers === 'function') {
+                markers.clearLayers();
+            }
+            
+            const system = document.getElementById('coordinate-system').value;
+            
+            // 根据选择的坐标系确定使用的坐标
+            processedData.forEach(item => {
+                const useLng = system === 'gaode' ? item.lng : (item.wgs84Lng || item.lng);
+                const useLat = system === 'gaode' ? item.lat : (item.wgs84Lat || item.lat);
+                
+                // 创建自定义图标
+                const markerIcon = L.divIcon({
+                    className: 'custom-marker',
+                    html: `<div style="
+                        background-color: #ff5722; 
+                        width: 12px; 
+                        height: 12px; 
+                        border-radius: 50%; 
+                        border: 2px solid white;
+                        box-shadow: 0 0 5px rgba(0,0,0,0.3);
+                    "></div>`,
+                    iconSize: [16, 16],
+                    iconAnchor: [8, 8]
+                });
+                
+                // 创建标记
+                const marker = L.marker([useLat, useLng], { icon: markerIcon });
+                
+                // 创建弹出窗口内容
+                let popupContent = `
+                    <div style="min-width: 200px;">
+                        <h4 style="margin: 0 0 10px 0; color: #333;">${item.address}</h4>
+                        <p style="margin: 5px 0;"><strong>高德坐标:</strong> ${item.lng.toFixed(6)}, ${item.lat.toFixed(6)}</p>
+                `;
+                
+                if (item.standardAddress && item.standardAddress !== item.address) {
+                    popupContent += `<p style="margin: 5px 0;"><strong>标准化地址:</strong> ${item.standardAddress}</p>`;
+                }
+                
+                popupContent += '</div>';
+                
+                marker.bindPopup(popupContent);
+                
+                // 添加到标记集群
+                markers.addLayer(marker);
+            });
+            
+            // 将标记集群添加到地图
+            if (map.hasLayer(markers)) {
+                map.removeLayer(markers);
+            }
+            map.addLayer(markers);
+            
+            // 如果有数据，调整视图以适应所有标记
+            if (processedData.length > 0) {
+                const group = new L.featureGroup(processedData.map(item => 
+                    L.marker([item.lat, item.lng])
+                ));
+                map.fitBounds(group.getBounds(), { padding: [50, 50] });
+            }
+        }
+        
+        // 切换聚合
+        function toggleClustering() {
+            const button = document.getElementById('toggle-clustering');
+            
+            // 安全检查
+            if (!markers || typeof L.markerClusterGroup !== 'function') return;
+            
+            if (map.hasLayer(markers)) {
+                map.removeLayer(markers);
+                button.textContent = '开启聚合';
+                clusteringEnabled = false;
+            } else {
+                map.addLayer(markers);
+                button.textContent = '关闭聚合';
+                clusteringEnabled = true;
+            }
+        }
+        
+        // 改变坐标系
+        function changeCoordinateSystem() {
+            displayMarkers();
+        }
+        
+        // 导出数据
+        function exportData() {
+            if (processedData.length === 0) return;
+            
+            // 创建CSV内容
+            let csv = '地址,经度,纬度,坐标类型\n';
+            
+            processedData.forEach(item => {
+                csv += `"${item.address}",${item.lng},${item.lat},"${item.coordinateType === 'gaode' ? '高德坐标' : 'WGS84坐标'}"\n`;
+            });
+            
+            // 创建下载链接
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `地图数据_${new Date().toISOString().slice(0,10)}.csv`;
+            a.click();
+            
+            URL.revokeObjectURL(url);
+        }
+        
+        // 清空地图
+        function clearMap() {
+            // 安全清除标记
+            if (markers && typeof markers.clearLayers === 'function') {
+                markers.clearLayers();
+            }
+            
+            if (map && markers && map.hasLayer(markers)) {
+                map.removeLayer(markers);
+            }
+            
+            // 重置数据
+            rawData = [];
+            processedData = [];
+            
+            // 重置UI
+            document.getElementById('toggle-clustering').textContent = '开启聚合';
+            document.getElementById('toggle-clustering').disabled = true;
+            document.getElementById('export-data').disabled = true;
+            document.getElementById('clear-map').disabled = true;
+            document.getElementById('coordinate-system').disabled = true;
+            
+            // 重置文件输入
+            document.getElementById('file-input').value = '';
+        }
+        
+        // 启用控制按钮
+        function enableControls() {
+            document.getElementById('toggle-clustering').disabled = false;
+            document.getElementById('export-data').disabled = false;
+            document.getElementById('clear-map').disabled = false;
+            document.getElementById('coordinate-system').disabled = false;
+        }
+        
+        // 禁用控制按钮
+        function disableControls() {
+            document.getElementById('toggle-clustering').disabled = true;
+            document.getElementById('export-data').disabled = true;
+            document.getElementById('clear-map').disabled = true;
+            document.getElementById('coordinate-system').disabled = true;
+        }
+    </script>
+</body>
+</html>
