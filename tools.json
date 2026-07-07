@@ -10,5 +10,17 @@
     "description": "",
     "path": "/tools/20250920_APPS_坐标数据可视化/Excel坐标数据可视化地图_v20250920.html",
     "htmlFile": "Excel坐标数据可视化地图_v20250920.html"
+  },
+  {
+    "name": "KML 合并/分割工具",
+    "description": "",
+    "path": "/tools/kml合并分割工具/",
+    "htmlFile": "index.html"
+  },
+  {
+    "name": "SHP → KML 转换工具",
+    "description": "",
+    "path": "/tools/shp转kml工具/",
+    "htmlFile": "index.html"
   }
 ]
