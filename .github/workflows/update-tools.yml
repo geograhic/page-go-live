@@ -1,0 +1,46 @@
+name: 更新工具清单
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'tools/**'
+      - 'scripts/generate-tools-json.js'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-tools:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: 生成工具清单
+        run: node scripts/generate-tools-json.js
+
+      - name: 检查是否有变化
+        id: check
+        run: |
+          if git diff --quiet tools.json; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 提交更改
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add tools.json
+          git commit -m "chore: 自动更新工具清单"
+          git push
