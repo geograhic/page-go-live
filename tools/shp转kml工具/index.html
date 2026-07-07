@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHP → KML 转换工具</title>
+<link rel="stylesheet" href="lib/leaflet.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app">
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-left">
+      <span class="app-icon">◈</span>
+      <h1>SHP → KML 转换工具</h1>
+    </div>
+    <div class="header-right">
+      <button id="btn-settings" class="btn-icon" title="设置">⚙</button>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <div class="main-content" id="main-content">
+    <!-- Left Panel -->
+    <aside class="control-panel" id="control-panel">
+      
+      <!-- Upload Section -->
+      <section class="panel-section">
+        <h2 class="section-title">① 上传矢量文件</h2>
+        <div class="upload-zone" id="upload-zone">
+          <div class="upload-icon">📁</div>
+          <p class="upload-text">拖拽矢量文件到此处<br>或点击选择</p>
+          <p class="upload-hint">推荐选择包含 .shp 的文件夹<br>自动识别 .shp/.shx/.dbf/.prj 全部组件<br>也可直接拖入 .kml 在地图上叠加预览</p>
+          <input type="file" id="file-input" multiple accept=".shp,.shx,.dbf,.prj,.cpg,.zip,.kml" hidden>
+          <input type="file" id="folder-input" webkitdirectory directory multiple hidden>
+        </div>
+        <div class="upload-buttons">
+          <button type="button" class="btn-upload" id="btn-select-files">📄 选择文件</button>
+          <button type="button" class="btn-upload" id="btn-select-folder">📁 选择文件夹</button>
+        </div>
+        <div id="component-status" class="component-status" style="display:none;"></div>
+        <div id="upload-files-list" class="files-list"></div>
+        <div id="shp-info" class="shp-info" style="display:none;"></div>
+      </section>
+
+      <!-- Annotation Section -->
+      <section class="panel-section" id="annotation-section" style="display:none;">
+        <h2 class="section-title">② 标注设置</h2>
+        <div class="form-group">
+          <label class="form-label">
+            <input type="checkbox" id="anno-enabled" checked>
+            <span>包含标注（字形几何）</span>
+          </label>
+        </div>
+        <div id="anno-options">
+          <div class="form-group">
+            <label class="form-label">标注字段</label>
+            <select id="anno-field" class="form-select"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">字体</label>
+            <div class="font-selector-row">
+              <select id="font-select" class="form-select">
+                <option value="fonts/SimHei-Bold.ttf">黑体 (SimHei) ★</option>
+                <option value="fonts/MicrosoftYaHei-Bold.ttf">微软雅黑 Bold</option>
+                <option value="fonts/SimSun.ttf">宋体 (SimSun)</option>
+                <option value="fonts/DejaVuSans-Bold.ttf">DejaVu Sans Bold</option>
+                <option value="fonts/Roboto-Black.ttf">Roboto Black</option>
+                <option value="__custom__">— 上传自定义字体 —</option>
+              </select>
+              <button id="btn-upload-font" class="btn-small" title="上传 .ttf/.otf 字体文件">↑</button>
+              <input type="file" id="font-file-input" accept=".ttf,.otf,.woff" hidden>
+            </div>
+            <p class="form-hint" id="font-hint">★ 黑体为默认推荐，内置中英文+数字</p>
+          </div>
+          <div class="form-group">
+            <label class="form-label">字形比例（占要素高度%）</label>
+            <input type="range" id="glyph-scale" min="20" max="90" value="60" class="form-range">
+            <span id="glyph-scale-val" class="range-val">60%</span>
+          </div>
+          <div class="form-group">
+            <label class="form-label">字形宽度（占要素宽度%）</label>
+            <input type="range" id="glyph-width" min="20" max="90" value="80" class="form-range">
+            <span id="glyph-width-val" class="range-val">80%</span>
+          </div>
+          <div class="form-group">
+            <div class="position-label-row">
+              <label class="form-label">标注放置位置</label>
+              <span class="position-help-trigger" id="position-help-trigger" title="查看位置示意">?</span>
+              <div class="position-help-tooltip" id="position-help-tooltip"></div>
+            </div>
+            <div class="position-grid" id="position-grid">
+              <label class="pos-cell" title="左上">
+                <input type="radio" name="anno-position" value="top-left">
+                <span class="pos-dot pos-tl"></span>
+              </label>
+              <label class="pos-cell" title="上中">
+                <input type="radio" name="anno-position" value="top-center">
+                <span class="pos-dot pos-tc"></span>
+              </label>
+              <label class="pos-cell" title="右上">
+                <input type="radio" name="anno-position" value="top-right">
+                <span class="pos-dot pos-tr"></span>
+              </label>
+              <label class="pos-cell" title="左中">
+                <input type="radio" name="anno-position" value="middle-left">
+                <span class="pos-dot pos-ml"></span>
+              </label>
+              <label class="pos-cell" title="居中">
+                <input type="radio" name="anno-position" value="center" checked>
+                <span class="pos-dot pos-c"></span>
+              </label>
+              <label class="pos-cell" title="右中">
+                <input type="radio" name="anno-position" value="middle-right">
+                <span class="pos-dot pos-mr"></span>
+              </label>
+              <label class="pos-cell" title="左下">
+                <input type="radio" name="anno-position" value="bottom-left">
+                <span class="pos-dot pos-bl"></span>
+              </label>
+              <label class="pos-cell" title="下中">
+                <input type="radio" name="anno-position" value="bottom-center">
+                <span class="pos-dot pos-bc"></span>
+              </label>
+              <label class="pos-cell" title="右下">
+                <input type="radio" name="anno-position" value="bottom-right">
+                <span class="pos-dot pos-br"></span>
+              </label>
+            </div>
+            <p class="form-hint" id="position-hint">当前：居中</p>
+          </div>
+          <div class="anno-help" id="anno-help"></div>
+        </div>
+      </section>
+
+      <!-- Style Section -->
+      <section class="panel-section" id="style-section" style="display:none;">
+        <h2 class="section-title">③ 样式设置</h2>
+        
+        <div class="style-group">
+          <h3 class="style-subtitle">矢量要素</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">线颜色</label>
+              <input type="color" id="vec-line-color" value="#ff8800" class="form-color">
+            </div>
+            <div class="form-group">
+              <label class="form-label">线宽</label>
+              <input type="number" id="vec-line-width" value="1.5" step="0.1" min="0.1" max="10" class="form-number">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">填充颜色</label>
+              <input type="color" id="vec-fill-color" value="#ffaa00" class="form-color">
+            </div>
+            <div class="form-group">
+              <label class="form-label">填充透明度</label>
+              <input type="range" id="vec-fill-opacity" min="0" max="100" value="20" class="form-range">
+              <span id="vec-fill-opacity-val" class="range-val">20%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="style-group">
+          <h3 class="style-subtitle">标注字形</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">线颜色</label>
+              <input type="color" id="glyph-line-color" value="#333333" class="form-color">
+            </div>
+            <div class="form-group">
+              <label class="form-label">线宽</label>
+              <input type="number" id="glyph-line-width" value="0.5" step="0.1" min="0.1" max="5" class="form-number">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">填充颜色</label>
+              <input type="color" id="glyph-fill-color" value="#dddddd" class="form-color">
+            </div>
+            <div class="form-group">
+              <label class="form-label">填充透明度</label>
+              <input type="range" id="glyph-fill-opacity" min="0" max="100" value="8" class="form-range">
+              <span id="glyph-fill-opacity-val" class="range-val">8%</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Coordinate Section -->
+      <section class="panel-section" id="coord-section" style="display:none;">
+        <h2 class="section-title">④ 坐标系设置</h2>
+        <div class="form-group">
+          <label class="form-label">源坐标系</label>
+          <select id="src-crs" class="form-select">
+            <option value="auto">自动检测（.prj）</option>
+            <option value="4326">WGS84 (EPSG:4326)</option>
+            <option value="4490">CGCS2000 (EPSG:4490)</option>
+            <option value="4479">CGCS2000 经纬度 (EPSG:4479)</option>
+            <optgroup label="CGCS2000 3°带 Gauss-Kruger">
+              <option value="4513">CM 75° (EPSG:4513)</option>
+              <option value="4514">CM 78° (EPSG:4514)</option>
+              <option value="4515">CM 81° (EPSG:4515)</option>
+              <option value="4516">CM 84° (EPSG:4516)</option>
+              <option value="4517">CM 87° (EPSG:4517)</option>
+              <option value="4518">CM 90° (EPSG:4518)</option>
+              <option value="4519">CM 93° (EPSG:4519)</option>
+              <option value="4520">CM 96° (EPSG:4520)</option>
+              <option value="4521">CM 99° (EPSG:4521)</option>
+              <option value="4522">CM 102° (EPSG:4522)</option>
+              <option value="4523">CM 105° (EPSG:4523)</option>
+              <option value="4524">CM 108° (EPSG:4524)</option>
+              <option value="4525">CM 111° (EPSG:4525)</option>
+              <option value="4526">CM 114° (EPSG:4526)</option>
+              <option value="4527">CM 117° (EPSG:4527)</option>
+              <option value="4528">CM 120° (EPSG:4528)</option>
+              <option value="4529">CM 123° (EPSG:4529)</option>
+              <option value="4530">CM 126° (EPSG:4530)</option>
+              <option value="4531">CM 129° (EPSG:4531)</option>
+              <option value="4532">CM 132° (EPSG:4532)</option>
+              <option value="4533">CM 135° (EPSG:4533)</option>
+            </optgroup>
+            <optgroup label="CGCS2000 3°带（含带号前缀）">
+              <option value="4534">CM 75° 带号39 (EPSG:4534)</option>
+              <option value="4535">CM 78° 带号40 (EPSG:4535)</option>
+              <option value="4536">CM 81° 带号41 (EPSG:4536)</option>
+              <option value="4537">CM 84° 带号42 (EPSG:4537)</option>
+              <option value="4538">CM 87° 带号43 (EPSG:4538)</option>
+              <option value="4539">CM 90° 带号44 (EPSG:4539)</option>
+              <option value="4540">CM 93° 带号45 (EPSG:4540)</option>
+              <option value="4541">CM 96° 带号46 (EPSG:4541)</option>
+              <option value="4542">CM 99° 带号47 (EPSG:4542)</option>
+              <option value="4543">CM 102° 带号48 (EPSG:4543)</option>
+              <option value="4544">CM 105° 带号49 (EPSG:4544)</option>
+              <option value="4545">CM 108° 带号50 (EPSG:4545)</option>
+              <option value="4546">CM 111° 带号51 (EPSG:4546)</option>
+              <option value="4547">CM 114° 带号52 (EPSG:4547)</option>
+              <option value="4548">CM 117° 带号53 (EPSG:4548)</option>
+              <option value="4549">CM 120° 带号54 (EPSG:4549)</option>
+              <option value="4550">CM 123° 带号55 (EPSG:4550)</option>
+              <option value="4551">CM 126° 带号56 (EPSG:4551)</option>
+              <option value="4552">CM 129° 带号57 (EPSG:4552)</option>
+              <option value="4553">CM 132° 带号58 (EPSG:4553)</option>
+              <option value="4554">CM 135° 带号59 (EPSG:4554)</option>
+            </optgroup>
+            <optgroup label="UTM">
+              <option value="32650">UTM Zone 50N (EPSG:32650)</option>
+              <option value="32649">UTM Zone 49N (EPSG:32649)</option>
+              <option value="32651">UTM Zone 51N (EPSG:32651)</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">输出坐标系</label>
+          <select id="dst-crs" class="form-select">
+            <option value="4326">WGS84 (EPSG:4326)</option>
+            <option value="gcj02">GCJ02（火星坐标）</option>
+          </select>
+        </div>
+        <div class="coord-help" id="coord-help"></div>
+      </section>
+
+      <!-- Export Section -->
+      <section class="panel-section" id="export-section" style="display:none;">
+        <h2 class="section-title">⑤ 导出</h2>
+        <div class="form-group">
+          <label class="form-label">导出方式</label>
+          <select id="export-mode" class="form-select">
+            <option value="merged">合并为单个 KML</option>
+            <option value="split">按要素分割为多个 KML（ZIP）</option>
+            <option value="merged-split">合并 + 分割（ZIP）</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">KML 文件名前缀</label>
+          <input type="text" id="export-prefix" value="output" class="form-text">
+        </div>
+        <div class="form-group" id="split-field-group" style="display:none;">
+          <label class="form-label">分割依据字段</label>
+          <select id="split-field" class="form-select"></select>
+        </div>
+        <button id="btn-generate" class="btn-primary" disabled>生成 KML</button>
+        <button id="btn-download" class="btn-secondary" style="display:none;">下载文件</button>
+        <div id="generate-status" class="status-msg"></div>
+      </section>
+
+    </aside>
+
+    <!-- Map Panel -->
+    <div class="map-panel" id="map-panel">
+      <div class="map-toolbar">
+        <select id="tile-source" class="map-select">
+          <option value="amap_map">高德地图</option>
+          <option value="amap_sat">高德卫星</option>
+          <option value="osm">OpenStreetMap</option>
+          <option value="google_map">Google 地图</option>
+          <option value="google_sat">Google 卫星</option>
+          <option value="custom">自定义...</option>
+        </select>
+        <input type="text" id="custom-tile-url" class="map-input" placeholder="https://{s}.tile.example.com/{z}/{x}/{y}.png" style="display:none;">
+        <button id="btn-add-kml" class="btn-small" title="添加 KML 叠加预览">📂 KML</button>
+        <button id="btn-fit-bounds" class="btn-small" title="缩放到数据范围">⊕</button>
+        <input type="file" id="kml-file-input" accept=".kml" multiple hidden>
+      </div>
+      <div id="map" class="map-container"></div>
+      <div id="kml-overlay-list" class="kml-overlay-list" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- Status Bar -->
+  <footer class="status-bar">
+    <span id="status-text">就绪</span>
+  </footer>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settings-modal" style="display:none;">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>设置</h2>
+      <button class="modal-close" id="btn-close-settings">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">
+          <input type="checkbox" id="setting-show-map" checked>
+          <span>显示地图预览</span>
+        </label>
+        <p class="form-hint">关闭后隐藏地图面板，释放屏幕空间用于数据操作</p>
+      </div>
+      <div class="form-group">
+        <label class="form-label">默认图源</label>
+        <select id="setting-default-tile" class="form-select">
+          <option value="amap_map">高德地图</option>
+          <option value="amap_sat">高德卫星</option>
+          <option value="osm">OpenStreetMap</option>
+          <option value="google_map">Google 地图</option>
+          <option value="google_sat">Google 卫星</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">
+          <input type="checkbox" id="setting-auto-fit" checked>
+          <span>加载后自动缩放到数据范围</span>
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="btn-save-settings" class="btn-primary">保存</button>
+    </div>
+  </div>
+</div>
+
+<script src="lib/leaflet.js"></script>
+<script src="lib/shp.js"></script>
+<script src="lib/opentype.min.js"></script>
+<script src="fonts/SimHei-Bold.base64.js"></script>
+<script src="lib/proj4.js"></script>
+<script src="lib/jszip.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

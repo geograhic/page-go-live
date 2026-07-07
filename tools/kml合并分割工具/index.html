@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KML 合并/分割工具</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app">
+  <header class="app-header">
+    <div class="header-left">
+      <span class="app-icon">⬕</span>
+      <h1>KML 合并/分割工具</h1>
+    </div>
+    <div class="header-right">
+      <button id="btn-settings" class="btn-icon" title="设置">⚙</button>
+    </div>
+  </header>
+
+  <div class="main-content">
+    <!-- Left Panel -->
+    <aside class="control-panel">
+      
+      <!-- Upload Section -->
+      <section class="panel-section">
+        <h2 class="section-title">① 上传 KML/KMZ</h2>
+        <div class="upload-zone" id="upload-zone">
+          <div class="upload-icon">📂</div>
+          <p class="upload-text">拖拽 KML/KMZ 到此处<br>或点击选择（可多选）</p>
+          <input type="file" id="file-input" multiple accept=".kml,.kmz" hidden>
+        </div>
+        <div id="file-list" class="files-list"></div>
+        <div id="stats" class="shp-info" style="display:none;"></div>
+      </section>
+
+      <!-- Operation Section -->
+      <section class="panel-section" id="op-section" style="display:none;">
+        <h2 class="section-title">② 选择操作</h2>
+        <div class="op-tabs">
+          <button class="op-tab active" data-op="merge">合并</button>
+          <button class="op-tab" data-op="split">分割</button>
+        </div>
+        
+        <!-- Merge Options -->
+        <div id="merge-options" class="op-panel active">
+          <div class="form-group">
+            <label class="form-label">合并方式</label>
+            <select id="merge-mode" class="form-select">
+              <option value="flat">所有要素放入同一文档</option>
+              <option value="folder">每个文件作为独立 Folder</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">样式处理</label>
+            <select id="merge-style" class="form-select">
+              <option value="keep">保留原始样式</option>
+              <option value="unify">统一为单一样式</option>
+              <option value="color">按文件分配不同颜色</option>
+            </select>
+          </div>
+          <div class="form-group" id="unify-style-group" style="display:none;">
+            <div class="style-group">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">线颜色</label>
+                  <input type="color" id="merge-line-color" value="#4a9eff" class="form-color">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">线宽</label>
+                  <input type="number" id="merge-line-width" value="1.5" step="0.1" min="0.1" class="form-number">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">填充颜色</label>
+                  <input type="color" id="merge-fill-color" value="#4a9eff" class="form-color">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">填充透明度</label>
+                  <input type="range" id="merge-fill-opacity" min="0" max="100" value="20" class="form-range">
+                  <span id="merge-fill-opacity-val" class="range-val">20%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Split Options -->
+        <div id="split-options" class="op-panel">
+          <div class="form-group">
+            <label class="form-label">分割方式</label>
+            <select id="split-mode" class="form-select">
+              <option value="attr">按 ExtendedData 属性字段</option>
+              <option value="name">按 Placemark 名称</option>
+              <option value="folder">按 Folder 文件夹结构</option>
+              <option value="geom">按几何类型</option>
+              <option value="region">按地理范围裁剪</option>
+              <option value="count">按数量等分</option>
+            </select>
+          </div>
+
+          <!-- Attribute split -->
+          <div class="split-config" id="cfg-attr">
+            <div class="form-group">
+              <label class="form-label">属性字段</label>
+              <select id="attr-field" class="form-select"></select>
+            </div>
+            <div class="help-box" data-help="attr">
+              <b>按 ExtendedData 属性字段分割</b>：选择一个属性字段（如 PageNumber），每个不同的属性值对应一个独立的 KML 文件。适合按编号、类别等属性分组输出。
+            </div>
+          </div>
+
+          <!-- Name split -->
+          <div class="split-config" id="cfg-name" style="display:none;">
+            <div class="form-group">
+              <label class="form-label">名称匹配方式</label>
+              <select id="name-mode" class="form-select">
+                <option value="exact">完全匹配</option>
+                <option value="prefix">前缀匹配</option>
+              </select>
+            </div>
+            <div class="help-box">
+              <b>按 Placemark 名称分割</b>：按每个 Placemark 的 &lt;name&gt; 标签分组。相同名称的要素会被合并到同一个文件。"前缀匹配"模式按第一个词分组。
+            </div>
+          </div>
+
+          <!-- Folder split -->
+          <div class="split-config" id="cfg-folder" style="display:none;">
+            <div class="form-group">
+              <label class="form-label">Folder 层级</label>
+              <select id="folder-depth" class="form-select">
+                <option value="1">顶层 Folder</option>
+                <option value="2">前两层 Folder</option>
+                <option value="all">所有层级</option>
+              </select>
+            </div>
+            <div class="help-box">
+              <b>按 Folder 文件夹结构分割</b>：按 KML 内的 &lt;Folder&gt; 层级分割。每个 Folder（含其子要素）输出为一个独立的 KML 文件。适用于从大文件中按文件夹结构拆分。
+            </div>
+          </div>
+
+          <!-- Geometry split -->
+          <div class="split-config" id="cfg-geom" style="display:none;">
+            <div class="help-box">
+              <b>按几何类型分割</b>：将要素按 Point（点）、LineString（线）、Polygon（面）分别输出为独立的 KML 文件。适用于混合几何类型的 KML 分类整理。
+            </div>
+          </div>
+
+          <!-- Region split -->
+          <div class="split-config" id="cfg-region" style="display:none;">
+            <div class="upload-zone small" id="boundary-upload">
+              <div class="upload-icon-small">📎</div>
+              <p class="upload-text-small">上传边界 KML</p>
+              <input type="file" id="boundary-input" accept=".kml" hidden>
+            </div>
+            <div id="boundary-info" style="display:none;"></div>
+            <div class="form-group">
+              <label class="form-label">裁剪模式</label>
+              <select id="clip-mode" class="form-select">
+                <option value="filter">筛选（保留完整要素）</option>
+                <option value="clip">裁剪（切割到边界）</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">筛选依据</label>
+              <select id="filter-basis" class="form-select">
+                <option value="center">要素中心点在边界内</option>
+                <option value="intersect">要素与边界有交集</option>
+              </select>
+            </div>
+            <div class="help-box">
+              <b>按地理范围裁剪</b>：上传一个边界 KML，保留与边界相交的要素。"筛选"模式保留完整要素不切割，"裁剪"模式会将面要素切割到边界范围内。
+            </div>
+          </div>
+
+          <!-- Count split -->
+          <div class="split-config" id="cfg-count" style="display:none;">
+            <div class="form-group">
+              <label class="form-label">每份要素数量</label>
+              <input type="number" id="count-per-file" value="100" min="1" class="form-number">
+            </div>
+            <div id="count-preview" class="form-hint"></div>
+            <div class="help-box">
+              <b>按数量等分</b>：将所有要素平均分成若干份，每份包含指定数量的要素。适用于大文件拆分为小文件以便加载。
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Coordinate Section -->
+      <section class="panel-section" id="coord-section" style="display:none;">
+        <h2 class="section-title">③ 坐标系转换</h2>
+        <div class="form-group">
+          <label class="form-label">转换模式</label>
+          <select id="coord-mode" class="form-select">
+            <option value="none">不转换（保持原始坐标）</option>
+            <option value="wgs2gcj">WGS84 → GCJ02（火星坐标）</option>
+            <option value="gcj2wgs">GCJ02 → WGS84</option>
+          </select>
+        </div>
+        <div class="coord-help" id="coord-help-split"></div>
+      </section>
+
+      <!-- Output Section -->
+      <section class="panel-section" id="output-section" style="display:none;">
+        <h2 class="section-title">④ 输出</h2>
+        <div class="form-group">
+          <label class="form-label">输出格式</label>
+          <select id="output-format" class="form-select">
+            <option value="kml">KML</option>
+            <option value="kmz">KMZ（压缩包）</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">文件名前缀</label>
+          <input type="text" id="output-prefix" value="output" class="form-text">
+        </div>
+        <button id="btn-execute" class="btn-primary" disabled>执行操作</button>
+        <button id="btn-download" class="btn-secondary" style="display:none;">⬇ 下载结果</button>
+        <div id="execute-status" class="status-msg"></div>
+      </section>
+
+    </aside>
+
+    <!-- Map Panel -->
+    <div class="map-panel" id="map-panel">
+      <div class="map-toolbar">
+        <select id="tile-source" class="map-select">
+          <option value="amap_map">高德地图</option>
+          <option value="amap_sat">高德卫星</option>
+          <option value="osm">OpenStreetMap</option>
+          <option value="google_map">Google 地图</option>
+          <option value="google_sat">Google 卫星</option>
+          <option value="custom">自定义...</option>
+        </select>
+        <input type="text" id="custom-tile-url" class="map-input" placeholder="https://{s}.tile.example.com/{z}/{x}/{y}.png" style="display:none;">
+        <button id="btn-fit-bounds" class="btn-small" title="缩放到数据范围">⊕</button>
+      </div>
+      <div id="map" class="map-container"></div>
+    </div>
+  </div>
+
+  <footer class="status-bar">
+    <span id="status-text">就绪</span>
+  </footer>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settings-modal" style="display:none;">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>设置</h2>
+      <button class="modal-close" id="btn-close-settings">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">
+          <input type="checkbox" id="setting-show-map" checked>
+          <span>显示地图预览</span>
+        </label>
+        <p class="form-hint">关闭后隐藏地图面板</p>
+      </div>
+      <div class="form-group">
+        <label class="form-label">默认图源</label>
+        <select id="setting-default-tile" class="form-select">
+          <option value="amap_map">高德地图</option>
+          <option value="amap_sat">高德卫星</option>
+          <option value="osm">OpenStreetMap</option>
+          <option value="google_map">Google 地图</option>
+          <option value="google_sat">Google 卫星</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="btn-save-settings" class="btn-primary">保存</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
