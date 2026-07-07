@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>在线网页工具站</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            padding: 40px 20px;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+        }
+
+        .search-section {
+            margin-bottom: 30px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 250px;
+            max-width: 500px;
+            padding: 12px 20px;
+            font-size: 1em;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            outline: none;
+            transition: box-shadow 0.3s;
+        }
+
+        .search-input:focus {
+            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .tool-count {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .tool-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .tool-card h3 {
+            font-size: 1.3em;
+            margin-bottom: 10px;
+            color: #333;
+            word-break: break-word;
+        }
+
+        .tool-card p {
+            color: #666;
+            font-size: 0.95em;
+            line-height: 1.6;
+            flex-grow: 1;
+            margin-bottom: 15px;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        .tool-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.3s;
+            align-self: flex-start;
+        }
+
+        .tool-button:hover {
+            opacity: 0.85;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: white;
+        }
+
+        .empty-state h2 {
+            font-size: 1.8em;
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: white;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid white;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-state {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .error-state h2 {
+            margin-bottom: 10px;
+        }
+
+        footer {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            padding: 20px;
+            font-size: 0.9em;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2em;
+            }
+
+            .tools-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .search-section {
+                flex-direction: column;
+            }
+
+            .search-input {
+                min-width: auto;
+                width: 100%;
+            }
+
+            .tool-count {
+                width: 100%;
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            header {
+                padding: 20px 10px;
+            }
+
+            header h1 {
+                font-size: 1.5em;
+            }
+
+            header p {
+                font-size: 1em;
+            }
+
+            .tool-card {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🛠️ 在线网页工具站</h1>
+            <p>高效实用的在线工具集合</p>
+        </header>
+
+        <div class="search-section">
+            <input 
+                type="text" 
+                class="search-input" 
+                id="searchInput" 
+                placeholder="搜索工具名称或描述..."
+            >
+            <div class="tool-count" id="toolCount">加载中...</div>
+        </div>
+
+        <div id="content"></div>
+
+        <footer>
+            <p>© 2024 在线网页工具站 | 由 GitHub Pages 驱动</p>
+        </footer>
+    </div>
+
+    <script>
+        // 全局状态
+        let allTools = [];
+        let filteredTools = [];
+
+        // DOM 元素
+        const contentDiv = document.getElementById('content');
+        const searchInput = document.getElementById('searchInput');
+        const toolCount = document.getElementById('toolCount');
+
+        // 加载工具列表
+        async function loadTools() {
+            try {
+                contentDiv.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>加载工具中...</p>
+                    </div>
+                `;
+
+                const response = await fetch('./tools.json');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                allTools = await response.json();
+                if (!Array.isArray(allTools)) {
+                    allTools = [];
+                }
+
+                // 按名称排序
+                allTools.sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
+
+                filteredTools = [...allTools];
+                renderTools();
+                updateToolCount();
+            } catch (error) {
+                console.error('加载工具列表失败:', error);
+                contentDiv.innerHTML = `
+                    <div class="error-state">
+                        <h2>⚠️ 加载失败</h2>
+                        <p>无法加载工具列表，请检查 tools.json 文件是否存在。</p>
+                        <p style="font-size: 0.9em; margin-top: 10px; opacity: 0.8;">
+                            错误信息: ${error.message}
+                        </p>
+                    </div>
+                `;
+                toolCount.textContent = '加载失败';
+            }
+        }
+
+        // 渲染工具卡片
+        function renderTools() {
+            if (filteredTools.length === 0) {
+                contentDiv.innerHTML = `
+                    <div class="empty-state">
+                        <h2>📭 暂无结果</h2>
+                        <p>${allTools.length === 0 ? '还没有添加工具，敬请期待！' : '没有找到匹配的工具，请尝试其他搜索词。'}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const toolsHTML = filteredTools.map(tool => `
+                <a href="${tool.path}" class="tool-card" title="打开 ${tool.name}">
+                    <h3>${escapeHtml(tool.name)}</h3>
+                    <p>${escapeHtml(tool.description)}</p>
+                    <button class="tool-button">打开工具 →</button>
+                </a>
+            `).join('');
+
+            contentDiv.innerHTML = `<div class="tools-grid">${toolsHTML}</div>`;
+        }
+
+        // 更新工具计数
+        function updateToolCount() {
+            if (allTools.length === 0) {
+                toolCount.textContent = '暂无工具';
+            } else {
+                toolCount.textContent = `共 ${filteredTools.length} / ${allTools.length} 个工具`;
+            }
+        }
+
+        // 搜索功能
+        function handleSearch() {
+            const searchTerm = searchInput.value.toLowerCase().trim();
+
+            if (!searchTerm) {
+                filteredTools = [...allTools];
+            } else {
+                filteredTools = allTools.filter(tool => {
+                    const name = tool.name.toLowerCase();
+                    const description = tool.description.toLowerCase();
+                    return name.includes(searchTerm) || description.includes(searchTerm);
+                });
+            }
+
+            renderTools();
+            updateToolCount();
+        }
+
+        // 防止 XSS
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        // 事件监听
+        searchInput.addEventListener('input', handleSearch);
+
+        // 初始化
+        loadTools();
+    </script>
+</body>
+</html>
