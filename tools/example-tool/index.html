@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>示例工具</title>
+    <meta name="description" content="这是一个示例工具，展示如何创建新工具。可以用它作为模板创建新的工具。">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .header {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .header h1 {
+            font-size: 1.8em;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 0.95em;
+        }
+
+        .content {
+            margin-bottom: 30px;
+            line-height: 1.8;
+            color: #555;
+        }
+
+        .content h2 {
+            color: #333;
+            margin: 20px 0 10px;
+            font-size: 1.2em;
+        }
+
+        .content ul {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        .content li {
+            margin-bottom: 8px;
+        }
+
+        .code-block {
+            background: #f5f5f5;
+            border-left: 4px solid #667eea;
+            padding: 12px 16px;
+            margin: 15px 0;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+        }
+
+        .back-link {
+            display: inline-block;
+            padding: 10px 16px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: background 0.3s;
+        }
+
+        .back-link:hover {
+            background: #764ba2;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 1.4em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📝 示例工具</h1>
+            <p>这是一个示例工具模板，展示如何创建新的网页工具</p>
+        </div>
+
+        <div class="content">
+            <h2>如何使用这个工具？</h2>
+            <p>这是示例工具的主体内容。你可以在这里放置任何你的工具功能。</p>
+
+            <h2>新增工具流程</h2>
+            <p>如果想创建新工具，按以下步骤操作：</p>
+            <ul>
+                <li>在 <code>tools/</code> 目录下创建新的文件夹，例如 <code>tools/my-tool/</code></li>
+                <li>在文件夹中创建 <code>index.html</code> 文件（或任意名字的 HTML 文件）</li>
+                <li>在 HTML 中添加 <code>&lt;title&gt;</code> 标签作为工具名称</li>
+                <li>在 HTML 中添加 <code>&lt;meta name="description" content="..."&gt;</code> 作为工具描述</li>
+                <li>GitHub Actions 会自动扫描并生成 <code>tools.json</code></li>
+                <li>推送到 main 分支后，工具就会出现在首页</li>
+            </ul>
+
+            <h2>HTML 元标签示例</h2>
+            <div class="code-block">
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;title&gt;我的工具&lt;/title&gt;
+    &lt;meta name="description" content="这是我的工具描述"&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;!-- 你的内容 --&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+            </div>
+
+            <h2>注意事项</h2>
+            <ul>
+                <li>工具 HTML 文件可以叫任何名字，例如 <code>index.html</code>, <code>tool.html</code> 等</li>
+                <li>如果没有 <code>&lt;title&gt;</code> 标签，系统会使用文件夹名作为工具名称</li>
+                <li>如果没有 description meta 标签，工具卡片不会显示描述</li>
+                <li>工具可以包含 CSS、JavaScript、图片等其他文件</li>
+                <li>相对路径会自动处理（基于 <code>/tools/你的工具名/</code>）</li>
+            </ul>
+
+            <h2>后续步骤</h2>
+            <p>你可以：</p>
+            <ul>
+                <li>复制此目录作为新工具的模板</li>
+                <li>修改 <code>&lt;title&gt;</code> 和 <code>description</code> 元标签</li>
+                <li>将你的工具代码放入 HTML 中</li>
+                <li>提交代码到仓库</li>
+            </ul>
+        </div>
+
+        <div>
+            <a href="/" class="back-link">← 返回首页</a>
+        </div>
+    </div>
+</body>
+</html>
