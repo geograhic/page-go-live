@@ -2,11 +2,13 @@
   {
     "name": "示例工具",
     "description": "这是一个示例工具，展示如何创建新工具。可以用它作为模板创建新的工具。",
-    "path": "/tools/example-tool/"
+    "path": "/tools/example-tool/",
+    "htmlFile": "index.html"
   },
   {
     "name": "Excel坐标可视化地图",
     "description": "",
-    "path": "/tools/20250920_APPS_坐标数据可视化/"
+    "path": "/tools/20250920_APPS_坐标数据可视化/Excel坐标数据可视化地图_v20250920.html",
+    "htmlFile": "Excel坐标数据可视化地图_v20250920.html"
   }
 ]
