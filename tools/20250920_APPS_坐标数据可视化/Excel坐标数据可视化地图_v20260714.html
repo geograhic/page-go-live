@@ -1,0 +1,1387 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>坐标数据可视化地图工作室</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary: #2196F3;
+            --primary-dark: #1976D2;
+            --danger: #f44336;
+            --success: #4caf50;
+            --warning: #ff9800;
+            --bg: #f5f7fa;
+            --card-bg: #ffffff;
+            --text: #333333;
+            --border: #e0e0e0;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', 'Microsoft YaHei', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow: hidden;
+        }
+        .app {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .sidebar {
+            width: 400px;
+            min-width: 320px;
+            max-width: 45vw;
+            background: var(--card-bg);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar header { margin-bottom: 16px; }
+        .sidebar h1 { font-size: 20px; margin: 0; color: var(--primary-dark); }
+        .sidebar h2 { font-size: 14px; margin: 4px 0 0; color: #666; font-weight: normal; }
+        .panel {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 14px;
+        }
+        .panel-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin: 0 0 10px;
+            display: flex;
+            align-items: center;
+        }
+        .panel-title::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 14px;
+            background: var(--primary);
+            margin-right: 8px;
+            border-radius: 2px;
+        }
+        .drop-zone {
+            border: 2px dashed #bdbdbd;
+            border-radius: 6px;
+            padding: 18px;
+            text-align: center;
+            color: #666;
+            cursor: pointer;
+            transition: 0.2s;
+            background: #fafafa;
+            font-size: 14px;
+        }
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: var(--primary);
+            background: #e3f2fd;
+        }
+        .form-group { margin-bottom: 10px; }
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 4px;
+            color: #555;
+        }
+        input[type="text"], input[type="number"], input[type="color"], input[type="file"], select, textarea {
+            width: 100%;
+            padding: 7px 8px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 13px;
+            font-family: inherit;
+        }
+        input[type="range"] { width: 100%; }
+        input[type="checkbox"] { width: auto; margin-right: 6px; vertical-align: middle; }
+        .btn {
+            display: inline-block;
+            padding: 7px 12px;
+            border: none;
+            border-radius: 4px;
+            background: var(--primary);
+            color: #fff;
+            font-size: 13px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: inherit;
+        }
+        .btn:hover { background: var(--primary-dark); }
+        .btn-block { width: 100%; margin-top: 8px; }
+        .btn-secondary { background: #9e9e9e; }
+        .btn-secondary:hover { background: #757575; }
+        .btn-success { background: var(--success); }
+        .btn-success:hover { background: #388e3c; }
+        .btn-warning { background: var(--warning); }
+        .btn-warning:hover { background: #f57c00; }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+        .row { display: flex; gap: 8px; }
+        .row > * { flex: 1; }
+        .crs-warning {
+            background: #fff3e0;
+            border: 1px solid #ffcc80;
+            color: #e65100;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-top: 8px;
+            line-height: 1.4;
+        }
+        .crs-warning strong { display: block; margin-bottom: 4px; }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 13px;
+            margin-top: 10px;
+            display: none;
+            line-height: 1.4;
+        }
+        .status.success { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+        .status.error { background: #ffebee; color: #c62828; border: 1px solid #ef9a9a; }
+        .status.info { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
+        #data-preview {
+            max-height: 220px;
+            overflow: auto;
+            margin-top: 10px;
+            font-size: 12px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: #fff;
+        }
+        #data-preview table { width: 100%; border-collapse: collapse; }
+        #data-preview th, #data-preview td { border: 1px solid var(--border); padding: 4px 6px; text-align: left; }
+        #data-preview th { background: #f5f5f5; position: sticky; top: 0; }
+        .map-container { flex: 1; position: relative; min-width: 0; }
+        #map { height: 100%; width: 100%; background: #eef2f5; }
+        .map-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            display: flex;
+            gap: 6px;
+        }
+        .map-controls .btn { padding: 6px 10px; font-weight: bold; }
+        .custom-marker svg { display: block; }
+        .marker-label {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            color: #333 !important;
+            font-size: 12px !important;
+            font-weight: 600 !important;
+            text-shadow: 0 0 2px #fff, 0 0 3px #fff;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: #fff;
+            border-radius: 8px;
+            max-width: 460px;
+            width: 90%;
+            padding: 20px;
+            position: relative;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+        .modal-close {
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+        .modal-close:hover { color: #333; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+        .hidden { display: none !important; }
+        #file-input { display: none; }
+        .manual-input textarea { min-height: 70px; resize: vertical; }
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.8);
+            z-index: 3000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .loading-overlay.active { display: flex; }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 10px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        @media (max-width: 768px) {
+            .app { flex-direction: column; }
+            .sidebar { width: 100%; max-width: none; height: 55%; border-right: none; border-bottom: 1px solid var(--border); }
+            .map-container { height: 45%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <aside class="sidebar">
+            <header>
+                <h1>坐标数据可视化地图</h1>
+                <h2>支持 Excel / CSV / TXT 及手动输入</h2>
+            </header>
+
+            <div class="panel">
+                <div class="panel-title">1. 导入数据</div>
+                <div class="drop-zone" id="drop-zone">
+                    <div>点击或拖拽文件到此处</div>
+                    <div style="font-size:12px;color:#999;margin-top:4px">支持 .xlsx .xls .csv .txt .tsv .json</div>
+                </div>
+                <input type="file" id="file-input" accept=".xlsx,.xls,.csv,.txt,.tsv,.json" multiple>
+
+                <div class="form-group" style="margin-top:10px">
+                    <label>数据坐标系</label>
+                    <select id="input-crs">
+                        <option value="auto">自动检测 / 默认 WGS-84</option>
+                        <option value="wgs84">WGS-84</option>
+                        <option value="gcj02">GCJ-02（火星 / 高德）</option>
+                        <option value="bd09">BD-09（百度）</option>
+                    </select>
+                    <div id="crs-warning" class="crs-warning hidden"></div>
+                    <button id="btn-convert" class="btn btn-block btn-sm hidden">转换坐标系以匹配当前地图</button>
+                </div>
+
+                <div class="form-group">
+                    <button id="btn-load-sample" class="btn btn-secondary btn-sm">加载示例数据</button>
+                </div>
+
+                <div class="form-group manual-input">
+                    <label>手动输入坐标</label>
+                    <textarea id="manual-input" placeholder="每行一个点，示例：&#10;北京 116.4074 39.9042&#10;116.4074,39.9042 上海&#10;也可支持度分秒格式： 116°24'26.6&quot;E 39°54'15.1&quot;N"></textarea>
+                    <button id="btn-parse-manual" class="btn btn-sm btn-block">解析手动输入</button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">2. 地图图源</div>
+                <div class="form-group">
+                    <select id="map-source"></select>
+                </div>
+                <div id="custom-source" class="form-group hidden">
+                    <label>自定义瓦片 URL</label>
+                    <input type="text" id="custom-url" placeholder="https://.../{z}/{x}/{y}.png">
+                    <div class="row" style="margin-top:8px">
+                        <select id="custom-crs">
+                            <option value="wgs84">WGS84</option>
+                            <option value="gcj02">GCJ02</option>
+                            <option value="bd09">BD09</option>
+                        </select>
+                        <button id="btn-add-custom" class="btn btn-sm">添加</button>
+                    </div>
+                    <div style="font-size:12px;color:#888;margin-top:4px">使用 {x} {y} {z}，可选 {s} 表示子域</div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">3. 样式设置</div>
+                <div class="row">
+                    <div class="form-group">
+                        <label>形状</label>
+                        <select id="style-shape">
+                            <option value="circle">圆形</option>
+                            <option value="square">方形</option>
+                            <option value="diamond">菱形</option>
+                            <option value="triangle">三角形</option>
+                            <option value="pin">图钉</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>大小</label>
+                        <input type="number" id="style-size" value="14" min="4" max="40">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <label>填充色</label>
+                        <input type="color" id="style-fill-color" value="#ff5722">
+                    </div>
+                    <div class="form-group">
+                        <label>不透明度</label>
+                        <input type="number" id="style-fill-opacity" value="0.85" min="0" max="1" step="0.05">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <label>边框色</label>
+                        <input type="color" id="style-border-color" value="#ffffff">
+                    </div>
+                    <div class="form-group">
+                        <label>边框宽</label>
+                        <input type="number" id="style-border-width" value="2" min="0" max="5">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label><input type="checkbox" id="style-label"> 显示名称标签</label>
+                    <select id="style-label-column" class="hidden"></select>
+                </div>
+                <div class="form-group">
+                    <label><input type="checkbox" id="style-connect"> 连接点</label>
+                </div>
+                <div class="row hidden" id="line-controls">
+                    <div class="form-group">
+                        <label>线颜色</label>
+                        <input type="color" id="style-line-color" value="#2196F3">
+                    </div>
+                    <div class="form-group">
+                        <label>线宽</label>
+                        <input type="number" id="style-line-width" value="2" min="1" max="10">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label><input type="checkbox" id="style-cluster" checked> 开启聚合</label>
+                </div>
+                <button id="btn-apply-style" class="btn btn-block btn-sm">应用样式</button>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">4. 导出与下载</div>
+                <button id="btn-export-csv" class="btn btn-block btn-sm">导出 CSV</button>
+                <button id="btn-export-offline" class="btn btn-block btn-sm btn-success">导出离线 HTML 地图</button>
+                <button id="btn-download-sample" class="btn btn-block btn-sm btn-secondary">下载示例文件包</button>
+                <button id="btn-clear" class="btn btn-block btn-sm btn-warning">清空数据</button>
+            </div>
+
+            <div id="status" class="status"></div>
+            <div id="data-preview"></div>
+        </aside>
+
+        <main class="map-container">
+            <div id="map"></div>
+            <div class="map-controls">
+                <button id="btn-zoom-in" class="btn btn-sm">+</button>
+                <button id="btn-zoom-out" class="btn btn-sm">−</button>
+                <button id="btn-fit" class="btn btn-sm">适配</button>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <span class="modal-close" id="modal-close">&times;</span>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="spinner"></div>
+        <div id="loading-text">处理中...</div>
+    </div>
+
+    <script>
+        // ========================== 常量配置 ==========================
+        const MAP_SOURCES = [
+            { id: 'gaode-vector', name: '高德矢量', url: 'https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}', subdomains: '1234', crs: 'gcj02', attribution: '高德地图', maxZoom: 18 },
+            { id: 'gaode-sat', name: '高德影像', url: 'https://webst0{s}.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}', subdomains: '1234', crs: 'gcj02', attribution: '高德地图', maxZoom: 18 },
+            { id: 'tencent-vector', name: '腾讯矢量', url: 'https://rt{s}.map.gtimg.com/realtimerender?z={z}&x={x}&y={y}&type=vector&style=0', subdomains: '0123', crs: 'gcj02', attribution: '腾讯地图', maxZoom: 18 },
+            { id: 'tencent-sat', name: '腾讯影像', url: 'https://rt{s}.map.gtimg.com/realtimerender?z={z}&x={x}&y={y}&type=satellite&style=0', subdomains: '0123', crs: 'gcj02', attribution: '腾讯地图', maxZoom: 18 },
+            { id: 'baidu-vector', name: '百度矢量', url: 'https://maponline{s}.bdimg.com/tile/?qt=vtile&x={x}&y={y}&z={z}&styles=pl&udt=20240714&scaler=1', subdomains: '0123', crs: 'bd09', attribution: '百度地图', maxZoom: 19 },
+            { id: 'baidu-sat', name: '百度影像', url: 'https://maponline{s}.bdimg.com/tile/?qt=vtile&x={x}&y={y}&z={z}&styles=sl&udt=20240714&scaler=1', subdomains: '0123', crs: 'bd09', attribution: '百度地图', maxZoom: 19 },
+            { id: 'osm', name: 'OpenStreetMap', url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', subdomains: 'abc', crs: 'wgs84', attribution: '© OpenStreetMap contributors', maxZoom: 19 },
+            { id: 'osm-hot', name: 'OpenStreetMap HOT', url: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', subdomains: 'abc', crs: 'wgs84', attribution: '© OpenStreetMap contributors', maxZoom: 19 },
+            { id: 'carto-light', name: 'CartoDB Positron', url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', subdomains: 'abcd', crs: 'wgs84', attribution: '© CARTO', maxZoom: 19 },
+            { id: 'carto-dark', name: 'CartoDB Dark Matter', url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', subdomains: 'abcd', crs: 'wgs84', attribution: '© CARTO', maxZoom: 19 },
+            { id: 'esri-imagery', name: 'ESRI 卫星影像', url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', crs: 'wgs84', attribution: 'Esri', maxZoom: 18 },
+            { id: 'esri-street', name: 'ESRI 街道', url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', crs: 'wgs84', attribution: 'Esri', maxZoom: 18 },
+            { id: 'esri-topo', name: 'ESRI 地形', url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', crs: 'wgs84', attribution: 'Esri', maxZoom: 18 },
+            { id: 'opentopomap', name: 'OpenTopoMap', url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', subdomains: 'abc', crs: 'wgs84', attribution: 'OpenTopoMap', maxZoom: 17 },
+            { id: 'wikimedia', name: 'Wikimedia', url: 'https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}{r}.png', subdomains: 'abcd', crs: 'wgs84', attribution: 'Wikimedia', maxZoom: 19 },
+            { id: 'usgs', name: 'USGS 影像', url: 'https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}', crs: 'wgs84', attribution: 'USGS', maxZoom: 16 },
+            { id: 'google-sat', name: 'Google 卫星', url: 'https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', subdomains: '0123', crs: 'wgs84', attribution: 'Google Maps', maxZoom: 20 },
+            { id: 'google-street', name: 'Google 街道', url: 'https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', subdomains: '0123', crs: 'wgs84', attribution: 'Google Maps', maxZoom: 20 },
+            { id: 'custom', name: '自定义图源', url: '', crs: 'wgs84', attribution: '自定义', maxZoom: 19 }
+        ];
+
+        const CRS_NAMES = {
+            wgs84: 'WGS-84',
+            gcj02: 'GCJ-02（火星 / 高德）',
+            bd09: 'BD-09（百度）'
+        };
+
+        const LAT_SYNONYMS = ['lat', 'latitude', '纬度', 'y', 'latitu', 'lat_',
+            'gcjlat', 'bdlat', 'wgslat', '高德纬度', '百度纬度', '火星纬度', 'latitud'];
+        const LNG_SYNONYMS = ['lng', 'lon', 'long', 'longitude', '经度', 'x', 'longit', 'long_',
+            'gcjlng', 'bdlng', 'wgslng', '高德经度', '百度经度', '火星经度', 'longitud'];
+        const NAME_SYNONYMS = ['name', '名称', '地址', 'address', 'location', '位置', 'title', 'label', '地名', '地点', 'point'];
+        const CRS_SYNONYMS = ['crs', 'coordinatesystem', 'coordtype', 'system', '坐标系', '坐标类型', '类型', 'coord', 'coordsystem', 'coordinatetype'];
+
+        const SAMPLE_DATA = [
+            { name: '北京', lng: 116.4074, lat: 39.9042, crs: 'wgs84', properties: { 名称: '北京', 经度: 116.4074, 纬度: 39.9042, 坐标系: 'WGS84' } },
+            { name: '上海', lng: 121.4737, lat: 31.2304, crs: 'wgs84', properties: { 名称: '上海', 经度: 121.4737, 纬度: 31.2304, 坐标系: 'WGS84' } },
+            { name: '广州', lng: 113.2644, lat: 23.1291, crs: 'wgs84', properties: { 名称: '广州', 经度: 113.2644, 纬度: 23.1291, 坐标系: 'WGS84' } },
+            { name: '成都', lng: 104.0665, lat: 30.5723, crs: 'wgs84', properties: { 名称: '成都', 经度: 104.0665, 纬度: 30.5723, 坐标系: 'WGS84' } },
+            { name: '西安', lng: 108.9398, lat: 34.3416, crs: 'wgs84', properties: { 名称: '西安', 经度: 108.9398, 纬度: 34.3416, 坐标系: 'WGS84' } },
+            { name: '杭州', lng: 120.1551, lat: 30.2741, crs: 'wgs84', properties: { 名称: '杭州', 经度: 120.1551, 纬度: 30.2741, 坐标系: 'WGS84' } },
+            { name: '武汉', lng: 114.3054, lat: 30.5928, crs: 'wgs84', properties: { 名称: '武汉', 经度: 114.3054, 纬度: 30.5928, 坐标系: 'WGS84' } },
+            { name: '深圳', lng: 114.0579, lat: 22.5431, crs: 'wgs84', properties: { 名称: '深圳', 经度: 114.0579, 纬度: 22.5431, 坐标系: 'WGS84' } },
+            { name: '重庆', lng: 106.5516, lat: 29.5630, crs: 'wgs84', properties: { 名称: '重庆', 经度: 106.5516, 纬度: 29.5630, 坐标系: 'WGS84' } },
+            { name: '南京', lng: 118.7969, lat: 32.0603, crs: 'wgs84', properties: { 名称: '南京', 经度: 118.7969, 纬度: 32.0603, 坐标系: 'WGS84' } }
+        ];
+
+        // ========================== 状态 ==========================
+        let appState = {
+            points: [],
+            columns: [],
+            inputCRS: 'auto',
+            convertOnDisplay: false,
+            mapSourceId: 'gaode-vector',
+            customSource: null,
+            markerLayer: null,
+            lineLayer: null
+        };
+        let map;
+        let baseLayer;
+
+        // ========================== 坐标系转换 ==========================
+        const PI = Math.PI;
+        const X_PI = PI * 3000.0 / 180.0;
+        const A = 6378245.0;
+        const EE = 0.00669342162296594323;
+
+        function outOfChina(lng, lat) {
+            return lng < 72.004 || lng > 137.8347 || lat < 0.8293 || lat > 55.8271;
+        }
+        function transformLat(lng, lat) {
+            let ret = -100.0 + 2.0 * lng + 3.0 * lat + 0.2 * lat * lat + 0.1 * lng * lat + 0.2 * Math.sqrt(Math.abs(lng));
+            ret += (20.0 * Math.sin(6.0 * lng * PI) + 20.0 * Math.sin(2.0 * lng * PI)) * 2.0 / 3.0;
+            ret += (20.0 * Math.sin(lat * PI) + 40.0 * Math.sin(lat / 3.0 * PI)) * 2.0 / 3.0;
+            ret += (160.0 * Math.sin(lat / 12.0 * PI) + 320.0 * Math.sin(lat * PI / 30.0)) * 2.0 / 3.0;
+            return ret;
+        }
+        function transformLng(lng, lat) {
+            let ret = 300.0 + lng + 2.0 * lat + 0.1 * lng * lng + 0.1 * lng * lat + 0.1 * Math.sqrt(Math.abs(lng));
+            ret += (20.0 * Math.sin(6.0 * lng * PI) + 20.0 * Math.sin(2.0 * lng * PI)) * 2.0 / 3.0;
+            ret += (20.0 * Math.sin(lng * PI) + 40.0 * Math.sin(lng / 3.0 * PI)) * 2.0 / 3.0;
+            ret += (150.0 * Math.sin(lng / 12.0 * PI) + 300.0 * Math.sin(lng / 30.0 * PI)) * 2.0 / 3.0;
+            return ret;
+        }
+        function wgs84ToGcj02(lng, lat) {
+            if (outOfChina(lng, lat)) return { lng: lng, lat: lat };
+            let dlat = transformLat(lng - 105.0, lat - 35.0);
+            let dlng = transformLng(lng - 105.0, lat - 35.0);
+            let radlat = lat / 180.0 * PI;
+            let magic = Math.sin(radlat);
+            magic = 1 - EE * magic * magic;
+            let sqrtmagic = Math.sqrt(magic);
+            dlat = (dlat * 180.0) / ((A * (1 - EE)) / (magic * sqrtmagic) * PI);
+            dlng = (dlng * 180.0) / (A / sqrtmagic * Math.cos(radlat) * PI);
+            return { lng: lng + dlng, lat: lat + dlat };
+        }
+        function gcj02ToWgs84(lng, lat) {
+            if (outOfChina(lng, lat)) return { lng: lng, lat: lat };
+            let dlat = transformLat(lng - 105.0, lat - 35.0);
+            let dlng = transformLng(lng - 105.0, lat - 35.0);
+            let radlat = lat / 180.0 * PI;
+            let magic = Math.sin(radlat);
+            magic = 1 - EE * magic * magic;
+            let sqrtmagic = Math.sqrt(magic);
+            dlat = (dlat * 180.0) / ((A * (1 - EE)) / (magic * sqrtmagic) * PI);
+            dlng = (dlng * 180.0) / (A / sqrtmagic * Math.cos(radlat) * PI);
+            let mglat = lat + dlat;
+            let mglng = lng + dlng;
+            return { lng: lng * 2 - mglng, lat: lat * 2 - mglat };
+        }
+        function gcj02ToBd09(lng, lat) {
+            let z = Math.sqrt(lng * lng + lat * lat) + 0.00002 * Math.sin(lat * X_PI);
+            let theta = Math.atan2(lat, lng) + 0.000003 * Math.cos(lng * X_PI);
+            return { lng: z * Math.cos(theta) + 0.0065, lat: z * Math.sin(theta) + 0.006 };
+        }
+        function bd09ToGcj02(lng, lat) {
+            let x = lng - 0.0065, y = lat - 0.006;
+            let z = Math.sqrt(x * x + y * y) - 0.00002 * Math.sin(y * X_PI);
+            let theta = Math.atan2(y, x) - 0.000003 * Math.cos(x * X_PI);
+            return { lng: z * Math.cos(theta), lat: z * Math.sin(theta) };
+        }
+        function wgs84ToBd09(lng, lat) {
+            const gcj = wgs84ToGcj02(lng, lat);
+            return gcj02ToBd09(gcj.lng, gcj.lat);
+        }
+        function bd09ToWgs84(lng, lat) {
+            const gcj = bd09ToGcj02(lng, lat);
+            return gcj02ToWgs84(gcj.lng, gcj.lat);
+        }
+        function convertCoord(pt, from, to) {
+            if (from === to || from === 'auto' || to === 'auto') return { lng: pt.lng, lat: pt.lat };
+            if (from === 'wgs84') {
+                if (to === 'gcj02') return wgs84ToGcj02(pt.lng, pt.lat);
+                if (to === 'bd09') return wgs84ToBd09(pt.lng, pt.lat);
+            } else if (from === 'gcj02') {
+                if (to === 'wgs84') return gcj02ToWgs84(pt.lng, pt.lat);
+                if (to === 'bd09') return gcj02ToBd09(pt.lng, pt.lat);
+            } else if (from === 'bd09') {
+                if (to === 'wgs84') return bd09ToWgs84(pt.lng, pt.lat);
+                if (to === 'gcj02') return bd09ToGcj02(pt.lng, pt.lat);
+            }
+            return { lng: pt.lng, lat: pt.lat };
+        }
+
+        // ========================== 坐标格式解析 ==========================
+        function normalizeCoordString(s) {
+            return String(s).trim()
+                .replace(/[°dD]/gi, '°')
+                .replace(/['′′′′′]/g, "'")
+                .replace(/["″″″″]/g, '"')
+                .replace(/[度]/g, '°')
+                .replace(/[分]/g, "'")
+                .replace(/[秒]/g, '"')
+                .replace(/[东]/g, 'E')
+                .replace(/[西]/g, 'W')
+                .replace(/[南]/g, 'S')
+                .replace(/[北]/g, 'N');
+        }
+        function parseCoord(str) {
+            if (str === null || str === undefined) return null;
+            const s = normalizeCoordString(str);
+            if (!s) return null;
+            const num = Number(s.replace(/,/g, ''));
+            if (!isNaN(num)) return num;
+            const patterns = [
+                { r: /^([+-]?\d+(?:\.\d+)?)\s*°\s*(\d+(?:\.\d+)?)\s*'\s*(\d+(?:\.\d+)?)\s*"\s*([NSEW])?$/, dirLast: true },
+                { r: /^([NSEW])\s*([+-]?\d+(?:\.\d+)?)\s*°\s*(\d+(?:\.\d+)?)\s*'\s*(\d+(?:\.\d+)?)\s*"$/, dirFirst: true },
+                { r: /^([+-]?\d+(?:\.\d+)?)\s*°\s*(\d+(?:\.\d+)?)\s*'\s*([NSEW])?$/, dirLast: true, ddm: true },
+                { r: /^([NSEW])\s*([+-]?\d+(?:\.\d+)?)\s*°\s*(\d+(?:\.\d+)?)\s*'$/, dirFirst: true, ddm: true }
+            ];
+            for (const p of patterns) {
+                const m = s.match(p.r);
+                if (!m) continue;
+                let dir, deg, min, sec;
+                if (p.dirLast) {
+                    deg = parseFloat(m[1]); min = parseFloat(m[2]);
+                    sec = p.ddm ? 0 : parseFloat(m[3]);
+                    dir = p.ddm ? m[3] : m[4];
+                } else {
+                    dir = m[1]; deg = parseFloat(m[2]); min = parseFloat(m[3]);
+                    sec = p.ddm ? 0 : parseFloat(m[4]);
+                }
+                if (isNaN(deg) || isNaN(min)) continue;
+                let sign = 1;
+                if (dir === 'W' || dir === 'S') sign = -1;
+                if (deg < 0) sign = -sign;
+                return sign * (Math.abs(deg) + min / 60 + sec / 3600);
+            }
+            return null;
+        }
+        function isValidLatLng(lat, lng) {
+            return !isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+        }
+
+        // ========================== 列识别与数据解析 ==========================
+        function normalizeHeader(h) {
+            return String(h).toLowerCase()
+                .replace(/[\s_\-（）()\[\]{}]/g, '')
+                .replace(/[°d]/g, '')
+                .trim();
+        }
+        function isHeaderRow(row) {
+            if (!row || row.length < 2) return false;
+            const keywords = LAT_SYNONYMS.concat(LNG_SYNONYMS).concat(NAME_SYNONYMS).concat(CRS_SYNONYMS).map(k => normalizeHeader(k));
+            const normalized = row.map(normalizeHeader);
+            return normalized.some(h => keywords.some(k => h.includes(k)));
+        }
+        function detectColumns(headers) {
+            const norm = headers.map(normalizeHeader);
+            let nameIdx = -1, latIdx = -1, lngIdx = -1, crsIdx = -1;
+            norm.forEach((h, i) => {
+                if (LAT_SYNONYMS.some(k => h.includes(k)) && !LNG_SYNONYMS.some(k => h.includes(k))) latIdx = i;
+                if (LNG_SYNONYMS.some(k => h.includes(k)) && !LAT_SYNONYMS.some(k => h.includes(k))) lngIdx = i;
+                if (NAME_SYNONYMS.some(k => h.includes(k))) nameIdx = i;
+                if (CRS_SYNONYMS.some(k => h.includes(k))) crsIdx = i;
+            });
+            return { nameIdx, latIdx, lngIdx, crsIdx };
+        }
+        function inferCRSFromHeaders(headers) {
+            const norm = headers.map(normalizeHeader);
+            if (norm.some(h => h.includes('高德') || h.includes('gcj') || h.includes('火星'))) return 'gcj02';
+            if (norm.some(h => h.includes('百度') || h.includes('bd'))) return 'bd09';
+            if (norm.some(h => h.includes('wgs') || h.includes('gps') || h.includes('84'))) return 'wgs84';
+            return 'wgs84';
+        }
+        function inferCRSFromValue(c) {
+            const v = String(c).toLowerCase();
+            if (v.includes('gcj') || v.includes('mars') || v.includes('gaode') || v.includes('高德') || v.includes('火星')) return 'gcj02';
+            if (v.includes('bd') || v.includes('baidu') || v.includes('百度')) return 'bd09';
+            if (v.includes('wgs') || v.includes('gps') || v.includes('84')) return 'wgs84';
+            return null;
+        }
+        function fallbackNumericColumns(rows) {
+            if (!rows || rows.length === 0) return { latIdx: -1, lngIdx: -1 };
+            for (let r = 0; r < Math.min(rows.length, 10); r++) {
+                const numeric = rows[r].map((v, i) => (parseCoord(v) !== null ? i : -1)).filter(i => i >= 0);
+                if (numeric.length >= 2) return { lngIdx: numeric[0], latIdx: numeric[1] };
+            }
+            return { latIdx: -1, lngIdx: -1 };
+        }
+        function parseRowsToPoints(rows, hasHeader) {
+            const headers = hasHeader ? rows[0].map(h => String(h === undefined ? '' : h).trim()) : rows[0].map((_, i) => '列' + (i + 1));
+            const cols = detectColumns(headers);
+            let { nameIdx, latIdx, lngIdx, crsIdx } = cols;
+
+            if (latIdx < 0 || lngIdx < 0) {
+                const fb = fallbackNumericColumns(hasHeader ? rows.slice(1) : rows);
+                if (lngIdx < 0) lngIdx = fb.lngIdx;
+                if (latIdx < 0) latIdx = fb.latIdx;
+            }
+            if (latIdx < 0 || lngIdx < 0) {
+                throw new Error('未能识别经纬度列，请检查表头是否包含“经度/纬度”或“lng/lat”');
+            }
+
+            const start = hasHeader ? 1 : 0;
+            const points = [];
+            for (let i = start; i < rows.length; i++) {
+                const row = rows[i];
+                if (!row || row.length === 0) continue;
+                const rawLng = parseCoord(row[lngIdx]);
+                const rawLat = parseCoord(row[latIdx]);
+                if (rawLng === null || rawLat === null) continue;
+                if (!isValidLatLng(rawLat, rawLng)) continue;
+
+                const name = nameIdx >= 0 ? String(row[nameIdx] || '').trim() : ('点' + (points.length + 1));
+                let crs = inferCRSFromValue(row[crsIdx]);
+                if (!crs) crs = inferCRSFromHeaders(headers);
+                if (appState.inputCRS !== 'auto') crs = appState.inputCRS;
+
+                const props = {};
+                headers.forEach((h, idx) => { props[h] = row[idx] === undefined ? '' : row[idx]; });
+
+                points.push({
+                    id: points.length + 1,
+                    name: name,
+                    lng: rawLng,
+                    lat: rawLat,
+                    crs: crs,
+                    originalLng: rawLng,
+                    originalLat: rawLat,
+                    properties: props
+                });
+            }
+            return { points, columns: headers };
+        }
+
+        // ========================== 文件解析 ==========================
+        function detectDelimiter(text) {
+            const sample = text.split(/\r?\n/).slice(0, 5).join('\n');
+            const counts = { '\t': 0, ';': 0, '|': 0, ',': 0 };
+            for (const c of sample) {
+                if (counts[c] !== undefined) counts[c]++;
+            }
+            const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+            return sorted[0][1] > 0 ? sorted[0][0] : null;
+        }
+        function parseLine(line, delimiter) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            for (let i = 0; i < line.length; i++) {
+                const c = line[i];
+                if (c === '"') {
+                    if (inQuotes && line[i + 1] === '"') {
+                        current += '"'; i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (c === delimiter && !inQuotes) {
+                    result.push(current);
+                    current = '';
+                } else {
+                    current += c;
+                }
+            }
+            result.push(current);
+            return result;
+        }
+        function parseText(text) {
+            const delimiter = detectDelimiter(text);
+            const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
+            if (!delimiter) {
+                return lines.map(l => l.trim().split(/\s+/));
+            }
+            return lines.map(l => parseLine(l, delimiter));
+        }
+        function parseJSON(text) {
+            try {
+                const data = JSON.parse(text);
+                if (Array.isArray(data)) return data.map(obj => Object.values(obj));
+                if (Array.isArray(data.features)) {
+                    return data.features.map(f => {
+                        const c = f.geometry && f.geometry.coordinates;
+                        const p = f.properties || {};
+                        return [c ? c[0] : '', c ? c[1] : '', p.name || p.名称 || ''];
+                    });
+                }
+            } catch (e) {}
+            return null;
+        }
+        async function parseFile(file) {
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (ext === 'xlsx' || ext === 'xls') {
+                const data = await file.arrayBuffer();
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const json = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+                return json;
+            } else if (ext === 'json') {
+                const text = await file.text();
+                const parsed = parseJSON(text);
+                if (parsed) return parsed;
+                throw new Error('JSON 格式不支持，仅支持对象数组或 GeoJSON');
+            } else {
+                const text = await file.text();
+                return parseText(text);
+            }
+        }
+        function parseManualInput(text) {
+            const lines = text.split(/\r?\n/).filter(l => l.trim());
+            const rows = [];
+            lines.forEach(line => {
+                const tokens = line.trim().split(/[\s,，]+/).filter(t => t);
+                if (tokens.length < 2) return;
+                let name = '';
+                let coordTokens = tokens;
+                if (isNaN(parseFloat(tokens[0]))) {
+                    name = tokens[0];
+                    coordTokens = tokens.slice(1);
+                }
+                const nums = coordTokens.map(t => parseCoord(t)).filter(n => n !== null);
+                if (nums.length < 2) return;
+                let lng, lat;
+                if (Math.abs(nums[0]) <= 90 && Math.abs(nums[1]) <= 180 && !(Math.abs(nums[1]) <= 90 && Math.abs(nums[0]) > 90)) {
+                    lat = nums[0]; lng = nums[1];
+                } else {
+                    lng = nums[0]; lat = nums[1];
+                }
+                if (!isValidLatLng(lat, lng)) return;
+                const row = [name, lng, lat];
+                rows.push(row);
+            });
+            if (rows.length === 0) return { points: [], columns: [] };
+            const cols = ['名称', '经度', '纬度'];
+            return parseRowsToPoints([cols].concat(rows), true);
+        }
+        function processRows(rows) {
+            const hasHeader = isHeaderRow(rows[0]);
+            return parseRowsToPoints(rows, hasHeader);
+        }
+
+        // ========================== 地图初始化与图层 ==========================
+        function getMapSource(id) {
+            if (id === 'custom' && appState.customSource) return appState.customSource;
+            return MAP_SOURCES.find(s => s.id === id) || MAP_SOURCES[0];
+        }
+        function getCurrentMapSource() {
+            return getMapSource(appState.mapSourceId);
+        }
+        function initMap() {
+            map = L.map('map', { zoomControl: false }).setView([35.8617, 104.1954], 4);
+            L.control.scale({ metric: true, imperial: false }).addTo(map);
+            L.control.zoom({ position: 'bottomright' }).addTo(map);
+            setMapSource('gaode-vector');
+        }
+        function setMapSource(id) {
+            const source = getMapSource(id);
+            appState.mapSourceId = source.id;
+            if (baseLayer) map.removeLayer(baseLayer);
+            const url = source.url;
+            const options = {
+                attribution: source.attribution || '',
+                maxZoom: source.maxZoom || 19,
+                subdomains: source.subdomains || 'abc'
+            };
+            baseLayer = L.tileLayer(url, options);
+            baseLayer.addTo(map);
+            refreshCRSWarning();
+        }
+        function addCustomSource() {
+            const url = document.getElementById('custom-url').value.trim();
+            if (!url || url.indexOf('{x}') < 0 || url.indexOf('{y}') < 0 || url.indexOf('{z}') < 0) {
+                showStatus('请输入包含 {x}、{y}、{z} 的瓦片地址', 'error');
+                return;
+            }
+            const crs = document.getElementById('custom-crs').value;
+            appState.customSource = {
+                id: 'custom', name: '自定义', url: url, crs: crs, attribution: '自定义', maxZoom: 19
+            };
+            document.getElementById('map-source').value = 'custom';
+            setMapSource('custom');
+            showStatus('自定义图源已加载', 'success');
+        }
+
+        // ========================== 样式与渲染 ==========================
+        function getStyle() {
+            return {
+                shape: document.getElementById('style-shape').value,
+                size: parseInt(document.getElementById('style-size').value) || 14,
+                fillColor: document.getElementById('style-fill-color').value,
+                fillOpacity: parseFloat(document.getElementById('style-fill-opacity').value) || 0.85,
+                borderColor: document.getElementById('style-border-color').value,
+                borderWidth: parseInt(document.getElementById('style-border-width').value) || 0,
+                showLabels: document.getElementById('style-label').checked,
+                labelColumn: document.getElementById('style-label-column').value,
+                connect: document.getElementById('style-connect').checked,
+                lineColor: document.getElementById('style-line-color').value,
+                lineWidth: parseInt(document.getElementById('style-line-width').value) || 2,
+                clustering: document.getElementById('style-cluster').checked
+            };
+        }
+        function getIconSvg(style) {
+            const size = parseInt(style.size);
+            const bw = parseFloat(style.borderWidth);
+            const fill = style.fillColor;
+            const fillOp = style.fillOpacity;
+            const stroke = style.borderColor;
+            const strokeW = bw;
+            if (style.shape === 'pin') {
+                const sw = bw * 24 / size;
+                return '<svg xmlns="http://www.w3.org/2000/svg" width="' + size + '" height="' + (size * 1.5) + '" viewBox="0 0 24 36">' +
+                    '<path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24C24 5.4 18.6 0 12 0z" fill="' + fill + '" fill-opacity="' + fillOp + '" stroke="' + (bw > 0 ? stroke : 'none') + '" stroke-width="' + sw + '"/>' +
+                    '<circle cx="12" cy="12" r="4" fill="' + stroke + '"/></svg>';
+            }
+            const strokeAttr = bw > 0 ? 'stroke="' + stroke + '" stroke-width="' + strokeW + '"' : 'stroke="none"';
+            let shape = '';
+            if (style.shape === 'circle') {
+                const r = size / 2 - bw / 2;
+                shape = '<circle cx="' + (size / 2) + '" cy="' + (size / 2) + '" r="' + r + '" fill="' + fill + '" fill-opacity="' + fillOp + '" ' + strokeAttr + '/>';
+            } else if (style.shape === 'square') {
+                shape = '<rect x="' + (bw / 2) + '" y="' + (bw / 2) + '" width="' + (size - bw) + '" height="' + (size - bw) + '" fill="' + fill + '" fill-opacity="' + fillOp + '" ' + strokeAttr + '/>';
+            } else if (style.shape === 'diamond') {
+                shape = '<polygon points="' + (size / 2) + ',' + (bw / 2) + ' ' + (size - bw / 2) + ',' + (size / 2) + ' ' + (size / 2) + ',' + (size - bw / 2) + ' ' + (bw / 2) + ',' + (size / 2) + '" fill="' + fill + '" fill-opacity="' + fillOp + '" ' + strokeAttr + '/>';
+            } else if (style.shape === 'triangle') {
+                shape = '<polygon points="' + (size / 2) + ',' + (bw / 2) + ' ' + (size - bw / 2) + ',' + (size - bw / 2) + ' ' + (bw / 2) + ',' + (size - bw / 2) + '" fill="' + fill + '" fill-opacity="' + fillOp + '" ' + strokeAttr + '/>';
+            }
+            return '<svg xmlns="http://www.w3.org/2000/svg" width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '">' + shape + '</svg>';
+        }
+        function createIcon(style) {
+            const size = parseInt(style.size);
+            let w = size, h = size, anchor = [w / 2, h / 2];
+            if (style.shape === 'pin') {
+                h = Math.round(size * 1.5);
+                anchor = [w / 2, h];
+            }
+            return L.divIcon({
+                className: 'custom-marker',
+                html: getIconSvg(style),
+                iconSize: [w, h],
+                iconAnchor: anchor
+            });
+        }
+        function getPointSourceCRS(p) {
+            if (p.crs && p.crs !== 'auto') return p.crs;
+            if (appState.inputCRS !== 'auto') return appState.inputCRS;
+            return 'wgs84';
+        }
+        function getDisplayPoint(p) {
+            const mapSource = getCurrentMapSource();
+            const mapCrs = mapSource.crs;
+            const sourceCrs = getPointSourceCRS(p);
+            if (appState.convertOnDisplay && sourceCrs !== mapCrs) {
+                return convertCoord(p, sourceCrs, mapCrs);
+            }
+            return { lat: p.lat, lng: p.lng };
+        }
+        function buildPopup(p, dp) {
+            let html = '<div style="min-width:180px;max-width:320px;">';
+            html += '<h4 style="margin:0 0 8px 0;color:#333;border-bottom:1px solid #eee;padding-bottom:4px;">' + (p.name || '未命名') + '</h4>';
+            html += '<div style="font-size:12px;margin-bottom:3px;"><b>经度:</b> ' + dp.lng.toFixed(6) + '</div>';
+            html += '<div style="font-size:12px;margin-bottom:3px;"><b>纬度:</b> ' + dp.lat.toFixed(6) + '</div>';
+            html += '<div style="font-size:12px;margin-bottom:6px;color:#666;"><b>原始坐标系:</b> ' + CRS_NAMES[getPointSourceCRS(p)] + '</div>';
+            if (p.properties && Object.keys(p.properties).length > 0) {
+                html += '<div style="border-top:1px solid #eee;padding-top:6px;margin-top:6px;">';
+                for (const [k, v] of Object.entries(p.properties)) {
+                    if (k === '经度' || k === '纬度' || k === '名称') continue;
+                    html += '<div style="font-size:12px;"><b>' + k + ':</b> ' + v + '</div>';
+                }
+                html += '</div>';
+            }
+            html += '</div>';
+            return html;
+        }
+        function createMarkerLayer() {
+            const style = getStyle();
+            if (style.clustering && typeof L.markerClusterGroup === 'function') {
+                return L.markerClusterGroup({
+                    spiderfyOnMaxZoom: true,
+                    showCoverageOnHover: true,
+                    zoomToBoundsOnClick: true,
+                    disableClusteringAtZoom: 18
+                });
+            }
+            return L.layerGroup();
+        }
+        function renderMarkers() {
+            if (!map) return;
+            const style = getStyle();
+            if (appState.markerLayer) {
+                map.removeLayer(appState.markerLayer);
+                appState.markerLayer = null;
+            }
+            if (appState.lineLayer) {
+                map.removeLayer(appState.lineLayer);
+                appState.lineLayer = null;
+            }
+            if (appState.points.length === 0) return;
+
+            const layer = createMarkerLayer();
+            appState.markerLayer = layer;
+            const latlngs = [];
+            const bounds = L.latLngBounds();
+
+            appState.points.forEach(p => {
+                const dp = getDisplayPoint(p);
+                const latlng = [dp.lat, dp.lng];
+                latlngs.push(latlng);
+                bounds.extend(latlng);
+                const icon = createIcon(style);
+                const marker = L.marker(latlng, { icon: icon });
+                marker.bindPopup(buildPopup(p, dp));
+                if (style.showLabels) {
+                    const label = style.labelColumn && p.properties && p.properties[style.labelColumn] ? p.properties[style.labelColumn] : p.name;
+                    if (label) {
+                        marker.bindTooltip(String(label), {
+                            permanent: true,
+                            direction: 'top',
+                            className: 'marker-label',
+                            offset: [0, -style.size / 2]
+                        }).openTooltip();
+                    }
+                }
+                layer.addLayer(marker);
+            });
+
+            map.addLayer(layer);
+            if (style.connect && latlngs.length > 1) {
+                appState.lineLayer = L.polyline(latlngs, { color: style.lineColor, weight: style.lineWidth, opacity: 0.7 }).addTo(map);
+            }
+            if (latlngs.length > 0) {
+                map.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
+            }
+        }
+
+        // ========================== 坐标系提醒 ==========================
+        function refreshCRSWarning() {
+            const warning = document.getElementById('crs-warning');
+            const btn = document.getElementById('btn-convert');
+            const mapCrs = getCurrentMapSource().crs;
+            const inputCrs = appState.inputCRS;
+            if (appState.points.length === 0) {
+                warning.classList.add('hidden');
+                btn.classList.add('hidden');
+                return;
+            }
+            if (inputCrs !== 'auto' && inputCrs !== mapCrs && !appState.convertOnDisplay) {
+                warning.innerHTML = '<strong>坐标系不匹配</strong>当前数据为 ' + CRS_NAMES[inputCrs] + '，当前地图使用 ' + CRS_NAMES[mapCrs] + '。若不转换，点会出现约百米级偏移。';
+                warning.classList.remove('hidden');
+                btn.classList.remove('hidden');
+                btn.textContent = '转换坐标系以匹配地图';
+            } else if (appState.convertOnDisplay) {
+                warning.innerHTML = '<strong>已启用坐标转换</strong>数据已按 ' + CRS_NAMES[mapCrs] + ' 显示。';
+                warning.classList.remove('hidden');
+                btn.classList.remove('hidden');
+                btn.textContent = '取消转换';
+            } else {
+                warning.classList.add('hidden');
+                btn.classList.add('hidden');
+            }
+        }
+
+        // ========================== UI 控制 ==========================
+        function showStatus(msg, type) {
+            const el = document.getElementById('status');
+            el.textContent = msg;
+            el.className = 'status ' + (type || 'info');
+            el.style.display = 'block';
+            setTimeout(() => { el.style.display = 'none'; }, 5000);
+        }
+        function showLoading(text) {
+            document.getElementById('loading-text').textContent = text || '处理中...';
+            document.getElementById('loading-overlay').classList.add('active');
+        }
+        function hideLoading() {
+            document.getElementById('loading-overlay').classList.remove('active');
+        }
+        function showModal(title, content, actions) {
+            const body = document.getElementById('modal-body');
+            body.innerHTML = '<h3 style="margin:0 0 12px 0;">' + title + '</h3>' + content + (actions || '');
+            document.getElementById('modal').classList.add('active');
+        }
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+        function updateDataPreview() {
+            const container = document.getElementById('data-preview');
+            if (appState.points.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+            const cols = ['名称', '经度', '纬度', '原始坐标系'];
+            let html = '<table><thead><tr>' + cols.map(c => '<th>' + c + '</th>').join('') + '</tr></thead><tbody>';
+            appState.points.slice(0, 50).forEach(p => {
+                html += '<tr>' +
+                    '<td>' + (p.name || '') + '</td>' +
+                    '<td>' + p.lng.toFixed(6) + '</td>' +
+                    '<td>' + p.lat.toFixed(6) + '</td>' +
+                    '<td>' + CRS_NAMES[getPointSourceCRS(p)] + '</td>' +
+                    '</tr>';
+            });
+            if (appState.points.length > 50) {
+                html += '<tr><td colspan="4" style="text-align:center;color:#888;">还有 ' + (appState.points.length - 50) + ' 行未显示</td></tr>';
+            }
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+        function updateLabelColumnOptions() {
+            const select = document.getElementById('style-label-column');
+            select.innerHTML = '<option value="">名称</option>';
+            appState.columns.forEach(col => {
+                const opt = document.createElement('option');
+                opt.value = col;
+                opt.textContent = col;
+                select.appendChild(opt);
+            });
+        }
+        function populateMapSourceSelect() {
+            const select = document.getElementById('map-source');
+            select.innerHTML = '';
+            MAP_SOURCES.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = s.name;
+                select.appendChild(opt);
+            });
+            select.value = appState.mapSourceId;
+        }
+        function loadData(points, columns) {
+            appState.points = points;
+            appState.columns = columns || [];
+            appState.convertOnDisplay = false;
+            updateLabelColumnOptions();
+            updateDataPreview();
+            renderMarkers();
+            refreshCRSWarning();
+            showStatus('成功加载 ' + points.length + ' 条坐标数据', 'success');
+        }
+        function loadSampleData() {
+            appState.inputCRS = 'wgs84';
+            document.getElementById('input-crs').value = 'wgs84';
+            loadData(SAMPLE_DATA.map(p => ({ ...p })), ['名称', '经度', '纬度', '坐标系']);
+        }
+        async function handleFiles(files) {
+            showLoading('正在解析文件...');
+            try {
+                const allPoints = [];
+                for (const file of files) {
+                    const rows = await parseFile(file);
+                    if (!rows || rows.length < 2) continue;
+                    const result = processRows(rows);
+                    allPoints.push(...result.points);
+                }
+                if (allPoints.length === 0) {
+                    showStatus('未能从文件中解析到有效坐标，请检查格式或示例文件', 'error');
+                    return;
+                }
+                loadData(allPoints, []);
+            } catch (e) {
+                showStatus('解析失败: ' + e.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+        function handleManualInput() {
+            const text = document.getElementById('manual-input').value;
+            if (!text.trim()) return;
+            showLoading('正在解析手动输入...');
+            try {
+                const result = parseManualInput(text);
+                if (result.points.length === 0) {
+                    showStatus('未能解析到有效坐标，请检查格式', 'error');
+                    return;
+                }
+                loadData(result.points, result.columns);
+            } catch (e) {
+                showStatus('解析失败: ' + e.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+        function download(content, filename, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        function exportCSV() {
+            if (appState.points.length === 0) return;
+            let csv = '\uFEFF名称,经度,纬度,原始坐标系\n';
+            appState.points.forEach(p => {
+                csv += '"' + (p.name || '') + '",' + p.lng + ',' + p.lat + ',"' + CRS_NAMES[getPointSourceCRS(p)] + '"\n';
+            });
+            download(csv, '坐标数据_' + new Date().toISOString().slice(0, 10) + '.csv', 'text/csv;charset=utf-8;');
+        }
+        async function exportOfflineHTML() {
+            if (appState.points.length === 0) {
+                showStatus('没有数据可导出', 'error');
+                return;
+            }
+            showLoading('正在生成离线 HTML 地图...');
+            try {
+                const [css, js] = await Promise.all([
+                    fetch('https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css').then(r => r.text()),
+                    fetch('https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js').then(r => r.text())
+                ]);
+                const html = buildOfflineHTML(css, js);
+                download(html, '离线坐标地图_' + new Date().toISOString().slice(0, 10) + '.html', 'text/html;charset=utf-8;');
+                showStatus('离线 HTML 地图已生成，可直接打开或分享', 'success');
+            } catch (e) {
+                showStatus('离线地图生成失败: ' + e.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+        function buildOfflineHTML(leafletCss, leafletJs) {
+            const style = getStyle();
+            const data = appState.points.map(p => {
+                const dp = getDisplayPoint(p);
+                return { name: p.name, lat: dp.lat, lng: dp.lng, props: p.properties };
+            });
+            const dataJSON = JSON.stringify(data);
+            const styleJSON = JSON.stringify(style);
+
+            const scriptLines = [
+                'const DATA = ' + dataJSON + ';',
+                'const STYLE = ' + styleJSON + ';',
+                'function getIconSvg(style) {',
+                '  var size = parseInt(style.size);',
+                '  var bw = parseFloat(style.borderWidth);',
+                '  var fill = style.fillColor;',
+                '  var fillOp = style.fillOpacity;',
+                '  var stroke = style.borderColor;',
+                '  var strokeW = bw;',
+                '  if (style.shape === "pin") {',
+                '    var sw = bw * 24 / size;',
+                '    return \'<svg xmlns="http://www.w3.org/2000/svg" width="\' + size + \'" height="\' + (size * 1.5) + \'" viewBox="0 0 24 36"><path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24C24 5.4 18.6 0 12 0z" fill="\' + fill + \'" fill-opacity="\' + fillOp + \'" stroke="\' + (bw > 0 ? stroke : "none") + \'" stroke-width="\' + sw + \'"/><circle cx="12" cy="12" r="4" fill="\' + stroke + \'"/></svg>\';',
+                '  }',
+                '  var strokeAttr = bw > 0 ? \'stroke="\' + stroke + \'" stroke-width="\' + strokeW + \'"\' : \'stroke="none"\';',
+                '  var shape = "";',
+                '  if (style.shape === "circle") {',
+                '    var r = size / 2 - bw / 2;',
+                '    shape = \'<circle cx="\' + (size / 2) + \'" cy="\' + (size / 2) + \'" r="\' + r + \'" fill="\' + fill + \'" fill-opacity="\' + fillOp + \'" \' + strokeAttr + \'/>\';',
+                '  } else if (style.shape === "square") {',
+                '    shape = \'<rect x="\' + (bw / 2) + \'" y="\' + (bw / 2) + \'" width="\' + (size - bw) + \'" height="\' + (size - bw) + \'" fill="\' + fill + \'" fill-opacity="\' + fillOp + \'" \' + strokeAttr + \'/>\';',
+                '  } else if (style.shape === "diamond") {',
+                '    shape = \'<polygon points="\' + (size / 2) + \',\' + (bw / 2) + \' \' + (size - bw / 2) + \',\' + (size / 2) + \' \' + (size / 2) + \',\' + (size - bw / 2) + \' \' + (bw / 2) + \',\' + (size / 2) + \'" fill="\' + fill + \'" fill-opacity="\' + fillOp + \'" \' + strokeAttr + \'/>\';',
+                '  } else if (style.shape === "triangle") {',
+                '    shape = \'<polygon points="\' + (size / 2) + \',\' + (bw / 2) + \' \' + (size - bw / 2) + \',\' + (size - bw / 2) + \' \' + (bw / 2) + \',\' + (size - bw / 2) + \'" fill="\' + fill + \'" fill-opacity="\' + fillOp + \'" \' + strokeAttr + \'/>\';',
+                '  }',
+                '  return \'<svg xmlns="http://www.w3.org/2000/svg" width="\' + size + \'" height="\' + size + \'" viewBox="0 0 \' + size + \' \' + size + \'">\' + shape + \'</svg>\';',
+                '}',
+                'function createIcon(style) {',
+                '  var size = parseInt(style.size);',
+                '  var w = size, h = size, anchor = [w / 2, h / 2];',
+                '  if (style.shape === "pin") { h = Math.round(size * 1.5); anchor = [w / 2, h]; }',
+                '  return L.divIcon({ className: "custom-marker", html: getIconSvg(style), iconSize: [w, h], iconAnchor: anchor });',
+                '}',
+                'L.GridLayer.Grid = L.GridLayer.extend({',
+                '  createTile: function(coords) {',
+                '    var tile = document.createElement("canvas");',
+                '    var s = this.getTileSize();',
+                '    tile.setAttribute("width", s.x);',
+                '    tile.setAttribute("height", s.y);',
+                '    var ctx = tile.getContext("2d");',
+                '    ctx.fillStyle = "rgba(240,248,255,1)";',
+                '    ctx.fillRect(0, 0, s.x, s.y);',
+                '    ctx.strokeStyle = "rgba(0,0,0,0.08)";',
+                '    ctx.lineWidth = 1;',
+                '    ctx.strokeRect(0, 0, s.x, s.y);',
+                '    ctx.fillStyle = "rgba(0,0,0,0.35)";',
+                '    ctx.font = "11px sans-serif";',
+                '    ctx.fillText(coords.x + "," + coords.y, 4, 12);',
+                '    return tile;',
+                '  }',
+                '});',
+                'L.gridLayer.grid = function(opts) { return new L.GridLayer.Grid(opts); };',
+                'var map = L.map("map").setView([35, 105], 4);',
+                'L.gridLayer.grid({ attribution: "离线网格底图" }).addTo(map);',
+                'var markers = (typeof L.markerClusterGroup === "function" && STYLE.clustering) ? L.markerClusterGroup() : L.layerGroup();',
+                'map.addLayer(markers);',
+                'var latlngs = [];',
+                'DATA.forEach(function(p) {',
+                '  var latlng = [p.lat, p.lng];',
+                '  latlngs.push(latlng);',
+                '  var marker = L.marker(latlng, { icon: createIcon(STYLE) });',
+                '  var popup = \'<div style="min-width:160px;"><h4 style="margin:0 0 6px 0;">\' + (p.name || "未命名") + \'</h4>\';',
+                '  if (p.props) {',
+                '    for (var k in p.props) {',
+                '      popup += \'<div style="font-size:12px;"><b>\' + k + \':</b> \' + p.props[k] + \'</div>\';',
+                '    }',
+                '  }',
+                '  popup += \'<div style="font-size:12px;"><b>经纬度:</b> \' + p.lng.toFixed(6) + \', \' + p.lat.toFixed(6) + \'</div></div>\';',
+                '  marker.bindPopup(popup);',
+                '  if (STYLE.showLabels && p.name) {',
+                '    marker.bindTooltip(p.name, { permanent: true, direction: "top", className: "marker-label", offset: [0, -STYLE.size / 2] }).openTooltip();',
+                '  }',
+                '  markers.addLayer(marker);',
+                '});',
+                'if (latlngs.length > 0) { map.fitBounds(L.latLngBounds(latlngs), { padding: [40, 40], maxZoom: 16 }); }',
+                'if (STYLE.connect && latlngs.length > 1) { L.polyline(latlngs, { color: STYLE.lineColor, weight: STYLE.lineWidth, opacity: 0.7 }).addTo(map); }'
+            ];
+
+            return [
+                '<!DOCTYPE html>',
+                '<html lang="zh-CN">',
+                '<head>',
+                '<meta charset="UTF-8">',
+                '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
+                '<title>离线坐标可视化地图</title>',
+                '<style>',
+                leafletCss,
+                'body { margin: 0; padding: 0; font-family: "Microsoft YaHei", sans-serif; }',
+                '#map { height: 100vh; width: 100%; background: #eef2f5; }',
+                '.custom-marker svg { display: block; }',
+                '.marker-label { background: transparent !important; border: none !important; box-shadow: none !important; color: #333 !important; font-size: 12px !important; font-weight: 600 !important; text-shadow: 0 0 2px #fff, 0 0 3px #fff; }',
+                '</style>',
+                '</head>',
+                '<body>',
+                '<div id="map"></div>',
+                '<script>',
+                leafletJs,
+                scriptLines.join('\n'),
+                '</scr' + 'ipt>',
+                '</body>',
+                '</html>'
+            ].join('\n');
+        }
+        function downloadSampleFiles() {
+            const csv = '\uFEFF名称,经度,纬度,坐标系\n' +
+                '北京,116.4074,39.9042,WGS84\n' +
+                '上海,121.4737,31.2304,WGS84\n' +
+                '广州,113.2644,23.1291,WGS84\n' +
+                '成都,104.0665,30.5723,WGS84\n' +
+                '西安,108.9398,34.3416,WGS84\n';
+            const txt = '北京\t116.4074\t39.9042\n' +
+                '上海\t121.4737\t31.2304\n' +
+                '广州\t113.2644\t23.1291\n' +
+                '成都\t104.0665\t30.5723\n' +
+                '西安\t108.9398\t34.3416\n';
+            download(csv, '坐标导入示例.csv', 'text/csv;charset=utf-8;');
+            download(txt, '坐标导入示例.txt', 'text/plain;charset=utf-8;');
+        }
+
+        // ========================== 事件绑定 ==========================
+        function bindEvents() {
+            const dropZone = document.getElementById('drop-zone');
+            const fileInput = document.getElementById('file-input');
+            dropZone.addEventListener('click', () => fileInput.click());
+            dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+            dropZone.addEventListener('drop', e => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+            });
+            fileInput.addEventListener('change', e => { if (e.target.files.length) handleFiles(e.target.files); });
+
+            document.getElementById('btn-parse-manual').addEventListener('click', handleManualInput);
+            document.getElementById('btn-load-sample').addEventListener('click', loadSampleData);
+            document.getElementById('btn-apply-style').addEventListener('click', renderMarkers);
+            document.getElementById('btn-export-csv').addEventListener('click', exportCSV);
+            document.getElementById('btn-export-offline').addEventListener('click', exportOfflineHTML);
+            document.getElementById('btn-download-sample').addEventListener('click', downloadSampleFiles);
+            document.getElementById('btn-clear').addEventListener('click', () => {
+                appState.points = [];
+                appState.columns = [];
+                appState.convertOnDisplay = false;
+                document.getElementById('manual-input').value = '';
+                document.getElementById('file-input').value = '';
+                updateDataPreview();
+                renderMarkers();
+                refreshCRSWarning();
+                showStatus('已清空数据', 'info');
+            });
+            document.getElementById('map-source').addEventListener('change', e => {
+                if (e.target.value === 'custom') {
+                    document.getElementById('custom-source').classList.remove('hidden');
+                } else {
+                    document.getElementById('custom-source').classList.add('hidden');
+                    setMapSource(e.target.value);
+                }
+            });
+            document.getElementById('btn-add-custom').addEventListener('click', addCustomSource);
+            document.getElementById('input-crs').addEventListener('change', e => {
+                appState.inputCRS = e.target.value;
+                if (appState.points.length > 0) {
+                    appState.points.forEach(p => {
+                        if (appState.inputCRS !== 'auto') p.crs = appState.inputCRS;
+                    });
+                    appState.convertOnDisplay = false;
+                    refreshCRSWarning();
+                    renderMarkers();
+                }
+            });
+            document.getElementById('btn-convert').addEventListener('click', () => {
+                appState.convertOnDisplay = !appState.convertOnDisplay;
+                refreshCRSWarning();
+                renderMarkers();
+            });
+            document.getElementById('btn-zoom-in').addEventListener('click', () => map && map.zoomIn());
+            document.getElementById('btn-zoom-out').addEventListener('click', () => map && map.zoomOut());
+            document.getElementById('btn-fit').addEventListener('click', () => {
+                if (!map || appState.points.length === 0) return;
+                const bounds = L.latLngBounds();
+                appState.points.forEach(p => bounds.extend(getDisplayPoint(p)));
+                map.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
+            });
+            document.getElementById('style-label').addEventListener('change', e => {
+                const col = document.getElementById('style-label-column');
+                col.classList.toggle('hidden', !e.target.checked);
+            });
+            document.getElementById('style-connect').addEventListener('change', e => {
+                document.getElementById('line-controls').classList.toggle('hidden', !e.target.checked);
+            });
+            document.getElementById('modal-close').addEventListener('click', closeModal);
+            document.getElementById('modal').addEventListener('click', e => {
+                if (e.target.id === 'modal') closeModal();
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initMap();
+            populateMapSourceSelect();
+            bindEvents();
+        });
+    </script>
+</body>
+</html>
