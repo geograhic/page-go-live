@@ -260,7 +260,21 @@
             transition: background .2s;
         }
         #btn-toggle-sidebar:hover { background: #e3f2fd; }
-        .sidebar header { padding-left: 48px; }
+        .sidebar header { position: relative; padding-left: 48px; }
+        .btn-close-sidebar {
+            display: none;
+            position: absolute;
+            top: 0; right: 0;
+            width: 32px; height: 32px;
+            border: none; border-radius: 6px;
+            background: transparent;
+            color: #666;
+            font-size: 22px; line-height: 1;
+            cursor: pointer;
+            align-items: center; justify-content: center;
+            padding: 0;
+        }
+        .btn-close-sidebar:hover { background: #f0f0f0; color: #333; }
         .sidebar-backdrop { display: none; }
         .map-container:fullscreen { background: #eef2f5; }
         .map-container:-webkit-full-screen { background: #eef2f5; }
@@ -283,14 +297,14 @@
             .sidebar {
                 position: absolute;
                 top: 0; left: 0; bottom: 0;
-                width: 86%;
-                max-width: 340px;
+                width: 80%;
+                max-width: 320px;
                 z-index: 1200;
                 box-shadow: 2px 0 14px rgba(0,0,0,0.18);
                 transform: translateX(0);
                 border-right: 1px solid var(--border);
             }
-            .app.sidebar-collapsed .sidebar { transform: translateX(-100%); width: 86%; min-width: 0; }
+            .app.sidebar-collapsed .sidebar { transform: translateX(-100%); width: 80%; min-width: 0; }
             .app:not(.sidebar-collapsed) .sidebar-backdrop {
                 display: block;
                 position: fixed; inset: 0;
@@ -299,8 +313,11 @@
             }
             .map-container { height: 100%; }
             .sidebar { font-size: 14px; }
+            .sidebar header { padding-left: 56px; }
             .btn { padding: 9px 12px; }
             input[type="text"], input[type="number"], input[type="color"], select, textarea { font-size: 16px; }
+            #btn-toggle-sidebar { width: 44px; height: 44px; font-size: 22px; }
+            .btn-close-sidebar { display: flex; }
             .map-controls .btn { width: 40px; height: 40px; font-size: 18px; display: flex; align-items: center; justify-content: center; padding: 0; }
             #data-preview { max-height: 150px; }
         }
@@ -318,6 +335,7 @@
             <header>
                 <h1>坐标数据可视化地图</h1>
                 <h2>支持 Excel / CSV / TXT 及手动输入</h2>
+                <button id="btn-close-sidebar" class="btn-close-sidebar" title="收起侧边栏" aria-label="收起侧边栏">×</button>
             </header>
 
             <div class="panel">
@@ -1512,8 +1530,14 @@
                 setTimeout(() => { if (map) map.invalidateSize(); }, 300);
             }
             btnToggle.addEventListener('click', () => setSidebar(!appEl.classList.contains('sidebar-collapsed')));
+            const btnCloseSidebar = document.getElementById('btn-close-sidebar');
+            if (btnCloseSidebar) btnCloseSidebar.addEventListener('click', () => setSidebar(true));
             if (backdrop) backdrop.addEventListener('click', () => setSidebar(true));
             updateToggleIcon();
+            // 手机端默认收起侧边栏，让地图先可见
+            if (window.matchMedia('(max-width: 768px)').matches) {
+                setSidebar(true);
+            }
 
             // 地图全屏预览
             const mapContainer = document.querySelector('.map-container');
