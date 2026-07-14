@@ -10,6 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
     <style>
         :root {
             --primary: #2196F3;
@@ -261,6 +262,12 @@
         }
         #btn-toggle-sidebar:hover { background: #e3f2fd; }
         .sidebar header { position: relative; padding-left: 48px; }
+        .lang-bar { margin-top: 10px; }
+        .lang-bar label { display: block; font-size: 12px; color: #666; margin-bottom: 4px; }
+        .lang-bar select { width: 100%; padding: 7px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; background: #fff; color: var(--text); }
+        .export-sep { height: 1px; background: var(--border); margin: 12px 0; }
+        .btn-primary { background: var(--primary); color: #fff; border: 1px solid var(--primary-dark); }
+        .btn-primary:hover { background: var(--primary-dark); }
         .btn-close-sidebar {
             display: none;
             position: absolute;
@@ -329,133 +336,156 @@
 </head>
 <body>
     <div class="app">
-        <button id="btn-toggle-sidebar" title="收起 / 展开侧边栏" aria-label="切换侧边栏">‹</button>
+        <button id="btn-toggle-sidebar" title="收起 / 展开侧边栏" data-i18n-title="toggle_title" aria-label="切换侧边栏">‹</button>
         <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
         <aside class="sidebar">
             <header>
-                <h1>坐标数据可视化地图</h1>
-                <h2>支持 Excel / CSV / TXT 及手动输入</h2>
+                <h1 data-i18n="app_title">坐标数据可视化地图</h1>
+                <h2 data-i18n="app_subtitle">支持 Excel / CSV / TXT 及手动输入</h2>
+                <div class="lang-bar">
+                    <label data-i18n="lang_label">界面语言</label>
+                    <select id="ui-lang">
+                        <option value="zh-CN">简体中文</option>
+                        <option value="zh-TW">繁體中文</option>
+                        <option value="en">English</option>
+                        <option value="ru">Русский</option>
+                        <option value="vi">Tiếng Việt</option>
+                        <option value="ja">日本語</option>
+                        <option value="ko">한국어</option>
+                    </select>
+                </div>
                 <button id="btn-close-sidebar" class="btn-close-sidebar" title="收起侧边栏" aria-label="收起侧边栏">×</button>
             </header>
 
             <div class="panel">
-                <div class="panel-title">1. 导入数据</div>
+                <div class="panel-title" data-i18n="panel1_title">1. 导入数据</div>
                 <div class="drop-zone" id="drop-zone">
-                    <div>点击或拖拽文件到此处</div>
-                    <div style="font-size:12px;color:#999;margin-top:4px">支持 .xlsx .xls .csv .txt .tsv .json</div>
+                    <div data-i18n="drop_main">点击或拖拽文件到此处</div>
+                    <div style="font-size:12px;color:#999;margin-top:4px" data-i18n="drop_sub">支持 .xlsx .xls .csv .txt .tsv .json</div>
                 </div>
                 <input type="file" id="file-input" accept=".xlsx,.xls,.csv,.txt,.tsv,.json" multiple>
 
                 <div class="form-group" style="margin-top:10px">
-                    <label>数据坐标系</label>
+                    <label data-i18n="crs_label">数据坐标系</label>
                     <select id="input-crs">
-                        <option value="auto">自动检测 / 默认 WGS-84</option>
-                        <option value="wgs84">WGS-84</option>
-                        <option value="gcj02">GCJ-02（火星 / 高德）</option>
-                        <option value="bd09">BD-09（百度）</option>
+                        <option value="auto" data-i18n="crs_auto">自动检测 / 默认 WGS-84</option>
+                        <option value="wgs84" data-i18n="crs_wgs84">WGS-84</option>
+                        <option value="gcj02" data-i18n="crs_gcj02">GCJ-02（火星 / 高德）</option>
+                        <option value="bd09" data-i18n="crs_bd09">BD-09（百度）</option>
                     </select>
                     <div id="crs-warning" class="crs-warning hidden"></div>
                     <button id="btn-convert" class="btn btn-block btn-sm hidden">转换坐标系以匹配当前地图</button>
                 </div>
 
                 <div class="form-group">
-                    <button id="btn-load-sample" class="btn btn-secondary btn-sm">加载示例数据</button>
+                    <button id="btn-load-sample" class="btn btn-secondary btn-sm" data-i18n="btn_load_sample">加载示例数据</button>
                 </div>
 
                 <div class="form-group manual-input">
-                    <label>手动输入坐标</label>
-                    <textarea id="manual-input" placeholder="每行一个点，示例：&#10;北京 116.4074 39.9042&#10;116.4074,39.9042 上海&#10;也可支持度分秒格式： 116°24'26.6&quot;E 39°54'15.1&quot;N"></textarea>
-                    <button id="btn-parse-manual" class="btn btn-sm btn-block">解析手动输入</button>
+                    <label data-i18n="manual_label">手动输入坐标</label>
+                    <textarea id="manual-input" data-i18n="manual_ph" placeholder="每行一个点，示例：&#10;北京 116.4074 39.9042&#10;116.4074,39.9042 上海&#10;也可支持度分秒格式： 116°24'26.6&quot;E 39°54'15.1&quot;N"></textarea>
+                    <button id="btn-parse-manual" class="btn btn-sm btn-block" data-i18n="btn_parse_manual">解析手动输入</button>
                 </div>
             </div>
 
             <div class="panel">
-                <div class="panel-title">2. 地图图源</div>
+                <div class="panel-title" data-i18n="panel2_title">2. 地图图源</div>
                 <div class="form-group">
                     <select id="map-source"></select>
                 </div>
                 <div id="custom-source" class="form-group hidden">
-                    <label>自定义瓦片 URL</label>
-                    <input type="text" id="custom-url" placeholder="https://.../{z}/{x}/{y}.png">
+                    <label data-i18n="custom_url_label">自定义瓦片 URL</label>
+                    <input type="text" id="custom-url" data-i18n="custom_url_ph" placeholder="https://.../{z}/{x}/{y}.png">
                     <div class="row" style="margin-top:8px">
                         <select id="custom-crs">
-                            <option value="wgs84">WGS84</option>
-                            <option value="gcj02">GCJ02</option>
-                            <option value="bd09">BD09</option>
+                            <option value="wgs84" data-i18n="ccrs_wgs84">WGS84</option>
+                            <option value="gcj02" data-i18n="ccrs_gcj02">GCJ02</option>
+                            <option value="bd09" data-i18n="ccrs_bd09">BD09</option>
                         </select>
-                        <button id="btn-add-custom" class="btn btn-sm">添加</button>
+                        <button id="btn-add-custom" class="btn btn-sm" data-i18n="btn_add_custom">添加</button>
                     </div>
-                    <div style="font-size:12px;color:#888;margin-top:4px">使用 {x} {y} {z}，可选 {s} 表示子域</div>
+                    <div style="font-size:12px;color:#888;margin-top:4px" data-i18n="custom_hint">使用 {x} {y} {z}，可选 {s} 表示子域</div>
                 </div>
             </div>
 
             <div class="panel">
-                <div class="panel-title">3. 样式设置</div>
+                <div class="panel-title" data-i18n="panel3_title">3. 样式设置</div>
                 <div class="row">
                     <div class="form-group">
-                        <label>形状</label>
+                        <label data-i18n="style_shape_label">形状</label>
                         <select id="style-shape">
-                            <option value="circle">圆形</option>
-                            <option value="square">方形</option>
-                            <option value="diamond">菱形</option>
-                            <option value="triangle">三角形</option>
-                            <option value="pin">图钉</option>
+                            <option value="circle" data-i18n="shape_circle">圆形</option>
+                            <option value="square" data-i18n="shape_square">方形</option>
+                            <option value="diamond" data-i18n="shape_diamond">菱形</option>
+                            <option value="triangle" data-i18n="shape_triangle">三角形</option>
+                            <option value="pin" data-i18n="shape_pin">图钉</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>大小</label>
+                        <label data-i18n="style_size_label">大小</label>
                         <input type="number" id="style-size" value="14" min="4" max="40">
                     </div>
                 </div>
                 <div class="row">
                     <div class="form-group">
-                        <label>填充色</label>
+                        <label data-i18n="style_fill_label">填充色</label>
                         <input type="color" id="style-fill-color" value="#ff5722">
                     </div>
                     <div class="form-group">
-                        <label>不透明度</label>
+                        <label data-i18n="style_opacity_label">不透明度</label>
                         <input type="number" id="style-fill-opacity" value="0.85" min="0" max="1" step="0.05">
                     </div>
                 </div>
                 <div class="row">
                     <div class="form-group">
-                        <label>边框色</label>
+                        <label data-i18n="style_border_color_label">边框色</label>
                         <input type="color" id="style-border-color" value="#ffffff">
                     </div>
                     <div class="form-group">
-                        <label>边框宽</label>
+                        <label data-i18n="style_border_width_label">边框宽</label>
                         <input type="number" id="style-border-width" value="2" min="0" max="5">
                     </div>
                 </div>
                 <div class="form-group">
-                    <label><input type="checkbox" id="style-label"> 显示名称标签</label>
+                    <label><input type="checkbox" id="style-label"> <span data-i18n="style_label_label">显示名称标签</span></label>
                     <select id="style-label-column" class="hidden"></select>
                 </div>
                 <div class="form-group">
-                    <label><input type="checkbox" id="style-connect"> 连接点</label>
+                    <label><input type="checkbox" id="style-connect"> <span data-i18n="style_connect_label">连接点</span></label>
                 </div>
                 <div class="row hidden" id="line-controls">
                     <div class="form-group">
-                        <label>线颜色</label>
+                        <label data-i18n="style_line_color_label">线颜色</label>
                         <input type="color" id="style-line-color" value="#2196F3">
                     </div>
                     <div class="form-group">
-                        <label>线宽</label>
+                        <label data-i18n="style_line_width_label">线宽</label>
                         <input type="number" id="style-line-width" value="2" min="1" max="10">
                     </div>
                 </div>
                 <div class="form-group">
-                    <label><input type="checkbox" id="style-cluster" checked> 开启聚合</label>
+                    <label><input type="checkbox" id="style-cluster" checked> <span data-i18n="style_cluster_label">开启聚合</span></label>
                 </div>
-                <button id="btn-apply-style" class="btn btn-block btn-sm">应用样式</button>
+                <button id="btn-apply-style" class="btn btn-block btn-sm" data-i18n="btn_apply_style">应用样式</button>
             </div>
 
             <div class="panel">
-                <div class="panel-title">4. 导出与下载</div>
-                <button id="btn-export-csv" class="btn btn-block btn-sm">导出 CSV</button>
-                <button id="btn-export-offline" class="btn btn-block btn-sm btn-success">导出离线 HTML 地图</button>
-                <button id="btn-download-sample" class="btn btn-block btn-sm btn-secondary">下载示例文件包</button>
-                <button id="btn-clear" class="btn btn-block btn-sm btn-warning">清空数据</button>
+                <div class="panel-title" data-i18n="panel4_title">4. 导出与下载</div>
+                <button id="btn-export-csv" class="btn btn-block btn-sm" data-i18n="btn_export_csv">导出 CSV</button>
+                <div class="export-sep"></div>
+                <div class="form-group" style="margin-top:4px">
+                    <label data-i18n="geo_format_label">矢量导出格式</label>
+                    <select id="geo-format">
+                        <option value="geojson" data-i18n="fmt_geojson">GeoJSON (.geojson)</option>
+                        <option value="kml" data-i18n="fmt_kml">KML (.kml)</option>
+                        <option value="shp" data-i18n="fmt_shp">Shapefile (.shp / .dbf / .shx / .prj)</option>
+                    </select>
+                </div>
+                <button id="btn-export-geo" class="btn btn-block btn-sm btn-primary" data-i18n="geo_export_btn">导出矢量数据</button>
+                <div class="export-sep"></div>
+                <button id="btn-export-offline" class="btn btn-block btn-sm btn-success" data-i18n="btn_export_offline">导出离线 HTML 地图</button>
+                <button id="btn-download-sample" class="btn btn-block btn-sm btn-secondary" data-i18n="btn_download_sample">下载示例文件包</button>
+                <button id="btn-clear" class="btn btn-block btn-sm btn-warning" data-i18n="btn_clear">清空数据</button>
             </div>
 
             <div id="status" class="status"></div>
@@ -467,8 +497,8 @@
             <div class="map-controls">
                 <button id="btn-zoom-in" class="btn btn-sm">+</button>
                 <button id="btn-zoom-out" class="btn btn-sm">−</button>
-                <button id="btn-fit" class="btn btn-sm">适配</button>
-                <button id="btn-fullscreen" class="btn btn-sm" title="全屏预览地图">⛶</button>
+                <button id="btn-fit" class="btn btn-sm" data-i18n="btn_fit">适配</button>
+                <button id="btn-fullscreen" class="btn btn-sm" title="全屏预览地图" data-i18n-title="fullscreen_title">⛶</button>
             </div>
         </main>
     </div>
@@ -1084,15 +1114,15 @@
                 return;
             }
             if (inputCrs !== 'auto' && inputCrs !== mapCrs && !appState.convertOnDisplay) {
-                warning.innerHTML = '<strong>坐标系不匹配</strong>当前数据为 ' + CRS_NAMES[inputCrs] + '，当前地图使用 ' + CRS_NAMES[mapCrs] + '。若不转换，点会出现约百米级偏移。';
+                warning.innerHTML = t('crs_mismatch').replace('{src}', crsName(inputCrs)).replace('{map}', crsName(mapCrs));
                 warning.classList.remove('hidden');
                 btn.classList.remove('hidden');
-                btn.textContent = '转换坐标系以匹配地图';
+                btn.textContent = t('btn_convert_action');
             } else if (appState.convertOnDisplay) {
-                warning.innerHTML = '<strong>已启用坐标转换</strong>数据已按 ' + CRS_NAMES[mapCrs] + ' 显示。';
+                warning.innerHTML = t('crs_converted').replace('{map}', crsName(mapCrs));
                 warning.classList.remove('hidden');
                 btn.classList.remove('hidden');
-                btn.textContent = '取消转换';
+                btn.textContent = t('btn_cancel_action');
             } else {
                 warning.classList.add('hidden');
                 btn.classList.add('hidden');
@@ -1128,18 +1158,18 @@
                 container.innerHTML = '';
                 return;
             }
-            const cols = ['名称', '经度', '纬度', '原始坐标系'];
+            const cols = [t('col_name'), t('col_lng'), t('col_lat'), t('col_crs')];
             let html = '<table><thead><tr>' + cols.map(c => '<th>' + c + '</th>').join('') + '</tr></thead><tbody>';
             appState.points.slice(0, 50).forEach(p => {
                 html += '<tr>' +
                     '<td>' + (p.name || '') + '</td>' +
                     '<td>' + p.lng.toFixed(6) + '</td>' +
                     '<td>' + p.lat.toFixed(6) + '</td>' +
-                    '<td>' + CRS_NAMES[getPointSourceCRS(p)] + '</td>' +
+                    '<td>' + crsName(getPointSourceCRS(p)) + '</td>' +
                     '</tr>';
             });
             if (appState.points.length > 50) {
-                html += '<tr><td colspan="4" style="text-align:center;color:#888;">还有 ' + (appState.points.length - 50) + ' 行未显示</td></tr>';
+                html += '<tr><td colspan="4" style="text-align:center;color:#888;">' + t('preview_more').replace('{n}', appState.points.length - 50) + '</td></tr>';
             }
             html += '</tbody></table>';
             container.innerHTML = html;
@@ -1160,7 +1190,7 @@
             MAP_SOURCES.forEach(s => {
                 const opt = document.createElement('option');
                 opt.value = s.id;
-                opt.textContent = s.name;
+                opt.textContent = sourceDisplayName(s);
                 select.appendChild(opt);
             });
             select.value = appState.mapSourceId;
@@ -1173,7 +1203,7 @@
             updateDataPreview();
             renderMarkers();
             refreshCRSWarning();
-            showStatus('成功加载 ' + points.length + ' 条坐标数据', 'success');
+            showStatus(t('loaded_n').replace('{n}', points.length), 'success');
         }
         function loadSampleData() {
             appState.inputCRS = 'wgs84';
@@ -1191,12 +1221,12 @@
                     allPoints.push(...result.points);
                 }
                 if (allPoints.length === 0) {
-                    showStatus('未能从文件中解析到有效坐标，请检查格式或示例文件', 'error');
+                    showStatus(t('parse_no_coord'), 'error');
                     return;
                 }
                 loadData(allPoints, []);
             } catch (e) {
-                showStatus('解析失败: ' + e.message, 'error');
+                showStatus(t('parse_fail_msg') + e.message, 'error');
             } finally {
                 hideLoading();
             }
@@ -1208,12 +1238,12 @@
             try {
                 const result = parseManualInput(text);
                 if (result.points.length === 0) {
-                    showStatus('未能解析到有效坐标，请检查格式', 'error');
+                    showStatus(t('parse_no_coord'), 'error');
                     return;
                 }
                 loadData(result.points, result.columns);
             } catch (e) {
-                showStatus('解析失败: ' + e.message, 'error');
+                showStatus(t('parse_fail_msg') + e.message, 'error');
             } finally {
                 hideLoading();
             }
@@ -1229,18 +1259,19 @@
         }
         function exportCSV() {
             if (appState.points.length === 0) return;
-            let csv = '\uFEFF名称,经度,纬度,原始坐标系\n';
+            let csv = '\uFEFF' + t('col_name') + ',' + t('col_lng') + ',' + t('col_lat') + ',' + t('col_crs') + '\n';
             appState.points.forEach(p => {
-                csv += '"' + (p.name || '') + '",' + p.lng + ',' + p.lat + ',"' + CRS_NAMES[getPointSourceCRS(p)] + '"\n';
+                csv += '"' + (p.name || '') + '",' + p.lng + ',' + p.lat + ',"' + crsName(getPointSourceCRS(p)) + '"\n';
             });
             download(csv, '坐标数据_' + new Date().toISOString().slice(0, 10) + '.csv', 'text/csv;charset=utf-8;');
+            showStatus(t('csv_done'), 'success');
         }
         async function exportOfflineHTML() {
             if (appState.points.length === 0) {
-                showStatus('没有数据可导出', 'error');
+                showStatus(t('no_data'), 'error');
                 return;
             }
-            showLoading('正在生成离线 HTML 地图...');
+            showLoading(t('gen_offline'));
             try {
                 const [css, js] = await Promise.all([
                     fetch('https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css').then(r => r.text()),
@@ -1248,9 +1279,9 @@
                 ]);
                 const html = buildOfflineHTML(css, js);
                 download(html, '离线坐标地图_' + new Date().toISOString().slice(0, 10) + '.html', 'text/html;charset=utf-8;');
-                showStatus('离线 HTML 地图已生成，可直接打开或分享', 'success');
+                showStatus(t('offline_done'), 'success');
             } catch (e) {
-                showStatus('离线地图生成失败: ' + e.message, 'error');
+                showStatus(t('offline_fail') + e.message, 'error');
             } finally {
                 hideLoading();
             }
@@ -1425,6 +1456,787 @@
                 '</html>'
             ].join('\n');
         }
+        // ========================== 多语言 (i18n) ==========================
+        const LANGS = ['zh-CN', 'zh-TW', 'en', 'ru', 'vi', 'ja', 'ko'];
+        let currentLang = 'zh-CN';
+
+        const I18N = {
+            'zh-CN': {
+                'app_title': '坐标数据可视化地图',
+                'app_subtitle': '支持 Excel / CSV / TXT 及手动输入',
+                'lang_label': '界面语言',
+                'panel1_title': '1. 导入数据',
+                'panel2_title': '2. 地图图源',
+                'panel3_title': '3. 样式设置',
+                'panel4_title': '4. 导出与下载',
+                'drop_main': '点击或拖拽文件到此处',
+                'drop_sub': '支持 .xlsx .xls .csv .txt .tsv .json',
+                'crs_label': '数据坐标系',
+                'crs_auto': '自动检测 / 默认 WGS-84',
+                'crs_wgs84': 'WGS-84',
+                'crs_gcj02': 'GCJ-02（火星 / 高德）',
+                'crs_bd09': 'BD-09（百度）',
+                'btn_load_sample': '加载示例数据',
+                'manual_label': '手动输入坐标',
+                'manual_ph': '每行一个点，示例：\n北京 116.4074 39.9042\n116.4074,39.9042 上海\n也可支持度分秒格式： 116°24\'26.6"E 39°54\'15.1"N',
+                'btn_parse_manual': '解析手动输入',
+                'custom_url_label': '自定义瓦片 URL',
+                'custom_url_ph': 'https://.../{z}/{x}/{y}.png',
+                'ccrs_wgs84': 'WGS84',
+                'ccrs_gcj02': 'GCJ02',
+                'ccrs_bd09': 'BD09',
+                'btn_add_custom': '添加',
+                'custom_hint': '使用 {x} {y} {z}，可选 {s} 表示子域',
+                'style_shape_label': '形状',
+                'shape_circle': '圆形',
+                'shape_square': '方形',
+                'shape_diamond': '菱形',
+                'shape_triangle': '三角形',
+                'shape_pin': '图钉',
+                'style_size_label': '大小',
+                'style_fill_label': '填充色',
+                'style_opacity_label': '不透明度',
+                'style_border_color_label': '边框色',
+                'style_border_width_label': '边框宽',
+                'style_label_label': '显示名称标签',
+                'style_connect_label': '连接点',
+                'style_line_color_label': '线颜色',
+                'style_line_width_label': '线宽',
+                'style_cluster_label': '开启聚合',
+                'btn_apply_style': '应用样式',
+                'geo_format_label': '矢量导出格式',
+                'fmt_geojson': 'GeoJSON (.geojson)',
+                'fmt_kml': 'KML (.kml)',
+                'fmt_shp': 'Shapefile (.shp / .dbf / .shx / .prj)',
+                'geo_export_btn': '导出矢量数据',
+                'btn_export_csv': '导出 CSV',
+                'btn_export_offline': '导出离线 HTML 地图',
+                'btn_download_sample': '下载示例文件包',
+                'btn_clear': '清空数据',
+                'btn_fit': '适配',
+                'toggle_title': '收起 / 展开侧边栏',
+                'fullscreen_title': '全屏预览地图',
+                'doc_title': '坐标数据可视化地图工作室',
+                'crsname_wgs84': 'WGS-84',
+                'crsname_gcj02': 'GCJ-02（火星 / 高德）',
+                'crsname_bd09': 'BD-09（百度）',
+                'no_data': '没有数据可导出',
+                'data_cleared': '已清空数据',
+                'geo_done_geojson': 'GeoJSON 已导出，可直接在 QGIS / ArcGIS 中加载（坐标系 WGS-84）',
+                'geo_done_kml': 'KML 已导出，可直接在 Google Earth / QGIS 中打开（坐标系 WGS-84）',
+                'geo_done_shp': 'Shapefile 已导出（.zip 含 .shp/.dbf/.shx/.prj，坐标系 WGS-84）',
+                'gen_shp': '正在生成 Shapefile...',
+                'shp_fail': 'Shapefile 生成失败：',
+                'loaded_n': '成功加载 {n} 条坐标数据',
+                'preview_more': '还有 {n} 行未显示',
+                'col_name': '名称', 'col_lng': '经度', 'col_lat': '纬度', 'col_crs': '原始坐标系',
+                'gen_offline': '正在生成离线 HTML 地图...',
+                'parse_no_coord': '未能从文件中解析到有效坐标，请检查格式或示例文件',
+                'crs_mismatch': '当前数据为 {src}，当前地图使用 {map}。若不转换，点会出现约百米级偏移。',
+                'crs_converted': '已启用坐标转换，数据已按 {map} 显示。',
+                'btn_convert_action': '转换坐标系以匹配地图',
+                'btn_cancel_action': '取消转换',
+                'offline_done': '离线 HTML 地图已生成，可直接打开或分享',
+                'offline_fail': '离线地图生成失败：',
+                'csv_done': 'CSV 已导出',
+                'parse_fail_msg': '解析失败：'
+            },
+            'zh-TW': {
+                'app_title': '座標資料視覺化地圖',
+                'app_subtitle': '支援 Excel / CSV / TXT 及手動輸入',
+                'lang_label': '介面語言',
+                'panel1_title': '1. 匯入資料',
+                'panel2_title': '2. 地圖圖源',
+                'panel3_title': '3. 樣式設定',
+                'panel4_title': '4. 匯出與下載',
+                'drop_main': '點擊或拖曳檔案到此處',
+                'crs_label': '資料座標系',
+                'crs_auto': '自動偵測 / 預設 WGS-84',
+                'crs_gcj02': 'GCJ-02（火星 / 高德）',
+                'crs_bd09': 'BD-09（百度）',
+                'btn_load_sample': '載入範例資料',
+                'manual_label': '手動輸入座標',
+                'manual_ph': '每行一個點，範例：\n北京 116.4074 39.9042\n116.4074,39.9042 上海\n亦支援度分秒格式： 116°24\'26.6"E 39°54\'15.1"N',
+                'btn_parse_manual': '解析手動輸入',
+                'custom_url_label': '自訂瓦片 URL',
+                'btn_add_custom': '新增',
+                'custom_hint': '使用 {x} {y} {z}，可選 {s} 表示子網域',
+                'style_shape_label': '形狀',
+                'shape_circle': '圓形',
+                'shape_square': '方形',
+                'shape_diamond': '菱形',
+                'shape_triangle': '三角形',
+                'shape_pin': '圖釘',
+                'style_size_label': '大小',
+                'style_fill_label': '填滿色',
+                'style_opacity_label': '不透明度',
+                'style_border_color_label': '邊框色',
+                'style_border_width_label': '邊框寬',
+                'style_label_label': '顯示名稱標籤',
+                'style_connect_label': '連接點',
+                'style_line_color_label': '線顏色',
+                'style_line_width_label': '線寬',
+                'style_cluster_label': '開啟聚合',
+                'btn_apply_style': '套用樣式',
+                'geo_format_label': '矢量匯出格式',
+                'geo_export_btn': '匯出矢量資料',
+                'btn_export_csv': '匯出 CSV',
+                'btn_export_offline': '匯出離線 HTML 地圖',
+                'btn_download_sample': '下載範例檔案包',
+                'btn_clear': '清空資料',
+                'btn_fit': '適配',
+                'toggle_title': '收起 / 展開側邊欄',
+                'fullscreen_title': '全螢幕預覽地圖',
+                'doc_title': '座標資料視覺化地圖工作室',
+                'crsname_gcj02': 'GCJ-02（火星 / 高德）',
+                'crsname_bd09': 'BD-09（百度）',
+                'no_data': '沒有資料可匯出',
+                'data_cleared': '已清空資料',
+                'geo_done_geojson': 'GeoJSON 已匯出，可直接在 QGIS / ArcGIS 中載入（座標系 WGS-84）',
+                'geo_done_kml': 'KML 已匯出，可直接在 Google Earth / QGIS 中開啟（座標系 WGS-84）',
+                'geo_done_shp': 'Shapefile 已匯出（.zip 含 .shp/.dbf/.shx/.prj，座標系 WGS-84）',
+                'gen_shp': '正在產生 Shapefile...',
+                'shp_fail': 'Shapefile 產生失敗：',
+                'loaded_n': '成功載入 {n} 筆座標資料',
+                'preview_more': '還有 {n} 行未顯示',
+                'crs_mismatch': '目前資料為 {src}，目前地圖使用 {map}。若不轉換，點位會偏移約百公尺。',
+                'crs_converted': '已啟用座標轉換，資料已依 {map} 顯示。',
+                'btn_convert_action': '轉換座標系以符合地圖',
+                'btn_cancel_action': '取消轉換',
+                'offline_done': '離線 HTML 地圖已產生，可直接開啟或分享',
+                'offline_fail': '離線地圖產生失敗：',
+                'csv_done': 'CSV 已匯出',
+                'parse_fail_msg': '解析失敗：'
+            },
+            'en': {
+                'app_title': 'Coordinate Data Visualization Map',
+                'app_subtitle': 'Supports Excel / CSV / TXT and manual input',
+                'lang_label': 'Interface Language',
+                'panel1_title': '1. Import Data',
+                'panel2_title': '2. Map Sources',
+                'panel3_title': '3. Style Settings',
+                'panel4_title': '4. Export & Download',
+                'drop_main': 'Click or drag files here',
+                'crs_label': 'Data Coordinate System',
+                'crs_auto': 'Auto-detect / Default WGS-84',
+                'crs_gcj02': 'GCJ-02 (Mars / Gaode)',
+                'crs_bd09': 'BD-09 (Baidu)',
+                'btn_load_sample': 'Load Sample Data',
+                'manual_label': 'Manual Coordinate Input',
+                'manual_ph': 'One point per line, e.g.:\nBeijing 116.4074 39.9042\n116.4074,39.9042 Shanghai\nAlso supports DMS: 116°24\'26.6"E 39°54\'15.1"N',
+                'btn_parse_manual': 'Parse Manual Input',
+                'custom_url_label': 'Custom Tile URL',
+                'btn_add_custom': 'Add',
+                'custom_hint': 'Use {x} {y} {z}, optional {s} for subdomain',
+                'style_shape_label': 'Shape',
+                'shape_circle': 'Circle',
+                'shape_square': 'Square',
+                'shape_diamond': 'Diamond',
+                'shape_triangle': 'Triangle',
+                'shape_pin': 'Pin',
+                'style_size_label': 'Size',
+                'style_fill_label': 'Fill Color',
+                'style_opacity_label': 'Opacity',
+                'style_border_color_label': 'Border Color',
+                'style_border_width_label': 'Border Width',
+                'style_label_label': 'Show name label',
+                'style_connect_label': 'Connect points',
+                'style_line_color_label': 'Line Color',
+                'style_line_width_label': 'Line Width',
+                'style_cluster_label': 'Enable clustering',
+                'btn_apply_style': 'Apply Style',
+                'geo_format_label': 'Vector Export Format',
+                'geo_export_btn': 'Export Vector Data',
+                'btn_export_csv': 'Export CSV',
+                'btn_export_offline': 'Export Offline HTML Map',
+                'btn_download_sample': 'Download Sample Files',
+                'btn_clear': 'Clear Data',
+                'btn_fit': 'Fit',
+                'toggle_title': 'Collapse / Expand Sidebar',
+                'fullscreen_title': 'Fullscreen Map Preview',
+                'doc_title': 'Coordinate Data Visualization Map Studio',
+                'crsname_gcj02': 'GCJ-02 (Mars / Gaode)',
+                'crsname_bd09': 'BD-09 (Baidu)',
+                'no_data': 'No data to export',
+                'data_cleared': 'Data cleared',
+                'geo_done_geojson': 'GeoJSON exported, ready to load in QGIS / ArcGIS (WGS-84)',
+                'geo_done_kml': 'KML exported, open in Google Earth / QGIS (WGS-84)',
+                'geo_done_shp': 'Shapefile exported (.zip with .shp/.dbf/.shx/.prj, WGS-84)',
+                'gen_shp': 'Generating Shapefile...',
+                'shp_fail': 'Shapefile generation failed: ',
+                'loaded_n': 'Successfully loaded {n} coordinates',
+                'preview_more': '{n} more rows not shown',
+                'col_name': 'Name', 'col_lng': 'Lon', 'col_lat': 'Lat', 'col_crs': 'Source CRS',
+                'gen_offline': 'Generating offline HTML map...',
+                'parse_no_coord': 'No valid coordinates could be parsed from the file, check the format or sample file',
+                'crs_mismatch': 'Source data is {src}, current map uses {map}. Without conversion points shift by ~hundreds of meters.',
+                'crs_converted': 'Coordinate conversion enabled, data shown in {map}.',
+                'btn_convert_action': 'Convert coordinates to match map',
+                'btn_cancel_action': 'Cancel conversion',
+                'offline_done': 'Offline HTML map generated, can be opened or shared',
+                'offline_fail': 'Offline map generation failed: ',
+                'csv_done': 'CSV exported',
+                'parse_fail_msg': 'Parse failed: '
+            },
+            'ru': {
+                'app_title': 'Карта визуализации координатных данных',
+                'app_subtitle': 'Поддержка Excel / CSV / TXT и ручного ввода',
+                'lang_label': 'Язык интерфейса',
+                'panel1_title': '1. Импорт данных',
+                'panel2_title': '2. Источники карты',
+                'panel3_title': '3. Настройки стиля',
+                'panel4_title': '4. Экспорт и загрузка',
+                'drop_main': 'Нажмите или перетащите файлы сюда',
+                'crs_label': 'Система координат данных',
+                'crs_auto': 'Авто / WGS-84 по умолчанию',
+                'crs_gcj02': 'GCJ-02 (Марс / Gaode)',
+                'crs_bd09': 'BD-09 (Baidu)',
+                'btn_load_sample': 'Загрузить пример',
+                'manual_label': 'Ручной ввод координат',
+                'manual_ph': 'Одна точка на строку, напр.:\nBeijing 116.4074 39.9042\n116.4074,39.9042 Shanghai\nПоддерживается DMS: 116°24\'26.6"E 39°54\'15.1"N',
+                'btn_parse_manual': 'Разобрать ввод',
+                'custom_url_label': 'Свой URL тайлов',
+                'btn_add_custom': 'Добавить',
+                'custom_hint': 'Используйте {x} {y} {z}, необязательно {s} для поддомена',
+                'style_shape_label': 'Форма',
+                'shape_circle': 'Круг',
+                'shape_square': 'Квадрат',
+                'shape_diamond': 'Ромб',
+                'shape_triangle': 'Треугольник',
+                'shape_pin': 'Булавка',
+                'style_size_label': 'Размер',
+                'style_fill_label': 'Цвет заливки',
+                'style_opacity_label': 'Прозрачность',
+                'style_border_color_label': 'Цвет границы',
+                'style_border_width_label': 'Толщина границы',
+                'style_label_label': 'Показывать подпись',
+                'style_connect_label': 'Соединить точки',
+                'style_line_color_label': 'Цвет линии',
+                'style_line_width_label': 'Толщина линии',
+                'style_cluster_label': 'Включить кластеризацию',
+                'btn_apply_style': 'Применить стиль',
+                'geo_format_label': 'Формат векторного экспорта',
+                'geo_export_btn': 'Экспорт векторных данных',
+                'btn_export_csv': 'Экспорт CSV',
+                'btn_export_offline': 'Экспорт офлайн HTML-карты',
+                'btn_download_sample': 'Скачать примеры файлов',
+                'btn_clear': 'Очистить данные',
+                'btn_fit': 'Подогнать',
+                'toggle_title': 'Свернуть / Развернуть панель',
+                'fullscreen_title': 'Полноэкранный предпросмотр',
+                'doc_title': 'Студия визуализации координат',
+                'crsname_gcj02': 'GCJ-02 (Марс / Gaode)',
+                'crsname_bd09': 'BD-09 (Baidu)',
+                'no_data': 'Нет данных для экспорта',
+                'data_cleared': 'Данные очищены',
+                'geo_done_geojson': 'GeoJSON экспортирован, открывается в QGIS / ArcGIS (WGS-84)',
+                'geo_done_kml': 'KML экспортирован, открывается в Google Earth / QGIS (WGS-84)',
+                'geo_done_shp': 'Shapefile экспортирован (.zip с .shp/.dbf/.shx/.prj, WGS-84)',
+                'gen_shp': 'Генерация Shapefile...',
+                'shp_fail': 'Ошибка генерации Shapefile: ',
+                'loaded_n': 'Успешно загружено точек: {n}',
+                'preview_more': 'Ещё {n} строк не показано',
+                'crs_mismatch': 'Данные в системе {src}, карта использует {map}. Без преобразования смещение ~сотни метров.',
+                'crs_converted': 'Преобразование включено, данные в системе {map}.',
+                'btn_convert_action': 'Преобразовать к системе карты',
+                'btn_cancel_action': 'Отменить преобразование',
+                'offline_done': 'Офлайн HTML-карта создана',
+                'offline_fail': 'Ошибка создания карты: ',
+                'csv_done': 'CSV экспортирован',
+                'parse_fail_msg': 'Ошибка разбора: '
+            },
+            'vi': {
+                'app_title': 'Bản đồ trực quan hóa dữ liệu tọa độ',
+                'app_subtitle': 'Hỗ trợ Excel / CSV / TXT và nhập thủ công',
+                'lang_label': 'Ngôn ngữ giao diện',
+                'panel1_title': '1. Nhập dữ liệu',
+                'panel2_title': '2. Nguồn bản đồ',
+                'panel3_title': '3. Cài đặt kiểu',
+                'panel4_title': '4. Xuất và tải xuống',
+                'drop_main': 'Nhấp hoặc kéo tệp vào đây',
+                'crs_label': 'Hệ tọa độ dữ liệu',
+                'crs_auto': 'Tự động / Mặc định WGS-84',
+                'crs_gcj02': 'GCJ-02 (Sao Hỏa / Gaode)',
+                'crs_bd09': 'BD-09 (Baidu)',
+                'btn_load_sample': 'Tải dữ liệu mẫu',
+                'manual_label': 'Nhập tọa độ thủ công',
+                'manual_ph': 'Mỗi dòng một điểm, ví dụ:\nBeijing 116.4074 39.9042\n116.4074,39.9042 Shanghai\nHỗ trợ DMS: 116°24\'26.6"E 39°54\'15.1"N',
+                'btn_parse_manual': 'Phân tích đầu vào',
+                'custom_url_label': 'URL tile tùy chỉnh',
+                'btn_add_custom': 'Thêm',
+                'custom_hint': 'Dùng {x} {y} {z}, tùy chọn {s} cho tên miền phụ',
+                'style_shape_label': 'Hình dạng',
+                'shape_circle': 'Hình tròn',
+                'shape_square': 'Hình vuông',
+                'shape_diamond': 'Hình thoi',
+                'shape_triangle': 'Tam giác',
+                'shape_pin': 'Ghim',
+                'style_size_label': 'Kích thước',
+                'style_fill_label': 'Màu tô',
+                'style_opacity_label': 'Độ mờ',
+                'style_border_color_label': 'Màu viền',
+                'style_border_width_label': 'Độ rộng viền',
+                'style_label_label': 'Hiển thị nhãn tên',
+                'style_connect_label': 'Nối các điểm',
+                'style_line_color_label': 'Màu đường',
+                'style_line_width_label': 'Độ rộng đường',
+                'style_cluster_label': 'Bật gộp nhóm',
+                'btn_apply_style': 'Áp dụng kiểu',
+                'geo_format_label': 'Định dạng xuất vec-tơ',
+                'geo_export_btn': 'Xuất dữ liệu vec-tơ',
+                'btn_export_csv': 'Xuất CSV',
+                'btn_export_offline': 'Xuất bản đồ HTML ngoại tuyến',
+                'btn_download_sample': 'Tải tệp mẫu',
+                'btn_clear': 'Xóa dữ liệu',
+                'btn_fit': 'Vừa vặn',
+                'toggle_title': 'Thu gọn / Mở rộng thanh bên',
+                'fullscreen_title': 'Xem bản đồ toàn màn hình',
+                'doc_title': 'Phòng thiết kế bản đồ trực quan hóa tọa độ',
+                'crsname_gcj02': 'GCJ-02 (Sao Hỏa / Gaode)',
+                'crsname_bd09': 'BD-09 (Baidu)',
+                'no_data': 'Không có dữ liệu để xuất',
+                'data_cleared': 'Đã xóa dữ liệu',
+                'geo_done_geojson': 'Đã xuất GeoJSON, mở được trong QGIS / ArcGIS (WGS-84)',
+                'geo_done_kml': 'Đã xuất KML, mở được trong Google Earth / QGIS (WGS-84)',
+                'geo_done_shp': 'Đã xuất Shapefile (.zip gồm .shp/.dbf/.shx/.prj, WGS-84)',
+                'gen_shp': 'Đang tạo Shapefile...',
+                'shp_fail': 'Lỗi tạo Shapefile: ',
+                'loaded_n': 'Đã tải thành công {n} tọa độ',
+                'preview_more': 'Còn {n} dòng chưa hiển thị',
+                'crs_mismatch': 'Dữ liệu là {src}, bản đồ dùng {map}. Nếu không chuyển đổi, điểm lệch khoảng trăm mét.',
+                'crs_converted': 'Đã bật chuyển đổi, dữ liệu hiển thị theo {map}.',
+                'btn_convert_action': 'Chuyển đổi tọa độ theo bản đồ',
+                'btn_cancel_action': 'Hủy chuyển đổi',
+                'offline_done': 'Đã tạo bản đồ HTML ngoại tuyến',
+                'offline_fail': 'Lỗi tạo bản đồ ngoại tuyến: ',
+                'csv_done': 'Đã xuất CSV',
+                'parse_fail_msg': 'Lỗi phân tích: '
+            },
+            'ja': {
+                'app_title': '座標データ可視化マップ',
+                'app_subtitle': 'Excel / CSV / TXT および手動入力に対応',
+                'lang_label': 'インターフェースの言語',
+                'panel1_title': '1. データのインポート',
+                'panel2_title': '2. 地図ソース',
+                'panel3_title': '3. スタイル設定',
+                'panel4_title': '4. エクスポートとダウンロード',
+                'drop_main': 'ここにファイルをクリックまたはドラッグ',
+                'crs_label': 'データの座標系',
+                'crs_auto': '自動検出 / デフォルト WGS-84',
+                'crs_gcj02': 'GCJ-02（火星 / 高徳）',
+                'crs_bd09': 'BD-09（百度）',
+                'btn_load_sample': 'サンプルを読み込む',
+                'manual_label': '座標を手動入力',
+                'manual_ph': '1行に1点、例：\n北京 116.4074 39.9042\n116.4074,39.9042 上海\n度分秒にも対応： 116°24\'26.6"E 39°54\'15.1"N',
+                'btn_parse_manual': '手動入力を解析',
+                'custom_url_label': 'カスタムタイル URL',
+                'btn_add_custom': '追加',
+                'custom_hint': '{x} {y} {z} を使用、サブドメンは {s}',
+                'style_shape_label': '形状',
+                'shape_circle': '円',
+                'shape_square': '四角',
+                'shape_diamond': '菱形',
+                'shape_triangle': '三角形',
+                'shape_pin': 'ピン',
+                'style_size_label': 'サイズ',
+                'style_fill_label': '塗りつぶし色',
+                'style_opacity_label': '不透明度',
+                'style_border_color_label': '枠線色',
+                'style_border_width_label': '枠線幅',
+                'style_label_label': '名前ラベルを表示',
+                'style_connect_label': '点を接続',
+                'style_line_color_label': '線の色',
+                'style_line_width_label': '線の幅',
+                'style_cluster_label': 'クラスタリングを有効',
+                'btn_apply_style': 'スタイルを適用',
+                'geo_format_label': 'ベクトル書き出し形式',
+                'geo_export_btn': 'ベクトルデータを書き出し',
+                'btn_export_csv': 'CSVを書き出し',
+                'btn_export_offline': 'オフライン HTML 地図を書き出し',
+                'btn_download_sample': 'サンプルファイルをダウンロード',
+                'btn_clear': 'データをクリア',
+                'btn_fit': 'フィット',
+                'toggle_title': 'サイドバーを折りたたむ / 展開',
+                'fullscreen_title': '地図を全画面プレビュー',
+                'doc_title': '座標データ可視化マップスタジオ',
+                'crsname_gcj02': 'GCJ-02（火星 / 高徳）',
+                'crsname_bd09': 'BD-09（百度）',
+                'no_data': '書き出すデータがありません',
+                'data_cleared': 'データをクリアしました',
+                'geo_done_geojson': 'GeoJSON を書き出しました（QGIS / ArcGIS で読み込み可、WGS-84）',
+                'geo_done_kml': 'KML を書き出しました（Google Earth / QGIS で開可、WGS-84）',
+                'geo_done_shp': 'Shapefile を書き出しました（.zip に .shp/.dbf/.shx/.prj を含む、WGS-84）',
+                'gen_shp': 'Shapefile を生成中...',
+                'shp_fail': 'Shapefile の生成に失敗：',
+                'loaded_n': '{n} 件の座標データを読み込みました',
+                'preview_more': 'あと {n} 行は表示されていません',
+                'crs_mismatch': 'データは {src}、現在の地図は {map} を使用。変換しないと数100mずれます。',
+                'crs_converted': '座標変換を有効にし、{map} で表示しています。',
+                'btn_convert_action': '地図に合わせて座標を変換',
+                'btn_cancel_action': '変換をキャンセル',
+                'offline_done': 'オフライン HTML 地図を生成しました',
+                'offline_fail': 'オフライン地図の生成に失敗：',
+                'csv_done': 'CSV を書き出しました',
+                'parse_fail_msg': '解析に失敗：'
+            },
+            'ko': {
+                'app_title': '좌표 데이터 시각화 지도',
+                'app_subtitle': 'Excel / CSV / TXT 및 수동 입력 지원',
+                'lang_label': '인터페이스 언어',
+                'panel1_title': '1. 데이터 가져오기',
+                'panel2_title': '2. 지도 소스',
+                'panel3_title': '3. 스타일 설정',
+                'panel4_title': '4. 내보내기 및 다운로드',
+                'drop_main': '여기를 클릭하거나 파일을 drag하세요',
+                'crs_label': '데이터 좌표계',
+                'crs_auto': '자동 감지 / 기본 WGS-84',
+                'crs_gcj02': 'GCJ-02 (화성 / 가오드)',
+                'crs_bd09': 'BD-09 (바이두)',
+                'btn_load_sample': '샘플 데이터 불러오기',
+                'manual_label': '좌표 수동 입력',
+                'manual_ph': '한 줄에 한 점, 예:\nBeijing 116.4074 39.9042\n116.4074,39.9042 Shanghai\nDMS도 지원: 116°24\'26.6"E 39°54\'15.1"N',
+                'btn_parse_manual': '수동 입력 파싱',
+                'custom_url_label': '사용자 정의 타일 URL',
+                'btn_add_custom': '추가',
+                'custom_hint': '{x} {y} {z} 사용, 하위 도메인은 {s}',
+                'style_shape_label': '모양',
+                'shape_circle': '원',
+                'shape_square': '사각형',
+                'shape_diamond': '마름모',
+                'shape_triangle': '삼각형',
+                'shape_pin': '핀',
+                'style_size_label': '크기',
+                'style_fill_label': '채우기 색',
+                'style_opacity_label': '불투명도',
+                'style_border_color_label': '테두리 색',
+                'style_border_width_label': '테두리 두께',
+                'style_label_label': '이름 라벨 표시',
+                'style_connect_label': '점 연결',
+                'style_line_color_label': '선 색',
+                'style_line_width_label': '선 두께',
+                'style_cluster_label': '클러스터링 사용',
+                'btn_apply_style': '스타일 적용',
+                'geo_format_label': '벡터 내보내기 형식',
+                'geo_export_btn': '벡터 데이터 내보내기',
+                'btn_export_csv': 'CSV 내보내기',
+                'btn_export_offline': '오프라인 HTML 지도 내보내기',
+                'btn_download_sample': '샘플 파일 다운로드',
+                'btn_clear': '데이터 지우기',
+                'btn_fit': '맞춤',
+                'toggle_title': '사이드바 접기 / 펼치기',
+                'fullscreen_title': '지도 전체화면 미리보기',
+                'doc_title': '좌표 데이터 시각화 지도 스튜디오',
+                'crsname_gcj02': 'GCJ-02 (화성 / 가오드)',
+                'crsname_bd09': 'BD-09 (바이두)',
+                'no_data': '내보낼 데이터가 없습니다',
+                'data_cleared': '데이터를 지웠습니다',
+                'geo_done_geojson': 'GeoJSON 내보내기 완료 (QGIS / ArcGIS에서 로드 가능, WGS-84)',
+                'geo_done_kml': 'KML 내보내기 완료 (Google Earth / QGIS에서 열기 가능, WGS-84)',
+                'geo_done_shp': 'Shapefile 내보내기 완료 (.zip에 .shp/.dbf/.shx/.prj 포함, WGS-84)',
+                'gen_shp': 'Shapefile 생성 중...',
+                'shp_fail': 'Shapefile 생성 실패: ',
+                'loaded_n': '좌표 {n}건을 불러왔습니다',
+                'preview_more': '{n}행 더 표시되지 않음',
+                'crs_mismatch': '데이터는 {src}, 현재 지도는 {map} 사용. 변환하지 않으면 수백 미터 오차 발생.',
+                'crs_converted': '좌표 변환 사용, {map}으로 표시 중.',
+                'btn_convert_action': '지도에 맞게 좌표 변환',
+                'btn_cancel_action': '변환 취소',
+                'offline_done': '오프라인 HTML 지도를 생성했습니다',
+                'offline_fail': '오프라인 지도 생성 실패: ',
+                'csv_done': 'CSV 내보내기 완료',
+                'parse_fail_msg': '파싱 실패: '
+            }
+        };
+
+        const SOURCE_NAMES = {
+            'gaode-vector': 'Gaode Vector', 'gaode-sat': 'Gaode Satellite',
+            'tencent-vector': 'Tencent Vector', 'tencent-sat': 'Tencent Satellite',
+            'baidu-vector': 'Baidu Vector', 'baidu-sat': 'Baidu Satellite',
+            'osm': 'OpenStreetMap', 'osm-hot': 'OpenStreetMap HOT',
+            'carto-light': 'CartoDB Positron', 'carto-dark': 'CartoDB Dark Matter',
+            'esri-imagery': 'ESRI Satellite', 'esri-street': 'ESRI Street', 'esri-topo': 'ESRI Topo',
+            'opentopomap': 'OpenTopoMap', 'wikimedia': 'Wikimedia', 'usgs': 'USGS Imagery',
+            'google-sat': 'Google Satellite', 'google-street': 'Google Street',
+            'custom': 'Custom Source'
+        };
+
+        function t(key) {
+            const d = I18N[currentLang];
+            if (d && d[key] != null) return d[key];
+            if (I18N['en'] && I18N['en'][key] != null) return I18N['en'][key];
+            if (I18N['zh-CN'][key] != null) return I18N['zh-CN'][key];
+            return key;
+        }
+        function crsName(code) {
+            const k = 'crsname_' + code;
+            const d = I18N[currentLang];
+            if (d && d[k] != null) return d[k];
+            return CRS_NAMES[code] || code;
+        }
+        function sourceDisplayName(s) {
+            if (currentLang === 'zh-CN' || currentLang === 'zh-TW') return s.name;
+            return SOURCE_NAMES[s.id] || s.name;
+        }
+        function applyI18n() {
+            const dict = I18N[currentLang];
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                let txt = (dict && dict[key] != null) ? dict[key] : (I18N['zh-CN'][key] != null ? I18N['zh-CN'][key] : null);
+                if (txt == null) return;
+                if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                    if (el.hasAttribute('placeholder')) el.placeholder = txt;
+                    return;
+                }
+                el.textContent = txt;
+            });
+            document.querySelectorAll('[data-i18n-title]').forEach(el => {
+                const key = el.getAttribute('data-i18n-title');
+                let txt = (dict && dict[key] != null) ? dict[key] : (I18N['zh-CN'][key] != null ? I18N['zh-CN'][key] : null);
+                if (txt != null) el.title = txt;
+            });
+            populateMapSourceSelect();
+            updateDataPreview();
+            refreshCRSWarning();
+            const dt = (dict && dict['doc_title'] != null) ? dict['doc_title'] : I18N['zh-CN']['doc_title'];
+            if (dt) document.title = dt;
+        }
+
+        // ========================== 地理矢量导出 ==========================
+        function getWGS84Point(p) {
+            const src = getPointSourceCRS(p);
+            const c = convertCoord(p, src, 'wgs84');
+            return { lng: c.lng, lat: c.lat };
+        }
+        function escXML(s) {
+            return String(s == null ? '' : s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+        }
+        function exportFileName() {
+            return 'Coordinate_Export_' + new Date().toISOString().slice(0, 10);
+        }
+        function buildGeoJSON() {
+            const features = appState.points.map(p => {
+                const w = getWGS84Point(p);
+                const props = Object.assign({}, p.properties || {});
+                props.name = p.name || '';
+                props.source_crs = getPointSourceCRS(p);
+                props.source_lng = Number(p.lng.toFixed(6));
+                props.source_lat = Number(p.lat.toFixed(6));
+                return {
+                    type: 'Feature',
+                    geometry: { type: 'Point', coordinates: [Number(w.lng.toFixed(6)), Number(w.lat.toFixed(6))] },
+                    properties: props
+                };
+            });
+            return {
+                type: 'FeatureCollection',
+                name: 'Coordinate Export',
+                crs: { type: 'name', properties: { name: 'urn:ogc:def:crs:OGC:1.3:CRS84' } },
+                features: features
+            };
+        }
+        function exportGeoJSON() {
+            const gj = buildGeoJSON();
+            download(JSON.stringify(gj, null, 2), exportFileName() + '.geojson', 'application/geo+json;charset=utf-8;');
+            showStatus(t('geo_done_geojson'), 'success');
+        }
+        function buildKML() {
+            let kml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+            kml += '<kml xmlns="http://www.opengis.net/kml/2.2">\n<Document>\n';
+            kml += '<name>Coordinate Export</name>\n';
+            appState.points.forEach(p => {
+                const w = getWGS84Point(p);
+                const props = Object.assign({}, p.properties || {});
+                props.source_crs = getPointSourceCRS(p);
+                props.source_lng = p.lng;
+                props.source_lat = p.lat;
+                kml += '<Placemark>\n<name>' + escXML(p.name || 'Unnamed') + '</name>\n';
+                kml += '<Point><coordinates>' + w.lng + ',' + w.lat + ',0</coordinates></Point>\n';
+                kml += '<ExtendedData>\n';
+                for (const [k, v] of Object.entries(props)) {
+                    kml += '<Data name="' + escXML(k) + '"><value>' + escXML(v) + '</value></Data>\n';
+                }
+                kml += '</ExtendedData>\n</Placemark>\n';
+            });
+            kml += '</Document>\n</kml>';
+            return kml;
+        }
+        function exportKML() {
+            const kml = buildKML();
+            download(kml, exportFileName() + '.kml', 'application/vnd.google-earth.kml+xml;charset=utf-8;');
+            showStatus(t('geo_done_kml'), 'success');
+        }
+
+        const WGS84_PRJ = 'GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]]';
+
+        function writeSHP(points) {
+            const n = points.length;
+            const contentWords = 10;
+            const fileLenWords = 50 + (4 + contentWords) * n;
+            const buf = new ArrayBuffer(fileLenWords * 2);
+            const dv = new DataView(buf);
+            dv.setInt32(0, 9994, false);
+            dv.setInt32(24, fileLenWords, false);
+            dv.setInt32(28, 1000, true);
+            dv.setInt32(32, 1, true);
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            points.forEach(p => { minX = Math.min(minX, p.lng); minY = Math.min(minY, p.lat); maxX = Math.max(maxX, p.lng); maxY = Math.max(maxY, p.lat); });
+            if (!isFinite(minX)) { minX = minY = maxX = maxY = 0; }
+            dv.setFloat64(36, minX, true); dv.setFloat64(44, minY, true); dv.setFloat64(52, maxX, true); dv.setFloat64(60, maxY, true);
+            dv.setFloat64(68, 0, true); dv.setFloat64(76, 0, true); dv.setFloat64(84, 0, true); dv.setFloat64(92, 0, true);
+            let off = 100;
+            for (let i = 0; i < n; i++) {
+                dv.setInt32(off, i + 1, false);
+                dv.setInt32(off + 4, contentWords, false);
+                const co = off + 8;
+                dv.setInt32(co, 1, true);
+                dv.setFloat64(co + 4, points[i].lng, true);
+                dv.setFloat64(co + 12, points[i].lat, true);
+                off += 8 + 20;
+            }
+            return buf;
+        }
+        function writeSHX(points) {
+            const n = points.length;
+            const fileLenWords = 50 + 4 * n;
+            const buf = new ArrayBuffer(fileLenWords * 2);
+            const dv = new DataView(buf);
+            dv.setInt32(0, 9994, false);
+            dv.setInt32(24, fileLenWords, false);
+            dv.setInt32(28, 1000, true);
+            dv.setInt32(32, 1, true);
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            points.forEach(p => { minX = Math.min(minX, p.lng); minY = Math.min(minY, p.lat); maxX = Math.max(maxX, p.lng); maxY = Math.max(maxY, p.lat); });
+            if (!isFinite(minX)) { minX = minY = maxX = maxY = 0; }
+            dv.setFloat64(36, minX, true); dv.setFloat64(44, minY, true); dv.setFloat64(52, maxX, true); dv.setFloat64(60, maxY, true);
+            dv.setFloat64(68, 0, true); dv.setFloat64(76, 0, true); dv.setFloat64(84, 0, true); dv.setFloat64(92, 0, true);
+            let off = 100;
+            for (let i = 0; i < n; i++) {
+                const recOffWords = 50 + 14 * i;
+                dv.setInt32(off, recOffWords, false);
+                dv.setInt32(off + 4, 10, false);
+                off += 8;
+            }
+            return buf;
+        }
+        function strToBytes(s) { return new TextEncoder().encode(s); }
+        function padRight(s, len) { s = String(s); if (s.length >= len) return s.slice(0, len); return s + ' '.repeat(len - s.length); }
+        function padLeft(s, len) { s = String(s); if (s.length >= len) return s.slice(0, len); return ' '.repeat(len - s.length) + s; }
+        function writeDBF(fields, records) {
+            const n = records.length;
+            const headerLen = 32 + 32 * fields.length + 1;
+            const recordLen = 1 + fields.reduce((s, f) => s + f.length, 0);
+            const buf = new ArrayBuffer(headerLen + recordLen * n);
+            const dv = new DataView(buf);
+            dv.setUint8(0, 0x03);
+            dv.setUint32(4, n, true);
+            dv.setUint16(8, headerLen, true);
+            dv.setUint16(10, recordLen, true);
+            dv.setUint8(29, 0x57);
+            let p = 32;
+            fields.forEach(f => {
+                const nb = strToBytes(String(f.name).slice(0, 11));
+                for (let i = 0; i < 11; i++) dv.setUint8(p + i, i < nb.length ? nb[i] : 0);
+                dv.setUint8(p + 11, f.type.charCodeAt(0));
+                dv.setUint8(p + 16, f.length);
+                dv.setUint8(p + 17, f.dec);
+                p += 32;
+            });
+            dv.setUint8(p, 0x0D);
+            let rp = headerLen;
+            records.forEach(rec => {
+                dv.setUint8(rp, 0x20);
+                rp += 1;
+                fields.forEach(f => {
+                    let val = rec[f.name];
+                    let s;
+                    if (f.type === 'N') {
+                        s = (typeof val === 'number' && isFinite(val)) ? val.toFixed(f.dec) : String(val == null ? '' : val);
+                        s = padLeft(s, f.length);
+                    } else {
+                        s = (val == null ? '' : String(val));
+                        s = padRight(s, f.length);
+                    }
+                    const b = strToBytes(s);
+                    for (let i = 0; i < f.length; i++) dv.setUint8(rp + i, i < b.length ? b[i] : 0x20);
+                    rp += f.length;
+                });
+            });
+            return buf;
+        }
+        function buildShapefileFiles() {
+            const wpts = appState.points.map(p => getWGS84Point(p));
+            const fields = [
+                { name: 'Name', type: 'C', length: 254, dec: 0 },
+                { name: 'SrcCRS', type: 'C', length: 10, dec: 0 },
+                { name: 'SrcLng', type: 'N', length: 19, dec: 6 },
+                { name: 'SrcLat', type: 'N', length: 19, dec: 6 },
+                { name: 'Attrs', type: 'C', length: 254, dec: 0 }
+            ];
+            const records = appState.points.map(p => {
+                const w = getWGS84Point(p);
+                let attrs = '';
+                try { attrs = JSON.stringify(p.properties || {}); } catch (e) { attrs = ''; }
+                return { Name: p.name || '', SrcCRS: getPointSourceCRS(p), SrcLng: w.lng, SrcLat: w.lat, Attrs: attrs };
+            });
+            return {
+                base: exportFileName(),
+                shp: writeSHP(wpts),
+                shx: writeSHX(wpts),
+                dbf: writeDBF(fields, records),
+                prj: WGS84_PRJ
+            };
+        }
+        function loadScript(src) {
+            return new Promise((res, rej) => {
+                const s = document.createElement('script');
+                s.src = src;
+                s.onload = () => res();
+                s.onerror = () => rej(new Error('script load failed: ' + src));
+                document.head.appendChild(s);
+            });
+        }
+        function saveBlob(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 2000);
+        }
+        async function exportShapefile() {
+            if (appState.points.length === 0) { showStatus(t('no_data'), 'error'); return; }
+            showLoading(t('gen_shp'));
+            try {
+                if (typeof JSZip === 'undefined') {
+                    await loadScript('https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js');
+                }
+                const f = buildShapefileFiles();
+                const zip = new JSZip();
+                zip.file(f.base + '.shp', f.shp);
+                zip.file(f.base + '.shx', f.shx);
+                zip.file(f.base + '.dbf', f.dbf);
+                zip.file(f.base + '.prj', f.prj);
+                const blob = await zip.generateAsync({ type: 'blob' });
+                saveBlob(blob, f.base + '.zip');
+                showStatus(t('geo_done_shp'), 'success');
+            } catch (e) {
+                showStatus(t('shp_fail') + e.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+        function exportVector() {
+            const fmt = document.getElementById('geo-format').value;
+            if (appState.points.length === 0) { showStatus(t('no_data'), 'error'); return; }
+            if (fmt === 'geojson') exportGeoJSON();
+            else if (fmt === 'kml') exportKML();
+            else if (fmt === 'shp') exportShapefile();
+        }
+
         function downloadSampleFiles() {
             const csv = '\uFEFF名称,经度,纬度,坐标系\n' +
                 '北京,116.4074,39.9042,WGS84\n' +
@@ -1460,7 +2272,10 @@
             document.getElementById('btn-apply-style').addEventListener('click', renderMarkers);
             document.getElementById('btn-export-csv').addEventListener('click', exportCSV);
             document.getElementById('btn-export-offline').addEventListener('click', exportOfflineHTML);
+            document.getElementById('btn-export-geo').addEventListener('click', exportVector);
             document.getElementById('btn-download-sample').addEventListener('click', downloadSampleFiles);
+            const uiLang = document.getElementById('ui-lang');
+            if (uiLang) uiLang.addEventListener('change', e => { currentLang = e.target.value; applyI18n(); });
             document.getElementById('btn-clear').addEventListener('click', () => {
                 appState.points = [];
                 appState.columns = [];
@@ -1470,7 +2285,7 @@
                 updateDataPreview();
                 renderMarkers();
                 refreshCRSWarning();
-                showStatus('已清空数据', 'info');
+                showStatus(t('data_cleared'), 'info');
             });
             document.getElementById('map-source').addEventListener('change', e => {
                 if (e.target.value === 'custom') {
@@ -1566,6 +2381,7 @@
             initMap();
             populateMapSourceSelect();
             bindEvents();
+            applyI18n();
         });
     </script>
 </body>
