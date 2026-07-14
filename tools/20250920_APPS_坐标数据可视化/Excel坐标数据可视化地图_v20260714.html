@@ -34,6 +34,7 @@
         .app {
             display: flex;
             height: 100vh;
+            height: 100dvh;
             overflow: hidden;
         }
         .sidebar {
@@ -240,15 +241,79 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
+        /* ===== 侧边栏折叠 / 全屏 / 响应式 ===== */
+        .sidebar { transition: width .26s ease, min-width .26s ease, transform .26s ease, padding .26s ease; }
+        #btn-toggle-sidebar {
+            position: fixed;
+            top: 10px; left: 10px;
+            z-index: 1400;
+            width: 36px; height: 36px;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.96);
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 5px rgba(0,0,0,0.18);
+            cursor: pointer;
+            font-size: 18px; line-height: 1;
+            color: var(--primary-dark);
+            display: flex; align-items: center; justify-content: center;
+            padding: 0;
+            transition: background .2s;
+        }
+        #btn-toggle-sidebar:hover { background: #e3f2fd; }
+        .sidebar header { padding-left: 48px; }
+        .sidebar-backdrop { display: none; }
+        .map-container:fullscreen { background: #eef2f5; }
+        .map-container:-webkit-full-screen { background: #eef2f5; }
+        /* 桌面折叠态：侧边栏收起为 0 宽度，地图占满 */
+        .app.sidebar-collapsed .sidebar {
+            width: 0 !important;
+            min-width: 0 !important;
+            max-width: 0 !important;
+            padding-left: 0; padding-right: 0;
+            border-right: none;
+            overflow: hidden;
+        }
+
+        @media (max-width: 1024px) and (min-width: 769px) {
+            .sidebar { width: 340px; min-width: 300px; max-width: 42vw; }
+        }
+
         @media (max-width: 768px) {
-            .app { flex-direction: column; }
-            .sidebar { width: 100%; max-width: none; height: 55%; border-right: none; border-bottom: 1px solid var(--border); }
-            .map-container { height: 45%; }
+            .app { flex-direction: row; }
+            .sidebar {
+                position: absolute;
+                top: 0; left: 0; bottom: 0;
+                width: 86%;
+                max-width: 340px;
+                z-index: 1200;
+                box-shadow: 2px 0 14px rgba(0,0,0,0.18);
+                transform: translateX(0);
+                border-right: 1px solid var(--border);
+            }
+            .app.sidebar-collapsed .sidebar { transform: translateX(-100%); width: 86%; min-width: 0; }
+            .app:not(.sidebar-collapsed) .sidebar-backdrop {
+                display: block;
+                position: fixed; inset: 0;
+                background: rgba(0,0,0,0.4);
+                z-index: 1150;
+            }
+            .map-container { height: 100%; }
+            .sidebar { font-size: 14px; }
+            .btn { padding: 9px 12px; }
+            input[type="text"], input[type="number"], input[type="color"], select, textarea { font-size: 16px; }
+            .map-controls .btn { width: 40px; height: 40px; font-size: 18px; display: flex; align-items: center; justify-content: center; padding: 0; }
+            #data-preview { max-height: 150px; }
+        }
+
+        @media (max-width: 420px) {
+            .sidebar { width: 100%; max-width: 100%; }
         }
     </style>
 </head>
 <body>
     <div class="app">
+        <button id="btn-toggle-sidebar" title="收起 / 展开侧边栏" aria-label="切换侧边栏">‹</button>
+        <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
         <aside class="sidebar">
             <header>
                 <h1>坐标数据可视化地图</h1>
@@ -385,6 +450,7 @@
                 <button id="btn-zoom-in" class="btn btn-sm">+</button>
                 <button id="btn-zoom-out" class="btn btn-sm">−</button>
                 <button id="btn-fit" class="btn btn-sm">适配</button>
+                <button id="btn-fullscreen" class="btn btn-sm" title="全屏预览地图">⛶</button>
             </div>
         </main>
     </div>
@@ -1375,6 +1441,44 @@
             document.getElementById('modal').addEventListener('click', e => {
                 if (e.target.id === 'modal') closeModal();
             });
+
+            // 侧边栏折叠 / 展开
+            const appEl = document.querySelector('.app');
+            const btnToggle = document.getElementById('btn-toggle-sidebar');
+            const backdrop = document.getElementById('sidebar-backdrop');
+            function updateToggleIcon() {
+                btnToggle.textContent = appEl.classList.contains('sidebar-collapsed') ? '›' : '‹';
+            }
+            function setSidebar(collapsed) {
+                appEl.classList.toggle('sidebar-collapsed', collapsed);
+                updateToggleIcon();
+                setTimeout(() => { if (map) map.invalidateSize(); }, 300);
+            }
+            btnToggle.addEventListener('click', () => setSidebar(!appEl.classList.contains('sidebar-collapsed')));
+            if (backdrop) backdrop.addEventListener('click', () => setSidebar(true));
+            updateToggleIcon();
+
+            // 地图全屏预览
+            const mapContainer = document.querySelector('.map-container');
+            const btnFs = document.getElementById('btn-fullscreen');
+            function toggleFullscreen() {
+                const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+                if (!fsEl) {
+                    if (mapContainer.requestFullscreen) mapContainer.requestFullscreen();
+                    else if (mapContainer.webkitRequestFullscreen) mapContainer.webkitRequestFullscreen();
+                } else {
+                    if (document.exitFullscreen) document.exitFullscreen();
+                    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+                }
+            }
+            btnFs.addEventListener('click', toggleFullscreen);
+            function onFsChange() {
+                const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+                btnFs.textContent = fsEl ? '⤡' : '⛶';
+                setTimeout(() => { if (map) map.invalidateSize(); }, 200);
+            }
+            document.addEventListener('fullscreenchange', onFsChange);
+            document.addEventListener('webkitfullscreenchange', onFsChange);
         }
 
         document.addEventListener('DOMContentLoaded', () => {
