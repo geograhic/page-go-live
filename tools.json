@@ -12,6 +12,12 @@
     "htmlFile": "Excel坐标数据可视化地图_v20250920.html"
   },
   {
+    "name": "KML 按位置分割与选择导出",
+    "description": "",
+    "path": "/tools/kml按位置分割工具/",
+    "htmlFile": "index.html"
+  },
+  {
     "name": "KML 合并/分割工具",
     "description": "",
     "path": "/tools/kml合并分割工具/",
