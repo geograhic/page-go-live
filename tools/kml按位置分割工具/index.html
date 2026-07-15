@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KML 按位置分割与选择导出</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div id="app">
+
+<!-- Header -->
+<header class="app-header">
+  <h1 class="app-title">🛰️ KML 按位置分割与选择导出</h1>
+  <div class="header-actions">
+    <button class="btn-icon" id="btn-settings" title="设置">⚙</button>
+  </div>
+</header>
+
+<!-- Main Content -->
+<div class="main-content">
+
+  <!-- Left Control Panel -->
+  <aside class="control-panel" id="control-panel">
+
+    <!-- Mode Tabs -->
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="split" id="tab-split">按区域分割</button>
+      <button class="mode-tab" data-mode="select" id="tab-select">按位置选择导出</button>
+    </div>
+
+    <!-- ===== MODE 1: 按区域分割 ===== -->
+    <div class="mode-panel active" id="panel-split">
+
+      <!-- ① Upload Grid KML -->
+      <section class="panel-section" id="sec-split-upload">
+        <h3 class="section-title"><span class="step-num">①</span> 上传 KML</h3>
+        <div class="upload-zone" id="grid-upload-zone">
+          <span class="upload-icon">📄</span>
+          <span class="upload-text">点击或拖拽上传 KML 文件</span>
+        </div>
+        <input type="file" id="grid-file-input" accept=".kml" hidden />
+        <div class="file-list" id="grid-file-list"></div>
+      </section>
+
+      <!-- ② Upload Boundary KMLs -->
+      <section class="panel-section" id="sec-split-boundary" style="display:none;">
+        <h3 class="section-title"><span class="step-num">②</span> 上传区域边界 KML</h3>
+        <div class="upload-zone" id="boundary-upload-zone">
+          <span class="upload-icon">🗺️</span>
+          <span class="upload-text">点击或拖拽上传一个或多个区域边界 KML</span>
+        </div>
+        <input type="file" id="boundary-file-input" accept=".kml" multiple hidden />
+        <div class="file-list" id="boundary-file-list"></div>
+      </section>
+
+      <!-- ③ Execute -->
+      <section class="panel-section" id="sec-split-execute" style="display:none;">
+        <h3 class="section-title"><span class="step-num">③</span> 执行分割</h3>
+        <div class="form-group">
+          <label class="form-label">空间关系</label>
+          <select class="form-select" id="split-relationship">
+            <option value="intersect">相交（有任何重叠即归入）</option>
+            <option value="within">完全包含（格网整体在区内）</option>
+            <option value="centroid-in" selected>质心在内（推荐，唯一归属）</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">重叠策略（相交 / 完全包含时）</label>
+          <select class="form-select" id="split-overlap">
+            <option value="first">归属首个相交区</option>
+            <option value="all">复制到所有相交区</option>
+          </select>
+        </div>
+        <button class="btn-primary" id="btn-split-execute">⚡ 执行分割</button>
+        <div class="status-inline" id="split-status"></div>
+      </section>
+
+      <!-- ④ Results -->
+      <section class="panel-section" id="sec-split-results" style="display:none;">
+        <h3 class="section-title"><span class="step-num">④</span> 分割结果</h3>
+        <div class="result-list" id="split-result-list"></div>
+        <div class="btn-row">
+          <button class="btn-primary" id="btn-split-download-all">📦 打包下载全部</button>
+        </div>
+      </section>
+    </div>
+
+    <!-- ===== MODE 2: 按位置选择导出 ===== -->
+    <div class="mode-panel" id="panel-select">
+
+      <!-- ① Upload KML -->
+      <section class="panel-section">
+        <h3 class="section-title"><span class="step-num">①</span> 上传 KML 文件</h3>
+        <div class="upload-zone" id="select-upload-zone">
+          <span class="upload-icon">📄</span>
+          <span class="upload-text">点击或拖拽上传 KML 文件</span>
+        </div>
+        <input type="file" id="select-file-input" accept=".kml" hidden />
+        <div class="file-list" id="select-file-list"></div>
+        <div class="kml-info" id="select-kml-info" style="display:none;"></div>
+      </section>
+
+      <!-- ② Draw Selection -->
+      <section class="panel-section" id="sec-select-draw" style="display:none;">
+        <h3 class="section-title"><span class="step-num">②</span> 绘制选择范围</h3>
+        <div class="draw-tools">
+          <button class="draw-btn active" data-tool="rectangle" id="btn-draw-rect">
+            <span class="draw-icon">▭</span> 矩形选择
+          </button>
+          <button class="draw-btn" data-tool="polygon" id="btn-draw-poly">
+            <span class="draw-icon">⬠</span> 多边形选择
+          </button>
+        </div>
+        <div class="draw-actions">
+          <button class="btn-small" id="btn-draw-clear">✕ 清除选择</button>
+          <button class="btn-small btn-undo" id="btn-draw-undo" style="display:none;">↩ 撤销</button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">空间关系</label>
+          <select class="form-select" id="select-relationship">
+            <option value="intersect" selected>相交（触及即选中）</option>
+            <option value="within">完全包含（要素整体在框内）</option>
+            <option value="contains">范围包含要素（框在要素内）</option>
+            <option value="centroid-in">质心在内（要素中心在框内）</option>
+          </select>
+        </div>
+        <div class="help-box">
+          在地图上点击绘制范围，双击完成。按所设"空间关系"命中的要素将被选中导出。
+        </div>
+      </section>
+
+      <!-- ③ Preview -->
+      <section class="panel-section" id="sec-select-preview" style="display:none;">
+        <h3 class="section-title"><span class="step-num">③</span> 选中要素</h3>
+        <div class="select-stats" id="select-stats"></div>
+        <div class="feature-list" id="select-feature-list"></div>
+      </section>
+
+      <!-- ④ Export -->
+      <section class="panel-section" id="sec-select-export" style="display:none;">
+        <h3 class="section-title"><span class="step-num">④</span> 导出</h3>
+        <div class="form-group">
+          <label class="form-label">导出文件名</label>
+          <input type="text" class="form-text" id="select-export-name" value="选中要素" />
+        </div>
+        <button class="btn-primary" id="btn-select-export">📥 导出 KML</button>
+        <div class="status-inline" id="select-status"></div>
+      </section>
+    </div>
+
+  </aside>
+
+  <!-- Right Map Panel -->
+  <div class="map-panel" id="map-panel">
+    <div class="map-toolbar">
+      <select class="form-select map-select" id="tile-source">
+        <option value="amap">高德地图</option>
+        <option value="amap_sat">高德卫星</option>
+        <option value="osm">OpenStreetMap</option>
+        <option value="google">Google 地图</option>
+        <option value="google_sat">Google 卫星</option>
+        <option value="custom">自定义</option>
+      </select>
+      <button class="btn-small" id="btn-fit-bounds" title="缩放到数据范围">⊕</button>
+      <button class="btn-small btn-map-toggle" id="btn-toggle-grid" title="显示/隐藏图层">👁 图层</button>
+      <button class="btn-small btn-map-toggle" id="btn-toggle-boundary" title="显示/隐藏边界">👁 边界</button>
+      <button class="btn-small" id="btn-style-editor" title="调整要素样式">🎨 样式</button>
+    </div>
+    <div id="map" class="map-container"></div>
+    <div class="coord-display" id="coord-display">经度 --.-- | 纬度 --.--</div>
+  </div>
+</div>
+
+<!-- Status Bar -->
+<footer class="status-bar">
+  <span id="status-text">就绪</span>
+  <span class="status-right" id="status-count"></span>
+</footer>
+
+<!-- 移动端底部导航（仅窄屏显示） -->
+<nav class="mobile-nav">
+  <button type="button" class="mnav-btn active" data-view="panel">⚙ 操作</button>
+  <button type="button" class="mnav-btn" data-view="map">🗺️ 地图</button>
+</nav>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settings-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>⚙ 设置</h3>
+      <button class="btn-icon modal-close" id="btn-modal-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">显示地图</label>
+        <label class="switch-label">
+          <input type="checkbox" id="setting-show-map" checked />
+          <span class="switch-track"></span>
+        </label>
+      </div>
+      <div class="form-group">
+        <label class="form-label">默认地图</label>
+        <select class="form-select" id="setting-default-tile">
+          <option value="amap">高德地图</option>
+          <option value="amap_sat">高德卫星</option>
+          <option value="osm">OpenStreetMap</option>
+          <option value="google">Google 地图</option>
+          <option value="google_sat">Google 卫星</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">执行后自动缩放到结果</label>
+        <label class="switch-label">
+          <input type="checkbox" id="setting-auto-fit" checked />
+          <span class="switch-track"></span>
+        </label>
+      </div>
+      <div class="form-group">
+        <label class="form-label">参考比例（符号随缩放变化）</label>
+        <label class="switch-label">
+          <input type="checkbox" id="setting-ref-scale" />
+          <span class="switch-track"></span>
+        </label>
+      </div>
+      <div class="form-group">
+        <label class="form-label">应用源 KML 样式渲染</label>
+        <label class="switch-label">
+          <input type="checkbox" id="setting-apply-source-style" checked />
+          <span class="switch-track"></span>
+        </label>
+        <span class="form-hint">关闭则所有要素使用默认单色；开启后按源 KML 的 &lt;Style&gt; 颜色/线宽/填充渲染</span>
+      </div>
+      <div class="form-group">
+        <label class="form-label">点要素显示名称/编号</label>
+        <label class="switch-label">
+          <input type="checkbox" id="setting-show-point-labels" checked />
+          <span class="switch-track"></span>
+        </label>
+        <span class="form-hint">关闭则点渲染为彩色圆点；开启后有点名称的要素显示为「圆点 + 编号」徽标（含源 &lt;IconStyle&gt; 图标时优先用图标）</span>
+      </div>
+      <div class="form-group">
+        <label class="form-label">参考级别（锚定缩放级别）</label>
+        <div class="form-row">
+          <input type="number" class="form-text" id="setting-ref-zoom" min="1" max="20" step="1" value="10" />
+          <button class="btn-small" id="btn-ref-zoom-current">当前</button>
+        </div>
+        <span class="form-hint" id="ref-zoom-hint"></span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-primary" id="btn-settings-save">保存设置</button>
+    </div>
+  </div>
+</div>
+
+<!-- Style Editor Modal -->
+<div class="modal-overlay" id="style-editor-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>🎨 调整要素样式</h3>
+      <button class="btn-icon modal-close" id="btn-style-editor-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">应用范围</label>
+        <select class="form-select" id="style-edit-scope">
+          <option value="all">全部要素</option>
+          <option value="selected">当前选中要素（按位置选择模式）</</option>
+          <option value="name">按名称包含筛选</option>
+        </select>
+      </div>
+      <div class="form-group" id="style-edit-name-row" style="display:none;">
+        <label class="form-label">名称包含</label>
+        <input type="text" class="form-text" id="style-edit-name" placeholder="要素名称子串" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">描边颜色</label>
+        <input type="color" id="style-edit-color" value="#4a9eff" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">线宽 / 描边粗细</label>
+        <input type="number" class="form-text" id="style-edit-weight" min="0" max="20" step="0.5" value="2" />
+      </div>
+      <div class="form-group">
+        <label class="switch-label" style="display:inline-flex;">
+          <input type="checkbox" id="style-edit-fill" checked />
+          <span class="switch-track"></span>
+        </label>
+        <span class="form-label" style="display:inline;">填充</span>
+      </div>
+      <div class="form-group">
+        <label class="form-label">填充颜色</label>
+        <input type="color" id="style-edit-fillcolor" value="#4a9eff" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">填充透明度（0–1）</label>
+        <input type="number" class="form-text" id="style-edit-fillop" min="0" max="1" step="0.05" value="0.3" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">点半径（仅点要素）</label>
+        <input type="number" class="form-text" id="style-edit-radius" min="1" max="40" step="1" value="5" />
+      </div>
+      <div class="form-hint">修改会写回要素的 KML &lt;Style&gt;，导出时一并携带。</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-primary" id="btn-style-apply">应用样式</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="spatial.js"></script>
+<script src="kml-style.js"></script>
+<script src="app.js"></script>
+<script>
+/* 移动端「操作 / 地图」视图切换（自包含，不依赖 app.js 内部变量） */
+(function () {
+  var mq = window.matchMedia('(max-width: 768px)');
+  var body = document.body;
+  var btns = Array.prototype.slice.call(document.querySelectorAll('.mnav-btn'));
+  function setView(v) {
+    body.classList.remove('mv-panel', 'mv-map');
+    body.classList.add('mv-' + v);
+    btns.forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-view') === v); });
+    if (v === 'map') {
+      [60, 260].forEach(function (t) {
+        setTimeout(function () { window.dispatchEvent(new Event('resize')); }, t);
+      });
+    }
+  }
+  function initView() {
+    if (mq.matches && !body.classList.contains('mv-panel') && !body.classList.contains('mv-map')) {
+      setView('panel');
+    }
+  }
+  btns.forEach(function (b) { b.addEventListener('click', function () { setView(b.getAttribute('data-view')); }); });
+  initView();
+  (mq.addEventListener ? mq.addEventListener('change', initView) : mq.addListener(initView));
+})();
+</script>
+</body>
+</html>

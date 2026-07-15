@@ -246,6 +246,12 @@
   <footer class="status-bar">
     <span id="status-text">就绪</span>
   </footer>
+
+  <!-- 移动端底部导航（仅窄屏显示） -->
+  <nav class="mobile-nav">
+    <button type="button" class="mnav-btn active" data-view="panel">⚙ 操作</button>
+    <button type="button" class="mnav-btn" data-view="map">🗺️ 地图</button>
+  </nav>
 </div>
 
 <!-- Settings Modal -->
@@ -283,5 +289,32 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="app.js"></script>
+<script>
+/* 移动端「操作 / 地图」视图切换（自包含，不依赖 app.js 内部变量） */
+(function () {
+  var mq = window.matchMedia('(max-width: 768px)');
+  var body = document.body;
+  var btns = Array.prototype.slice.call(document.querySelectorAll('.mnav-btn'));
+  function setView(v) {
+    body.classList.remove('mv-panel', 'mv-map');
+    body.classList.add('mv-' + v);
+    btns.forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-view') === v); });
+    if (v === 'map') {
+      // 地图容器由隐藏变显示，需让 Leaflet 重新计算尺寸
+      [60, 260].forEach(function (t) {
+        setTimeout(function () { window.dispatchEvent(new Event('resize')); }, t);
+      });
+    }
+  }
+  function initView() {
+    if (mq.matches && !body.classList.contains('mv-panel') && !body.classList.contains('mv-map')) {
+      setView('panel');
+    }
+  }
+  btns.forEach(function (b) { b.addEventListener('click', function () { setView(b.getAttribute('data-view')); }); });
+  initView();
+  (mq.addEventListener ? mq.addEventListener('change', initView) : mq.addListener(initView));
+})();
+</script>
 </body>
 </html>
