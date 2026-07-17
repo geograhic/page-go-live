@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Solar System · Endril Tools</title>
+<style>
+  :root{
+    --bg1:#05070f; --bg2:#0a0e1a; --accent:#7dd3fc; --accent2:#a78bfa;
+    --text:#e8edf6; --muted:#8a93a6;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;
+    color:var(--text);
+    background:
+      radial-gradient(1200px 600px at 70% -10%, rgba(124,58,237,.25), transparent 60%),
+      radial-gradient(900px 500px at 10% 110%, rgba(45,212,191,.18), transparent 55%),
+      linear-gradient(160deg,var(--bg1),var(--bg2));
+    min-height:100%;
+    display:flex; align-items:center; justify-content:center;
+    overflow:hidden; position:relative;
+  }
+  .stars{position:fixed; inset:0; pointer-events:none;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, #fff, transparent),
+      radial-gradient(1px 1px at 80% 20%, #cbd5e1, transparent),
+      radial-gradient(1.5px 1.5px at 50% 70%, #fff, transparent),
+      radial-gradient(1px 1px at 35% 80%, #e2e8f0, transparent),
+      radial-gradient(1px 1px at 65% 50%, #fff, transparent),
+      radial-gradient(1.5px 1.5px at 90% 80%, #cbd5e1, transparent);
+    opacity:.6; animation:tw 4s ease-in-out infinite alternate;
+  }
+  @keyframes tw{from{opacity:.35}to{opacity:.75}}
+  .card{
+    position:relative; z-index:2; width:min(520px,90vw); padding:40px 36px;
+    border-radius:22px; background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.12);
+    backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    box-shadow:0 20px 60px rgba(0,0,0,.45); text-align:center;
+  }
+  .brand{font-size:13px; letter-spacing:.28em; color:var(--muted); text-transform:uppercase; margin-bottom:18px}
+  .title{
+    font-size:34px; font-weight:800; line-height:1.1; margin-bottom:10px;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .sub{color:var(--muted); font-size:15px; margin-bottom:22px}
+  .note{font-size:13px; color:var(--muted); line-height:1.7; margin-bottom:26px}
+  .links{display:flex; gap:12px; justify-content:center; flex-wrap:wrap}
+  a.btn{
+    text-decoration:none; font-size:14px; font-weight:600; padding:11px 20px;
+    border-radius:12px; color:var(--text); border:1px solid rgba(255,255,255,.16);
+    background:rgba(255,255,255,.05); transition:.2s;
+  }
+  a.btn:hover{background:rgba(255,255,255,.12); transform:translateY(-1px)}
+  a.btn.primary{background:linear-gradient(90deg,rgba(125,211,252,.9),rgba(167,139,250,.9)); color:#06121f; border:none}
+  .foot{margin-top:26px; font-size:11px; color:rgba(138,147,166,.7)}
+</style>
+</head>
+<body>
+  <div class="stars"></div>
+  <div class="card">
+    <div class="brand">Endril · Tools</div>
+    <div class="title">Solar System</div>
+    <div class="sub">太阳系漫游工具 · 即将上线</div>
+    <div class="note">
+      本工具基于 <strong>Solar-Wanderer</strong>（MIT License, © 2026 hyqzz）二创整合，<br/>
+      提供交互式太阳系三维可视化。正式版本正在打磨中。
+    </div>
+    <div class="links">
+      <a class="btn primary" href="https://html.endril.com">返回 Endril</a>
+      <a class="btn" href="https://github.com/hyqzz/Solar-Wanderer" target="_blank" rel="noopener">查看源码</a>
+    </div>
+    <div class="foot">Temporary landing page · 正式版上线后此页将被替换</div>
+  </div>
+</body>
+</html>
