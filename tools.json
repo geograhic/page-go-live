@@ -28,5 +28,11 @@
     "description": "",
     "path": "/tools/shp转kml工具/",
     "htmlFile": "index.html"
+  },
+  {
+    "name": "Solar System · Endril Tools",
+    "description": "",
+    "path": "/tools/solar-system/",
+    "htmlFile": "index.html"
   }
 ]
