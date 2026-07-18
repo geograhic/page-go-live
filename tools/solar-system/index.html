@@ -16,6 +16,10 @@
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png?v=5">
 <link rel="apple-touch-icon" href="apple-touch-icon.png?v=5">
 <meta property="og:image" content="poster.jpg">
+<!-- Preload critical video assets in parallel with HTML parse (faster first frame on mobile/WeChat) -->
+<link rel="preload" href="hls.min.js" as="script">
+<link rel="preload" href="playlist.m3u8" as="fetch">
+<link rel="preload" href="seg000.ts" as="fetch">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;border-radius:0!important;}
 html,body{width:100%;min-height:100%;overflow-x:hidden;overflow-y:auto;background:#000;font-family:'SF Pro Display','PingFang SC','-apple-system','Segoe UI',sans-serif;color:#e8e8f0;cursor:default;-webkit-font-smoothing:antialiased;}
@@ -110,7 +114,10 @@ h1{font-size:clamp(2.6rem,6.5vw,5.2rem);font-weight:800;letter-spacing:-.025em;l
 <img id="poster" class="loading" src="poster.jpg" alt="" aria-hidden="true">
 
 <!-- Layer 1: NASA ISS video via HLS fragmented streaming -->
-<video id="bgvideo" autoplay muted loop playsinline webkit-playsinline preload="auto"></video>
+<!-- x5-* attributes: keep video inline (background) inside WeChat's X5 browser
+     instead of being hijacked into the system fullscreen player -->
+<video id="bgvideo" autoplay muted loop playsinline webkit-playsinline preload="auto"
+  x5-playsinline x5-video-player-type="h5" x5-video-player-fullscreen="true" x5-video-orientation="portrait"></video>
 
 <!-- Layer 2+ -->
 <canvas id="cosmos"></canvas>
@@ -138,30 +145,34 @@ h1{font-size:clamp(2.6rem,6.5vw,5.2rem);font-weight:800;letter-spacing:-.025em;l
 <div class="note">背景影像：NASA ISS Ultra-HD Earth / DSCOVR EPIC（公共领域） &middot; svs.gsfc.nasa.gov / epic.gsfc.nasa.gov</div>
 
 <!-- Self-hosted hls.js (no external CDN → works in WeChat) -->
-<script src="hls.min.js"></script>
+<script src="hls.min.js" defer></script>
 <script>
 (function(){
 /* ============================================================
- * HLS FRAGMENTED STREAMING ENGINE v8
+ * HLS FRAGMENTED STREAMING ENGINE v8.1 (WeChat / mobile fix)
  * - Video is MANDATORY (per requirement): always attempt to load
  * - Uses HLS (Media Source Extensions): segmented, progressive
- *   → first ~1.5MB segment plays almost immediately
- *   → subsequent segments stream in while playing (no full 27MB wait)
+ *   → first ~1.2MB segment plays almost immediately
+ *   → subsequent segments stream in while playing (no full-file wait)
  * - Single 1080p rendition → ZERO quality reduction (no ABR downshift)
  * - Self-hosted hls.min.js (same-origin, WeChat-safe)
- * - Native HLS for Safari/iOS; hls.js (MSE) for Chromium/WeChat
- * - MP4 hotlink fallback if HLS entirely fails
+ * - Native HLS for Safari/iOS; hls.js (MSE) for Chromium/WeChat/X5
+ * - Self-hosted 1080p MP4 fallback (same Cloudflare CDN) if HLS fails
+ *   → replaces the old external NASA 54MB hotlink (dead-slow from China)
+ * - WeChat X5 inline attributes so video renders as background
  * - Poster (Ken Burns) = buffering cover until video can play
  * - Tap-to-unlock for autoplay-blocked browsers
- * - Memory bounded: maxBufferLength=30s, backBuffer=30s
+ * - Memory bounded: maxBufferLength=20s, backBuffer=20s
  * ============================================================ */
 
 var V = document.getElementById('bgvideo');
 var P = document.getElementById('poster');
 var HLS_URL = 'playlist.m3u8'; // same-origin, in this folder
 
-// NASA MP4 direct (last-resort fallback, hotlinked)
-var MP4_FALLBACK = 'https://svs.gsfc.nasa.gov/vis/a030000/a030600/a030623/iss_red_camera_2015_1080p.mp4';
+// Self-hosted MP4 (last-resort fallback). Sits on the SAME Cloudflare CDN as
+// the page, so it is fast & reliable from China/WeChat. The old external NASA
+// 54MB hotlink was the real reason mobile WeChat never showed video.
+var MP4_FALLBACK = 'bg-fallback.mp4';
 
 var state = {hls:null, revealed:false, fallbackTried:false};
 
@@ -175,12 +186,24 @@ function revealVideo(){
   setTimeout(function(){ if(state.revealed) P.style.display='none'; },2200);
 }
 
+// Bind reveal to the FIRST of several "playable" events. WeChat/X5 can be
+// finicky about which event actually fires for MSE/video streams, so we
+// listen to loadeddata / canplay / playing and remove the others on fire.
+var _revealBound=false;
+function bindReveal(){
+  if(_revealBound) return; _revealBound=true;
+  ['loadeddata','canplay','playing'].forEach(function(ev){
+    var h=function(){ try{V.removeEventListener(ev,h);}catch(e){} revealVideo(); };
+    V.addEventListener(ev,h,false);
+  });
+}
+
 // --- Try native HLS (Safari / iOS) ---
 function tryNativeHls(){
   if(V.canPlayType('application/vnd.apple.mpegurl')){
     V.src = HLS_URL;
     V.addEventListener('loadedmetadata',function(){ V.play().catch(function(){}); },{once:true});
-    V.addEventListener('canplay',revealVideo,{once:true});
+    bindReveal();
     return true;
   }
   return false;
@@ -190,17 +213,20 @@ function tryNativeHls(){
 function tryHlsJs(){
   if(typeof Hls === 'undefined' || !Hls.isSupported()) return false;
   var hls = new Hls({
-    maxBufferLength: 30,          // keep ~30s buffered ahead
-    maxMaxBufferLength: 60,
-    maxBufferSize: 60*1000*1000,  // 60MB hard cap
-    backBufferLength: 30,         // keep 30s behind for seeking
+    maxBufferLength: 20,          // start playback sooner, lighter on mobile
+    maxMaxBufferLength: 40,
+    maxBufferSize: 50*1000*1000,  // 50MB hard cap
+    backBufferLength: 20,         // keep 20s behind for seeking
     capLevelToPlayerSize: false,  // DO NOT reduce quality by player size
-    startLevel: -1,               // auto (single rendition)
-    fragLoadingMaxRetry: 10,
-    fragLoadingRetryDelay: 800,
-    manifestLoadingMaxRetry: 6,
-    manifestLoadingRetryDelay: 800,
-    enableWorker: true            // demux off main thread (perf)
+    startLevel: 0,                // load first segment immediately
+    fragLoadingMaxRetry: 12,      // resilient on flaky mobile nets
+    fragLoadingRetryDelay: 600,
+    manifestLoadingMaxRetry: 8,
+    manifestLoadingRetryDelay: 600,
+    enableWorker: true,           // demux off main thread (perf)
+    nudgeOffset: 0.1,             // help WeChat/X5 media-timeline sync
+    nudgeMaxRetry: 5,
+    lowLatencyMode: false
   });
   state.hls = hls;
   hls.loadSource(HLS_URL);
@@ -225,7 +251,7 @@ function tryHlsJs(){
       }
     }
   });
-  V.addEventListener('canplay',revealVideo,{once:true});
+  bindReveal();
   return true;
 }
 
@@ -239,7 +265,7 @@ function tryMp4Fallback(){
   state.fallbackTried = true;
   console.log('[video] HLS failed → MP4 fallback');
   V.src = MP4_FALLBACK;
-  V.addEventListener('canplay',revealVideo,{once:true});
+  bindReveal();
   V.load();
   V.play().catch(function(){});
   // If MP4 also fails, poster+canvas remains (still acceptable)
