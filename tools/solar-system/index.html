@@ -16,10 +16,10 @@
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png?v=5">
 <link rel="apple-touch-icon" href="apple-touch-icon.png?v=5">
 <meta property="og:image" content="poster.jpg">
-<!-- Preload critical video assets in parallel with HTML parse (faster first frame on mobile/WeChat) -->
+<!-- Preload hls.min.js in parallel with HTML parse (small, reused by the <script> tag).
+     Note: we deliberately do NOT preload playlist.m3u8/seg000.ts — hls.js manages its
+     own segment fetching and would otherwise double-download them on slow mobile nets. -->
 <link rel="preload" href="hls.min.js" as="script">
-<link rel="preload" href="playlist.m3u8" as="fetch">
-<link rel="preload" href="seg000.ts" as="fetch">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;border-radius:0!important;}
 html,body{width:100%;min-height:100%;overflow-x:hidden;overflow-y:auto;background:#000;font-family:'SF Pro Display','PingFang SC','-apple-system','Segoe UI',sans-serif;color:#e8e8f0;cursor:default;-webkit-font-smoothing:antialiased;}
@@ -145,7 +145,7 @@ h1{font-size:clamp(2.6rem,6.5vw,5.2rem);font-weight:800;letter-spacing:-.025em;l
 <div class="note">背景影像：NASA ISS Ultra-HD Earth / DSCOVR EPIC（公共领域） &middot; svs.gsfc.nasa.gov / epic.gsfc.nasa.gov</div>
 
 <!-- Self-hosted hls.js (no external CDN → works in WeChat) -->
-<script src="hls.min.js" defer></script>
+<script src="hls.min.js"></script>
 <script>
 (function(){
 /* ============================================================
@@ -204,6 +204,12 @@ function tryNativeHls(){
     V.src = HLS_URL;
     V.addEventListener('loadedmetadata',function(){ V.play().catch(function(){}); },{once:true});
     bindReveal();
+    // Safety net: if native HLS fails to load/play, fall back to hls.js → MP4
+    V.addEventListener('error',function(){
+      if(state.fallbackTried) return;
+      cleanupHls();
+      if(!tryHlsJs()) tryMp4Fallback();
+    },{once:true});
     return true;
   }
   return false;
