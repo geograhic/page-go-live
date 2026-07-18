@@ -149,20 +149,21 @@ h1{font-size:clamp(2.6rem,6.5vw,5.2rem);font-weight:800;letter-spacing:-.025em;l
 <script>
 (function(){
 /* ============================================================
- * HLS FRAGMENTED STREAMING ENGINE v8.1 (WeChat / mobile fix)
- * - Video is MANDATORY (per requirement): always attempt to load
- * - Uses HLS (Media Source Extensions): segmented, progressive
- *   → first ~1.2MB segment plays almost immediately
- *   → subsequent segments stream in while playing (no full-file wait)
- * - Single 1080p rendition → ZERO quality reduction (no ABR downshift)
+ * HLS ADAPTIVE STREAMING ENGINE v9 (ABR + stall recovery)
+ * - Video is MANDATORY: always attempt to load
+ * - HLS with 3 adaptive renditions (1080p / 720p / 480p) → AUTO bitrate switching
+ *   → weak networks drop to 480p instead of stalling
+ *   → good networks upgrade to 1080p (full HD, peak quality)
+ * - First segment at lowest rendition (480p) → instant first frame
  * - Self-hosted hls.min.js (same-origin, WeChat-safe)
  * - Native HLS for Safari/iOS; hls.js (MSE) for Chromium/WeChat/X5
- * - Self-hosted 1080p MP4 fallback (same Cloudflare CDN) if HLS fails
- *   → replaces the old external NASA 54MB hotlink (dead-slow from China)
+ * - Self-hosted MP4 fallback (same Cloudflare CDN) if HLS entirely fails
+ * - Stall recovery: if playback freezes, re-play + startLoad + downgrade level
+ *   → fixes "stalls once and never resumes" on mobile
  * - WeChat X5 inline attributes so video renders as background
  * - Poster (Ken Burns) = buffering cover until video can play
  * - Tap-to-unlock for autoplay-blocked browsers
- * - Memory bounded: maxBufferLength=20s, backBuffer=20s
+ * - Memory bounded: maxBufferLength=30s, backBuffer=15s
  * ============================================================ */
 
 var V = document.getElementById('bgvideo');
@@ -219,16 +220,19 @@ function tryNativeHls(){
 function tryHlsJs(){
   if(typeof Hls === 'undefined' || !Hls.isSupported()) return false;
   var hls = new Hls({
-    maxBufferLength: 20,          // start playback sooner, lighter on mobile
-    maxMaxBufferLength: 40,
-    maxBufferSize: 50*1000*1000,  // 50MB hard cap
-    backBufferLength: 20,         // keep 20s behind for seeking
-    capLevelToPlayerSize: false,  // DO NOT reduce quality by player size
-    startLevel: 0,                // load first segment immediately
-    fragLoadingMaxRetry: 12,      // resilient on flaky mobile nets
-    fragLoadingRetryDelay: 600,
+    capLevelToPlayerSize: true,   // phones don't pull 1080p they can't show → fewer stalls
+    startLevel: 0,                // begin at lowest rendition (480p) for instant first frame; ABR upgrades
+    maxBufferLength: 30,          // smooth playback (30s ahead)
+    maxMaxBufferLength: 60,
+    maxBufferSize: 60*1000*1000,  // 60MB hard cap
+    backBufferLength: 15,         // light on memory (looping background)
+    abrEwmaDefaultEstimate: 800000, // assume ~0.8Mbps initially → sensible start level
+    abrBandWidthFactor: 0.95,     // conservative: leave headroom → avoid stalls
+    abrBandWidthMinFactor: 0.70,
+    fragLoadingMaxRetry: 15,      // resilient on flaky mobile nets
+    fragLoadingRetryDelay: 500,
     manifestLoadingMaxRetry: 8,
-    manifestLoadingRetryDelay: 600,
+    manifestLoadingRetryDelay: 500,
     enableWorker: true,           // demux off main thread (perf)
     nudgeOffset: 0.1,             // help WeChat/X5 media-timeline sync
     nudgeMaxRetry: 5,
@@ -265,6 +269,38 @@ function cleanupHls(){
   if(state.hls){ try{state.hls.destroy();}catch(e){} state.hls=null; }
 }
 
+// --- Stall recovery ---------------------------------------------------------
+// Mobile WeChat background video often freezes once and NEVER resumes, because
+// nothing re-triggers playback after a buffering pause. We watch for stalls and
+// proactively recover: re-play + hls.startLoad() + downgrade one rendition.
+var _stall = {last:0, stuck:0, timer:null};
+function recoverPlayback(){
+  try{ V.play().catch(function(){}); }catch(e){}
+  if(state.hls){
+    try{
+      state.hls.startLoad();
+      if(state.hls.levels && state.hls.currentLevel > 0){
+        state.hls.nextLevel = Math.max(0, state.hls.currentLevel - 1);
+      }
+    }catch(e){}
+  }
+}
+function setupStallRecovery(){
+  ['stalled','waiting'].forEach(function(ev){
+    V.addEventListener(ev, function(){ recoverPlayback(); }, false);
+  });
+  _stall.timer = setInterval(function(){
+    if(V.paused || document.hidden){ _stall.stuck = 0; return; }
+    if(V.readyState < 3){ // buffering / not enough data
+      if(_stall.last !== 0 && Math.abs(V.currentTime - _stall.last) < 0.05){
+        _stall.stuck++;
+        if(_stall.stuck >= 2) recoverPlayback(); // ~5s frozen → recover
+      } else { _stall.stuck = 0; }
+    } else { _stall.stuck = 0; }
+    _stall.last = V.currentTime;
+  }, 2500);
+}
+
 // --- Last-resort: direct MP4 (progressive download) ---
 function tryMp4Fallback(){
   if(state.fallbackTried) return;
@@ -291,15 +327,16 @@ function tryTapUnlock(){
 document.addEventListener('touchstart',tryTapUnlock,{once:true});
 document.addEventListener('click',tryTapUnlock,{once:true});
 
-// --- Visibility: save bandwidth when hidden ---
+// --- Visibility: save bandwidth when hidden; recover when shown ---
 document.addEventListener('visibilitychange',function(){
   if(document.hidden){try{V.pause();}catch(e){}}
-  else{try{V.play().catch(function(){});}catch(e){}}
+  else{ recoverPlayback(); }
 });
 
 // --- Boot ---
 (function boot(){
   function start(){
+    setupStallRecovery();
     if(tryNativeHls()) return;
     if(tryHlsJs()) return;
     tryMp4Fallback();
