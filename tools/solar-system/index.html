@@ -1,1 +1,329 @@
-%3C!DOCTYPE%20html%3E%0A%3Chtml%20lang=%22zh-CN%22%3E%0A%3Chead%3E%0A%3Cmeta%20charset=%22UTF-8%22%3E%0A%3Cmeta%20name=%22viewport%22%20content=%22width=device-width,%20initial-scale=1.0%22%3E%0A%3Ctitle%3ESolar%20System%20%E2%80%94%20%E5%A4%AA%E9%98%B3%E7%B3%BB%E6%BC%AB%E6%B8%B8%E5%B7%A5%E5%85%B7%20%7C%20Endril%20Tools%3C/title%3E%0A%3Cmeta%20name=%22description%22%20content=%22%E5%9F%BA%E4%BA%8E%E7%9C%9F%E5%AE%9E%E5%A4%A9%E6%96%87%E6%95%B0%E6%8D%AE%E7%9A%84%E4%BA%A4%E4%BA%92%E5%BC%8F%E5%A4%AA%E9%98%B3%E7%B3%BB%E4%B8%89%E7%BB%B4%E6%BC%AB%E6%B8%B8%E5%B7%A5%E5%85%B7%E3%80%82%22%3E%0A%3Clink%20rel=%22canonical%22%20href=%22https://html.endril.com/tools/solar-system/%22%3E%0A%3Cmeta%20property=%22og:title%22%20content=%22Solar%20System%20%E2%80%94%20%E5%A4%AA%E9%98%B3%E7%B3%BB%E6%BC%AB%E6%B8%B8%20%7C%20Endril%20Tools%22%3E%0A%3Cmeta%20property=%22og:url%22%20content=%22https://html.endril.com/tools/solar-system/%22%3E%0A%3Cmeta%20property=%22og:type%22%20content=%22website%22%3E%0A%20%20%3Cmeta%20property=%22og:site_name%22%20content=%22Endril%22%3E%0A%20%20%3Cmeta%20name=%22theme-color%22%20content=%22#070a1a%22%3E%0A%20%20%3Clink%20rel=%22icon%22%20href=%22favicon.ico?v=2%22%3E%0A%20%20%3Clink%20rel=%22icon%22%20type=%22image/svg+xml%22%20href=%22icon.svg?v=2%22%3E%0A%20%20%3Clink%20rel=%22icon%22%20type=%22image/png%22%20sizes=%22192x192%22%20href=%22icon-192.png?v=2%22%3E%0A%20%20%3Clink%20rel=%22icon%22%20type=%22image/png%22%20sizes=%22512x512%22%20href=%22icon-512.png?v=2%22%3E%0A%20%20%3Clink%20rel=%22apple-touch-icon%22%20href=%22apple-touch-icon.png?v=2%22%3E%0A%20%20%3Cmeta%20property=%22og:image%22%20content=%22icon-512.png?v=2%22%3E%0A%3Cstyle%3E%0A*,*::before,*::after%7Bmargin:0;padding:0;box-sizing:border-box;border-radius:0!important;%7D%0Ahtml,body%7Bwidth:100%25;height:100%25;overflow:hidden;background:#000;font-family:'SF%20Pro%20Display','PingFang%20SC','-apple-system','Segoe%20UI',sans-serif;color:#e8e8f0;cursor:default;-webkit-font-smoothing:antialiased;%7D%0A%0A/*%20---%20video%20background%20(NASA%20ISS%20Ultra-HD,%20public%20domain)%20---%20*/%0A#bgvideo%7Bposition:fixed;inset:0;z-index:0;width:100%25;height:100%25;object-fit:cover;object-position:center;opacity:.85;filter:saturate(1.05)%20contrast(1.04);pointer-events:none;%7D%0A%0A/*%20---%20canvas%20cosmic%20overlay%20(stars/nebula/shooting)%20---%20*/%0A#cosmos%7Bposition:fixed;inset:0;z-index:1;width:100%25;height:100%25;pointer-events:none;%7D%0A%0A/*%20---%20depth%20+%20legibility%20gradient%20---%20*/%0A#overlay%7Bposition:fixed;inset:0;z-index:2;background:%0A%20%20radial-gradient(ellipse%20120%25%2080%25%20at%2050%25%2030%25,%20rgba(20,30,70,.12)%200%25,%20transparent%2055%25),%0A%20%20linear-gradient(180deg,%20rgba(0,0,0,.35)%200%25,%20rgba(0,0,0,.15)%2040%25,%20rgba(0,0,0,.6)%20100%25);%0A%20%20pointer-events:none;%7D%0A%0A.stage%7Bposition:relative;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2.5rem%201.5rem;text-align:center;%7D%0A%0A.badge%7Bdisplay:inline-block;padding:.32rem%20.85rem;background:rgba(255,255,255,.05);border:1px%20solid%20rgba(255,255,255,.1);color:rgba(175,185,225,.82);font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;backdrop-filter:blur(10px);margin-bottom:2.2rem;%7D%0A%0A.title-block%7Bmax-width:720px;%7D%0Ah1%7Bfont-size:clamp(2.6rem,6.5vw,5.2rem);font-weight:800;letter-spacing:-.025em;line-height:1.06;background:linear-gradient(135deg,#a5b4fc%200%25,#c084fc%2030%25,#60a5fa%2065%25,#93c5fd%20100%25);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:.35rem;text-shadow:0%200%2040px%20rgba(120,140,255,.25);%7D%0A.subtitle%7Bfont-size:clamp(.9rem,1.8vw,1.15rem);color:rgba(200,210,245,.66);font-weight:300;letter-spacing:.05em;margin-bottom:2.4rem;%7D%0A%0A.guide%7Bdisplay:flex;flex-direction:row;flex-wrap:nowrap;gap:.85rem;justify-content:center;max-width:920px;margin-bottom:2.4rem;width:100%25;%7D%0A.gi%7Bflex:1%201%200;min-width:0;padding:1.35rem%201.15rem;background:rgba(10,12,26,.5);border:1px%20solid%20rgba(135,125,195,.13);backdrop-filter:blur(16px);text-align:left;transition:border-color%20.3s,transform%20.22s,box-shadow%20.3s;position:relative;overflow:hidden;%7D%0A.gi::before%7Bcontent:'';position:absolute;top:0;left:0;width:3px;height:100%25;background:linear-gradient(180deg,#a78bfa,#6366f1);%7D%0A.gi:hover%7Bborder-color:rgba(155,145,230,.38);transform:translateY(-2px);box-shadow:0%200%2026px%20rgba(90,80,180,.22);%7D%0A.gi-n%7Bfont-size:1.8rem;font-weight:800;color:rgba(167,139,250,.26);line-height:1;margin-bottom:.3rem;font-family:'SF%20Mono',Consolas,monospace;%7D%0A.gi-l%7Bfont-size:.8rem;font-weight:600;color:rgba(218,213,248,.9);margin-bottom:.28rem;%7D%0A.gi-d%7Bfont-size:.7rem;color:rgba(168,162,208,.54);line-height:1.55;%7D%0A%0A.cta-row%7Bdisplay:flex;gap:.85rem;flex-wrap:wrap;justify-content:center;align-items:center;max-width:680px;%7D%0A.btn%7Bpadding:.82rem%201.7rem;font-size:.8rem;font-weight:600;letter-spacing:.03em;text-decoration:none;border:1px%20solid%20transparent;cursor:pointer;transition:all%20.25s;display:inline-flex;align-items:center;gap:.45rem;%7D%0A.btn-p%7Bbackground:linear-gradient(135deg,#2563eb,#6366f1);color:#fff;border-color:rgba(120,130,255,.4);%7D%0A.btn-p:hover%7Bbackground:linear-gradient(135deg,#3b78f0,#7c7ff3);box-shadow:0%200%2030px%20rgba(60,90,230,.35);%7D%0A.btn-s%7Bbackground:rgba(255,255,255,.04);color:rgba(210,215,250,.92);border-color:rgba(140,160,255,.28);backdrop-filter:blur(8px);%7D%0A.btn-s:hover%7Bcolor:#fff;border-color:rgba(150,170,255,.5);background:rgba(255,255,255,.08);box-shadow:0%200%2022px%20rgba(90,120,255,.2);%7D%0A.btn-g%7Bbackground:transparent;color:rgba(198,193,235,.72);border-color:rgba(158,153,212,.22);%7D%0A.btn-g:hover%7Bcolor:#fff;border-color:rgba(175,170,228,.45);background:rgba(255,255,255,.03);%7D%0A%0A.note%7Bposition:fixed;bottom:1.05rem;left:50%25;transform:translateX(-50%25);z-index:4;font-size:.6rem;color:rgba(150,145,188,.32);letter-spacing:.02em;text-align:center;white-space:nowrap;%7D%0A.scanline%7Bposition:fixed;inset:0;z-index:4;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent%202px,rgba(255,255,255,.0025)%202px,rgba(255,255,255,.0025)%204px);%7D%0A%0A@media(max-width:720px)%7B%0A%20%20.guide%7Bflex-wrap:wrap;gap:.65rem;%7D%20.gi%7Bflex:1%201%20200px;min-width:0;padding:1rem%20.85rem;%7D%0A%20%20.cta-row%7Bflex-direction:column;width:100%25;%7D%20.btn%7Bwidth:100%25;justify-content:center;%7D%0A%7D%0A@media(max-width:520px)%7B%0A%20%20.guide%7Bflex-direction:column;%7D%0A%7D%0A%3C/style%3E%0A%3C/head%3E%0A%3Cbody%3E%0A%0A%3Cvideo%20id=%22bgvideo%22%20autoplay%20muted%20loop%20playsinline%20preload=%22auto%22%0A%20%20src=%22https://svs.gsfc.nasa.gov/vis/a030000/a030600/a030623/iss_red_camera_2015_3840x1920.mp4%22%3E%0A%20%20%3Csource%20src=%22https://svs.gsfc.nasa.gov/vis/a030000/a030600/a030623/iss_red_camera_2015_1080p.mp4%22%20type=%22video/mp4%22%3E%0A%3C/video%3E%0A%0A%3Ccanvas%20id=%22cosmos%22%3E%3C/canvas%3E%0A%3Cdiv%20id=%22overlay%22%3E%3C/div%3E%0A%3Cdiv%20class=%22scanline%22%3E%3C/div%3E%0A%0A%3Cdiv%20class=%22stage%22%3E%0A%20%20%3Cdiv%20class=%22badge%22%3EEndril%20&middot;%20Tools%3C/div%3E%0A%20%20%3Cdiv%20class=%22title-block%22%3E%0A%20%20%20%20%3Ch1%3ESolar%20System%3C/h1%3E%0A%20%20%20%20%3Cp%20class=%22subtitle%22%3E%E4%BB%A5%E5%85%89%E5%B9%B4%E4%B8%88%E9%87%8F%E5%AE%87%E5%AE%99%20&middot;%20%E7%94%A8%E6%8C%87%E5%B0%96%E8%A7%A6%E7%A2%B0%E6%98%9F%E8%BE%B0%3C/p%3E%0A%20%20%3C/div%3E%0A%20%20%3Cdiv%20class=%22guide%22%3E%0A%20%20%20%20%3Cdiv%20class=%22gi%22%3E%3Cdiv%20class=%22gi-n%22%3E01%3C/div%3E%3Cdiv%20class=%22gi-l%22%3E%E7%9C%9F%E5%AE%9E%E8%BD%A8%E9%81%93%E6%95%B0%E6%8D%AE%3C/div%3E%3Cdiv%20class=%22gi-d%22%3ENASA%20JPL%20%E6%98%9F%E5%8E%86%E9%A9%B1%E5%8A%A8%3Cbr%3E%E5%85%AB%E5%A4%A7%E8%A1%8C%E6%98%9F%E5%AE%9E%E6%97%B6%E4%BD%8D%E7%BD%AE%E6%A8%A1%E6%8B%9F%3C/div%3E%3C/div%3E%0A%20%20%20%20%3Cdiv%20class=%22gi%22%3E%3Cdiv%20class=%22gi-n%22%3E02%3C/div%3E%3Cdiv%20class=%22gi-l%22%3E%E6%B2%89%E6%B5%B8%E5%BC%8F%E6%8E%A2%E7%B4%A2%3C/div%3E%3Cdiv%20class=%22gi-d%22%3E%E8%87%AA%E7%94%B1%E7%BC%A9%E6%94%BE%20&middot;%20%E6%97%B6%E9%97%B4%E5%8A%A0%E9%80%9F%3Cbr%3E%E4%BB%8E%E5%A4%AA%E9%98%B3%E5%88%B0%E5%86%A5%E7%8E%8B%E6%98%9F%E4%B8%80%E9%95%9C%E5%88%B0%E5%BA%95%3C/div%3E%3C/div%3E%0A%20%20%20%20%3Cdiv%20class=%22gi%22%3E%3Cdiv%20class=%22gi-n%22%3E03%3C/div%3E%3Cdiv%20class=%22gi-l%22%3E%E8%88%AA%E5%A4%A9%E7%A7%91%E5%AD%A6%3C/div%3E%3Cdiv%20class=%22gi-d%22%3ENASA%20Eyes%20/%20%E5%BC%80%E6%BA%90%E9%A1%B9%E7%9B%AE%3Cbr%3EMIT%20%E5%8D%8F%E8%AE%AE%20&middot;%20%E4%B8%89%E7%BB%B4%E4%BA%A4%E4%BA%92%3C/div%3E%3C/div%3E%0A%20%20%3C/div%3E%0A%20%20%3Cdiv%20class=%22cta-row%22%3E%0A%20%20%20%20%3Ca%20href=%22https://eyes.nasa.gov/apps/solar-system/#/sun%22%20class=%22btn%20btn-p%22%20target=%22_blank%22%20rel=%22noopener%22%3E&#9654;%20NASA%20Eyes%20%E5%A4%AA%E9%98%B3%E7%B3%BB%3C/a%3E%0A%20%20%20%20%3Ca%20href=%22https://github.com/hyqzz/Solar-Wanderer%22%20class=%22btn%20btn-s%22%20target=%22_blank%22%20rel=%22noopener%22%3ESolar-Wanderer%20%E6%BA%90%E7%A0%81%3C/a%3E%0A%20%20%20%20%3Ca%20href=%22https://endril.com%22%20class=%22btn%20btn-g%22%20target=%22_blank%22%20rel=%22noopener%22%3E%E8%BF%94%E5%9B%9E%20Endril%3C/a%3E%0A%20%20%3C/div%3E%0A%3C/div%3E%0A%0A%3Cdiv%20class=%22note%22%3E%E8%83%8C%E6%99%AF%E5%BD%B1%E5%83%8F%EF%BC%9ANASA%20ISS%20Ultra-HD%20Earth%EF%BC%88%E5%85%AC%E5%85%B1%E9%A2%86%E5%9F%9F%EF%BC%89%20&middot;%20svs.gsfc.nasa.gov%3C/div%3E%0A%0A%3Cscript%3E%0A(function()%7B%0Avar%20c=document.getElementById('cosmos'),ctx=c.getContext('2d');%0Avar%20W,H,T=0;%0Avar%20stars=%5B%5D,nebulas=%5B%5D;%0Avar%20video=document.getElementById('bgvideo');%0Atry%7B%20video.playbackRate=0.7;%20%7Dcatch(e)%7B%7D%0A%0Afunction%20resize()%7BW=c.width=innerWidth;H=c.height=innerHeight;initAll();%7D%0Awindow.addEventListener('resize',resize);%0Afunction%20rand(a,b)%7Breturn%20a+Math.random()*(b-a);%7D%0A%0Afunction%20initStars()%7B%0A%20%20stars=%5B%5D;%0A%20%20for(var%20i=0;i%3C300;i++)stars.push(%7Bx:rand(0,W),y:rand(0,H),r:rand(.15,.55),a:rand(.06,.38),sp:rand(.0003,.001),tw:rand(.8,1.4),ph:rand(0,Math.PI*2)%7D);%0A%20%20for(var%20i=0;i%3C70;i++)stars.push(%7Bx:rand(0,W),y:rand(0,H),r:rand(.4,1.1),a:rand(.18,.5),sp:rand(.0008,.0018),tw:rand(1.2,2.2),ph:rand(0,Math.PI*2),big:true%7D);%0A%7D%0Afunction%20initNebulas()%7B%0A%20%20nebulas=%5B%0A%20%20%20%20%7Bx:W*.2,y:H*.18,r:Math.min(W,H)*.4,c:'rgba(90,60,200,',a:.05%7D,%0A%20%20%20%20%7Bx:W*.8,y:H*.8,r:Math.min(W,H)*.32,c:'rgba(30,80,180,',a:.045%7D,%0A%20%20%20%20%7Bx:W*.55,y:H*.4,r:Math.min(W,H)*.25,c:'rgba(150,50,130,',a:.035%7D%0A%20%20%5D;%0A%7D%0A%0Afunction%20initAll()%7BinitStars();initNebulas();%7D%0A%0Afunction%20drawNebula(n)%7B%0A%20%20ctx.globalCompositeOperation='screen';%0A%20%20var%20g=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,n.r);%0A%20%20g.addColorStop(0,n.c+n.a+')');g.addColorStop(1,n.c+'0)');%0A%20%20ctx.fillStyle=g;ctx.fillRect(n.x-n.r,n.y-n.r,n.r*2,n.r*2);%0A%20%20ctx.globalCompositeOperation='source-over';%0A%7D%0A%0Afunction%20drawStar(s)%7B%0A%20%20var%20tw=Math.sin(T*s.tw+s.ph)*.5+.5;%0A%20%20var%20al=s.a*(.35+tw*.65);%0A%20%20ctx.globalAlpha=al;%0A%20%20if(s.big)%7B%0A%20%20%20%20var%20g=ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*3.2);%0A%20%20%20%20g.addColorStop(0,'rgba(225,230,255,1)');g.addColorStop(.4,'rgba(170,185,255,.35)');g.addColorStop(1,'rgba(150,170,255,0)');%0A%20%20%20%20ctx.fillStyle=g;ctx.beginPath();ctx.arc(s.x,s.y,s.r*3.2,0,Math.PI*2);ctx.fill();%0A%20%20%7Delse%7B%0A%20%20%20%20ctx.fillStyle='#e6ebff';ctx.fillRect(s.x,s.y,s.r,s.r);%0A%20%20%7D%0A%20%20ctx.globalAlpha=1;%0A%7D%0A%0A//%20shooting%20star%0Avar%20shooter=%7Bactive:false,x:0,y:0,dx:0,dy:0,life:0,len:0%7D;%0Afunction%20maybeShooter()%7B%0A%20%20if(!shooter.active&&Math.random()%3C.0025)%7B%0A%20%20%20%20shooter.active=true;shooter.x=rand(0,W*.7);shooter.y=rand(0,H*.45);%0A%20%20%20%20var%20ang=rand(.18,.55);shooter.len=rand(70,180);%0A%20%20%20%20shooter.dx=Math.cos(ang)*13;shooter.dy=Math.sin(ang)*13;shooter.life=1;%0A%20%20%7D%0A%7D%0Afunction%20drawShooter()%7B%0A%20%20if(!shooter.active)return;%0A%20%20ctx.globalCompositeOperation='screen';%0A%20%20var%20ex=shooter.x-shooter.dx*shooter.len/13,ey=shooter.y-shooter.dy*shooter.len/13;%0A%20%20var%20grad=ctx.createLinearGradient(shooter.x,shooter.y,ex,ey);%0A%20%20grad.addColorStop(0,'rgba(255,255,255,'+(shooter.life*.85)+')');%0A%20%20grad.addColorStop(1,'rgba(190,205,255,0)');%0A%20%20ctx.strokeStyle=grad;ctx.lineWidth=1.4;%0A%20%20ctx.beginPath();ctx.moveTo(shooter.x,shooter.y);ctx.lineTo(ex,ey);ctx.stroke();%0A%20%20ctx.globalCompositeOperation='source-over';%0A%20%20shooter.x+=shooter.dx;shooter.y+=shooter.dy;shooter.life-=.016;%0A%20%20if(shooter.life%3C=0%7C%7Cshooter.x%3EW+120%7C%7Cshooter.y%3EH+120)shooter.active=false;%0A%7D%0A%0Afunction%20frame()%7B%0A%20%20T+=.016;%0A%20%20ctx.clearRect(0,0,W,H);%20%20%20%20%20%20%20%20%20%20//%20transparent:%20NASA%20Earth%20video%20shows%20through%0A%20%20nebulas.forEach(drawNebula);%0A%20%20stars.forEach(drawStar);%0A%20%20maybeShooter();drawShooter();%0A%20%20requestAnimationFrame(frame);%0A%7D%0A%0A//%20if%20video%20fails,%20darken%20to%20keep%20cosmic%20look%0Avideo.addEventListener('error',function()%7B%0A%20%20document.body.style.background='radial-gradient(ellipse%20at%2070%25%2030%25,#0a1430,#03060f%2070%25)';%0A%7D);%0A%0Aresize();%0Aframe();%0A%7D)();%0A%3C/script%3E%0A%3C/body%3E%0A%3C/html%3E
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solar System — 太阳系漫游工具 | Endril Tools</title>
+<meta name="description" content="基于真实天文数据的交互式太阳系三维漫游工具。">
+<link rel="canonical" href="https://html.endril.com/tools/solar-system/">
+<meta property="og:title" content="Solar System — 太阳系漫游 | Endril Tools">
+<meta property="og:url" content="https://html.endril.com/tools/solar-system/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Endril">
+<meta name="theme-color" content="#070a1a">
+<link rel="icon" href="favicon.ico?v=5">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=5">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png?v=5">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=5">
+<meta property="og:image" content="poster.jpg">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;border-radius:0!important;}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'SF Pro Display','PingFang SC','-apple-system','Segoe UI',sans-serif;color:#e8e8f0;cursor:default;-webkit-font-smoothing:antialiased;}
+
+/* --- layer 0: real NASA poster (instant, no JS needed) --- */
+#poster{position:fixed;inset:0;z-index:0;width:100%;height:100%;object-fit:cover;object-position:center;opacity:.92;pointer-events:none;}
+
+/* --- layer 1: NASA ISS 4K video (lazy-loaded) --- */
+#bgvideo{position:fixed;inset:0;z-index:1;width:100%;height:100%;object-fit:cover;object-position:center;opacity:0;filter:saturate(1.05) contrast(1.04);transition:opacity 2s ease;pointer-events:none;}
+#bgvideo.visible{opacity:.85;}
+
+/* --- layer 2: canvas cosmic overlay (stars/nebula/shooting) --- */
+#cosmos{position:fixed;inset:0;z-index:2;width:100%;height:100%;pointer-events:none;}
+
+/* --- layer 3: depth + legibility gradient --- */
+#overlay{position:fixed;inset:0;z-index:3;background:
+  radial-gradient(ellipse 120% 80% at 50% 30%, rgba(20,30,70,.12) 0%, transparent 55%),
+  linear-gradient(180deg, rgba(0,0,0,.35) 0%, rgba(0,0,0,.15) 40%, rgba(0,0,0,.6) 100%);
+  pointer-events:none;}
+
+.stage{position:relative;z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2.5rem 1.5rem;text-align:center;}
+
+.badge{display:inline-block;padding:.32rem .85rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:rgba(175,185,225,.82);font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;backdrop-filter:blur(10px);margin-bottom:2.2rem;}
+
+.title-block{max-width:720px;}
+h1{font-size:clamp(2.6rem,6.5vw,5.2rem);font-weight:800;letter-spacing:-.025em;line-height:1.06;background:linear-gradient(135deg,#a5b4fc 0%,#c084fc 30%,#60a5fa 65%,#93c5fd 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:.35rem;text-shadow:0 0 40px rgba(120,140,255,.25);}
+.subtitle{font-size:clamp(.9rem,1.8vw,1.15rem);color:rgba(200,210,245,.66);font-weight:300;letter-spacing:.05em;margin-bottom:2.4rem;}
+
+.guide{display:flex;flex-direction:row;flex-wrap:nowrap;gap:.85rem;justify-content:center;max-width:920px;margin-bottom:2.4rem;width:100%;}
+.gi{flex:1 1 0;min-width:0;padding:1.35rem 1.15rem;background:rgba(10,12,26,.5);border:1px solid rgba(135,125,195,.13);backdrop-filter:blur(16px);text-align:left;transition:border-color .3s,transform .22s,box-shadow .3s;position:relative;overflow:hidden;}
+.gi::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:linear-gradient(180deg,#a78bfa,#6366f1);}
+.gi:hover{border-color:rgba(155,145,230,.38);transform:translateY(-2px);box-shadow:0 0 26px rgba(90,80,180,.22);}
+.gi-n{font-size:1.8rem;font-weight:800;color:rgba(167,139,250,.26);line-height:1;margin-bottom:.3rem;font-family:'SF Mono',Consolas,monospace;}
+.gi-l{font-size:.8rem;font-weight:600;color:rgba(218,213,248,.9);margin-bottom:.28rem;}
+.gi-d{font-size:.7rem;color:rgba(168,162,208,.54);line-height:1.55;}
+
+.cta-row{display:flex;gap:.85rem;flex-wrap:wrap;justify-content:center;align-items:center;max-width:680px;}
+.btn{padding:.82rem 1.7rem;font-size:.8rem;font-weight:600;letter-spacing:.03em;text-decoration:none;border:1px solid transparent;cursor:pointer;transition:all .25s;display:inline-flex;align-items:center;gap:.45rem;}
+.btn-p{background:linear-gradient(135deg,#2563eb,#6366f1);color:#fff;border-color:rgba(120,130,255,.4);}
+.btn-p:hover{background:linear-gradient(135deg,#3b78f0,#7c7ff3);box-shadow:0 0 30px rgba(60,90,230,.35);}
+.btn-s{background:rgba(255,255,255,.04);color:rgba(210,215,250,.92);border-color:rgba(140,160,255,.28);backdrop-filter:blur(8px);}
+.btn-s:hover{color:#fff;border-color:rgba(150,170,255,.5);background:rgba(255,255,255,.08);box-shadow:0 0 22px rgba(90,120,255,.2);}
+.btn-g{background:transparent;color:rgba(198,193,235,.72);border-color:rgba(158,153,212,.22);}
+.btn-g:hover{color:#fff;border-color:rgba(175,170,228,.45);background:rgba(255,255,255,.03);}
+
+.note{position:fixed;bottom:1.05rem;left:50%;transform:translateX(-50%);z-index:5;font-size:.6rem;color:rgba(150,145,188,.32);letter-spacing:.02em;text-align:center;white-space:nowrap;}
+.scanline{position:fixed;inset:0;z-index:5;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.0025) 2px,rgba(255,255,255,.0025) 4px);}
+
+@media(max-width:720px){
+  .guide{flex-wrap:wrap;gap:.65rem;} .gi{flex:1 1 200px;min-width:0;padding:1rem .85rem;}
+  .cta-row{flex-direction:column;width:100%;} .btn{width:100%;justify-content:center;}
+}
+@media(max-width:520px){
+  .guide{flex-direction:column;}
+}
+</style>
+</head>
+<body>
+
+<!-- Layer 0: real NASA EPIC Earth poster (instant paint) -->
+<img id="poster" src="poster.jpg" alt="" aria-hidden="true">
+
+<!-- Layer 1: NASA ISS 4K video (loaded by adaptive engine) -->
+<video id="bgvideo" autoplay muted loop playsinline preload="none"></video>
+
+<!-- Layer 2+ -->
+<canvas id="cosmos"></canvas>
+<div id="overlay"></div>
+<div class="scanline"></div>
+
+<div class="stage">
+  <div class="badge">Endril &middot; Tools</div>
+  <div class="title-block">
+    <h1>Solar System</h1>
+    <p class="subtitle">以光年丈量宇宙 &middot; 用指尖触碰星辰</p>
+  </div>
+  <div class="guide">
+    <div class="gi"><div class="gi-n">01</div><div class="gi-l">真实轨道数据</div><div class="gi-d">NASA JPL 星历驱动<br>八大行星实时位置模拟</div></div>
+    <div class="gi"><div class="gi-n">02</div><div class="gi-l">沉浸式探索</div><div class="gi-d">自由缩放 &middot; 时间加速<br>从太阳到冥王星一镜到底</div></div>
+    <div class="gi"><div class="gi-n">03</div><div class="gi-l">航天科学</div><div class="gi-d">NASA Eyes / 开源项目<br>MIT 协议 &middot; 三维交互</div></div>
+  </div>
+  <div class="cta-row">
+    <a href="https://eyes.nasa.gov/apps/solar-system/#/sun" class="btn btn-p" target="_blank" rel="noopener">&#9654; NASA Eyes 太阳系</a>
+    <a href="https://github.com/hyqzz/Solar-Wanderer" class="btn btn-s" target="_blank" rel="noopener">Solar-Wanderer 源码</a>
+    <a href="https://endril.com" class="btn btn-g" target="_blank" rel="noopener">返回 Endril</a>
+  </div>
+</div>
+
+<div class="note">背景影像：NASA ISS Ultra-HD Earth / DSCOVR EPIC（公共领域） &middot; svs.gsfc.nasa.gov / epic.gsfc.nasa.gov</div>
+
+<script>
+(function(){
+/* ============================================================
+ * ADAPTIVE VIDEO ENGINE
+ * - Lazy loads after page interactive (poster shows instantly)
+ * - Uses Network Information API for initial quality selection
+ * - All sources are real NASA public-domain ISS Earth videos
+ * - Auto-upgrades to 4K when bandwidth allows (adaptive bitrate)
+ * - Pauses when tab hidden (saves bandwidth)
+ * ============================================================ */
+
+var V = document.getElementById('bgvideo');
+var P = document.getElementById('poster');
+
+// Real NASA ISS Earth video renditions (all public domain)
+var SRC = {
+  '4K' : 'https://svs.gsfc.nasa.gov/vis/a030000/a030600/a030623/iss_red_camera_2015_3840x1920.mp4',
+  '1080':'https://svs.gsfc.nasa.gov/vis/a030000/a030600/a030623/iss_red_camera_2015_1080p.mp4',
+  '720':'https://svs.gsfc.nasa.gov/vis/a030000/a030600/a030623/iss_red_camera_2015_720p.mp4'
+};
+
+// Detect optimal starting quality via Network Information API
+function pickInitialQuality(){
+  var conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  if(!conn) return '4K'; // no API → assume good net, aim for best
+
+  if(conn.saveData) return '720';
+  var t = conn.effectiveType||'';
+  if(t==='slow-2g'||t==='2g') return '720';
+  if(t==='3g') return '1080';
+  if(t==='4g'){
+    var d = conn.downlink; // Mbps estimate
+    if(d>=15) return '4K';      // fast 4G → go 4K
+    if(d>=5)  return '1080';     // decent 4G → 1080 first, upgrade later
+    return '720';               // weak 4G
+  }
+  return '4K'; // unknown → optimistic
+}
+
+// Load and play a given quality
+function loadAndPlay(q){
+  V.src = SRC[q];
+  V.load();
+  var p = V.play();
+  if(p)p.catch(function(){ /* autoplay may need interaction */ });
+}
+
+// Show video (crossfade from poster)
+function revealVideo(){
+  V.classList.add('visible');
+  setTimeout(function(){ P.style.display='none'; },2200);
+}
+
+// Upgrade to 4K when current source plays stably
+function maybeUpgradeTo4K(currentQ){
+  if(currentQ==='4K')return;
+  var upgradeTimer;
+  var stallCount=0;
+
+  // Monitor for stalls (buffer underruns)
+  V.addEventListener('waiting',function(){stallCount++;});
+  V.addEventListener('playing',function(){
+    // Reset timer each time we resume playing
+    clearTimeout(upgradeTimer);
+    // If playing stably for 10s with ≤1 stall, upgrade
+    upgradeTimer=setTimeout(function(){
+      if(stallCount<=1 && !document.hidden){
+        upgradeTo4K();
+      }
+    },10000);
+  });
+}
+
+// Seamless upgrade to 4K: preload hidden, then swap
+function upgradeTo4K(){
+  var hV=document.createElement('video');
+  hV.muted=true;hV.preload='auto';hV.crossOrigin='anonymous';
+  hV.src=SRC['4K'];
+  hV.addEventListener('canplaythrough',function(){
+    // Match current playback position
+    var t=V.currentTime||0;
+    V.src=SRC['4K'];V.load();
+    V.currentTime=t;
+    V.play().catch(function(){});
+    hV.remove();
+  },{once:true});
+}
+
+// Visibility: pause/resume (save bandwidth)
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden){try{V.pause();}catch(e){}
+  }else{try{V.play().catch(function(){});}catch(e){}
+  }
+});
+
+// Error handling: keep poster visible if all video fails
+V.addEventListener('error',function(){
+  // poster stays visible, cosmic canvas still runs
+});
+
+/* ---- Adaptive bootstrap sequence ---- */
+var Q=pickInitialQuality();
+
+// Delayed lazy load: let poster paint first, then load video
+if(document.readyState==='complete'){
+  initVideo(Q);
+}else{
+  window.addEventListener('load',function(){initVideo(Q);});
+}
+
+function initVideo(q){
+  // Small delay to ensure poster is painted
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){
+      loadAndPlay(q);
+
+      // Crossfade when video has enough data
+      function onCanPlay(){
+        revealVideo();
+        try{V.playbackRate=0.7;}catch(e){}
+        maybeUpgradeTo4K(q);
+        V.removeEventListener('canplay',onCanPlay);
+        V.removeEventListener('loadeddata',onCanPlay);
+      }
+      V.addEventListener('canplay',onCanPlay,{once:true});
+      V.addEventListener('loadeddata',onCanPlay,{once:true});
+
+      // Fallback: if canplay never fires (some browsers), show after timeout
+      setTimeout(function(){
+        if(!V.classList.contains('visible'))revealVideo();
+      },12000);
+    });
+  });
+}
+
+
+/* ============================================================
+ * COSMIC CANVAS OVERLAY (stars / nebula / shooting stars)
+ * Runs independently of video state
+ * ============================================================ */
+var c=document.getElementById('cosmos'),ctx=c.getContext('2d');
+var W,H,T=0;
+var stars=[],nebulas=[];
+
+function resize(){W=c.width=innerWidth;H=c.height=innerHeight;initAll();}
+window.addEventListener('resize',resize);
+function rand(a,b){return a+Math.random()*(b-a);}
+
+function initStars(){
+  stars=[];
+  for(var i=0;i<300;i++)stars.push({x:rand(0,W),y:rand(0,H),r:rand(.15,.55),a:rand(.06,.38),sp:rand(.0003,.001),tw:rand(.8,1.4),ph:rand(0,Math.PI*2)});
+  for(var i=0;i<70;i++)stars.push({x:rand(0,W),y:rand(0,H),r:rand(.4,1.1),a:rand(.18,.5),sp:rand(.0008,.0018),tw:rand(1.2,2.2),ph:rand(0,Math.PI*2),big:true});
+}
+function initNebulas(){
+  nebulas=[
+    {x:W*.2,y:H*.18,r:Math.min(W,H)*.4,c:'rgba(90,60,200,',a:.05},
+    {x:W*.8,y:H*.8,r:Math.min(W,H)*.32,c:'rgba(30,80,180,',a:.045},
+    {x:W*.55,y:H*.4,r:Math.min(W,H)*.25,c:'rgba(150,50,130,',a:.035}
+  ];
+}
+function initAll(){initStars();initNebulas();}
+
+function drawNebula(n){
+  ctx.globalCompositeOperation='screen';
+  var g=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,n.r);
+  g.addColorStop(0,n.c+n.a+')');g.addColorStop(1,n.c+'0)');
+  ctx.fillStyle=g;ctx.fillRect(n.x-n.r,n.y-n.r,n.r*2,n.r*2);
+  ctx.globalCompositeOperation='source-over';
+}
+function drawStar(s){
+  var tw=Math.sin(T*s.tw+s.ph)*.5+.5;
+  var al=s.a*(.35+tw*.65);
+  ctx.globalAlpha=al;
+  if(s.big){
+    var g=ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*3.2);
+    g.addColorStop(0,'rgba(225,230,255,1)');g.addColorStop(.4,'rgba(170,185,255,.35)');g.addColorStop(1,'rgba(150,170,255,0)');
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(s.x,s.y,s.r*3.2,0,Math.PI*2);ctx.fill();
+  }else{
+    ctx.fillStyle='#e6ebff';ctx.fillRect(s.x,s.y,s.r,s.r);
+  }
+  ctx.globalAlpha=1;
+}
+
+// shooting star
+var shooter={active:false,x:0,y:0,dx:0,dy:0,life:0,len:0};
+function maybeShooter(){
+  if(!shooter.active&&Math.random()<.0025){
+    shooter.active=true;shooter.x=rand(0,W*.7);shooter.y=rand(0,H*.45);
+    var ang=rand(.18,.55);shooter.len=rand(70,180);
+    shooter.dx=Math.cos(ang)*13;shooter.dy=Math.sin(ang)*13;shooter.life=1;
+  }
+}
+function drawShooter(){
+  if(!shooter.active)return;
+  ctx.globalCompositeOperation='screen';
+  var ex=shooter.x-shooter.dx*shooter.len/13,ey=shooter.y-shooter.dy*shooter.len/13;
+  var grad=ctx.createLinearGradient(shooter.x,shooter.y,ex,ey);
+  grad.addColorStop(0,'rgba(255,255,255,'+(shooter.life*.85)+')');
+  grad.addColorStop(1,'rgba(190,205,255,0)');
+  ctx.strokeStyle=grad;ctx.lineWidth=1.4;
+  ctx.beginPath();ctx.moveTo(shooter.x,shooter.y);ctx.lineTo(ex,ey);ctx.stroke();
+  ctx.globalCompositeOperation='source-over';
+  shooter.x+=shooter.dx;shooter.y+=shooter.dy;shooter.life-=.016;
+  if(shooter.life<=0||shooter.x>W+120||shooter.y>H+120)shooter.active=false;
+}
+
+function frame(){
+  T+=.016;
+  ctx.clearRect(0,0,W,H);
+  nebulas.forEach(drawNebula);
+  stars.forEach(drawStar);
+  maybeShooter();drawShooter();
+  requestAnimationFrame(frame);
+}
+
+resize();
+frame();
+})();
+</script>
+</body>
+</html>
