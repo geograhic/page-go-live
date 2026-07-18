@@ -41,8 +41,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'SF
 h1{font-size:clamp(2.6rem,6.5vw,5.2rem);font-weight:800;letter-spacing:-.025em;line-height:1.06;background:linear-gradient(135deg,#a5b4fc 0%,#c084fc 30%,#60a5fa 65%,#93c5fd 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:.35rem;text-shadow:0 0 40px rgba(120,140,255,.25);}
 .subtitle{font-size:clamp(.9rem,1.8vw,1.15rem);color:rgba(200,210,245,.66);font-weight:300;letter-spacing:.05em;margin-bottom:2.4rem;}
 
-.guide{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;max-width:760px;margin-bottom:2.4rem;}
-.gi{flex:1 1 200px;max-width:225px;padding:1.35rem 1.05rem;background:rgba(10,12,26,.5);border:1px solid rgba(135,125,195,.13);backdrop-filter:blur(16px);text-align:left;transition:border-color .3s,transform .22s,box-shadow .3s;position:relative;overflow:hidden;}
+.guide{display:flex;flex-direction:column;gap:.85rem;align-items:center;max-width:600px;margin-bottom:2.4rem;width:100%;}
+.gi{width:100%;max-width:600px;padding:1.35rem 1.3rem;background:rgba(10,12,26,.5);border:1px solid rgba(135,125,195,.13);backdrop-filter:blur(16px);text-align:left;transition:border-color .3s,transform .22s,box-shadow .3s;position:relative;overflow:hidden;}
 .gi::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:linear-gradient(180deg,#a78bfa,#6366f1);}
 .gi:hover{border-color:rgba(155,145,230,.38);transform:translateY(-2px);box-shadow:0 0 26px rgba(90,80,180,.22);}
 .gi-n{font-size:1.8rem;font-weight:800;color:rgba(167,139,250,.26);line-height:1;margin-bottom:.3rem;font-family:'SF Mono',Consolas,monospace;}
@@ -62,7 +62,7 @@ h1{font-size:clamp(2.6rem,6.5vw,5.2rem);font-weight:800;letter-spacing:-.025em;l
 .scanline{position:fixed;inset:0;z-index:4;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.0025) 2px,rgba(255,255,255,.0025) 4px);}
 
 @media(max-width:560px){
-  .guide{gap:.65rem;} .gi{padding:1rem .8rem;max-width:100%;flex:1 1 140px;}
+  .guide{gap:.6rem;} .gi{padding:1rem .9rem;}
   .cta-row{flex-direction:column;width:100%;} .btn{width:100%;justify-content:center;}
 }
 </style>
