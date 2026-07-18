@@ -28,7 +28,7 @@ html,body{width:100%;min-height:100%;overflow-x:hidden;overflow-y:auto;backgroun
   100%{transform:scale(1.06) translate(-0.3%,-0.2%);}
 }
 
-/* --- layer 1: NASA ISS video (progressive enhancement) --- */
+/* --- layer 1: NASA ISS video (HLS fragmented streaming) --- */
 #bgvideo{position:fixed;inset:0;z-index:1;width:100%;height:100%;object-fit:cover;object-position:center;opacity:0;filter:saturate(1.05) contrast(1.04);transition:opacity 2s ease;pointer-events:none;}
 #bgvideo.visible{opacity:.85;}
 
@@ -40,6 +40,12 @@ html,body{width:100%;min-height:100%;overflow-x:hidden;overflow-y:auto;backgroun
   radial-gradient(ellipse 120% 80% at 50% 30%, rgba(20,30,70,.12) 0%, transparent 55%),
   linear-gradient(180deg, rgba(0,0,0,.35) 0%, rgba(0,0,0,.15) 40%, rgba(0,0,0,.6) 100%);
   pointer-events:none;}
+
+/* --- subtle buffering shimmer while video loads --- */
+#poster.loading::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(110deg,transparent 30%,rgba(120,140,255,.04) 50%,transparent 70%);
+  background-size:200% 100%;animation:shimmer 2.4s linear infinite;}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
 .stage{position:relative;z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2.5rem 1.5rem;text-align:center;}
 
@@ -101,12 +107,10 @@ h1{font-size:clamp(2.6rem,6.5vw,5.2rem);font-weight:800;letter-spacing:-.025em;l
 <body>
 
 <!-- Layer 0: real NASA poster (Ken Burns animation, instant paint) -->
-<img id="poster" src="poster.jpg" alt="" aria-hidden="true">
+<img id="poster" class="loading" src="poster.jpg" alt="" aria-hidden="true">
 
-<!-- Layer 1: NASA ISS video (WeChat x5 compatible, progressive enhancement) -->
-<video id="bgvideo" autoplay muted loop playsinline webkit-playsinline
-  x5-video-player-type="h5" x5-video-player-fullscreen="" x5-webkit-airplay="allow"
-  preload="none"></video>
+<!-- Layer 1: NASA ISS video via HLS fragmented streaming -->
+<video id="bgvideo" autoplay muted loop playsinline webkit-playsinline preload="auto"></video>
 
 <!-- Layer 2+ -->
 <canvas id="cosmos"></canvas>
@@ -133,175 +137,148 @@ h1{font-size:clamp(2.6rem,6.5vw,5.2rem);font-weight:800;letter-spacing:-.025em;l
 
 <div class="note">背景影像：NASA ISS Ultra-HD Earth / DSCOVR EPIC（公共领域） &middot; svs.gsfc.nasa.gov / epic.gsfc.nasa.gov</div>
 
+<!-- Self-hosted hls.js (no external CDN → works in WeChat) -->
+<script src="hls.min.js"></script>
 <script>
 (function(){
 /* ============================================================
- * ADAPTIVE VIDEO ENGINE v7
- * - Poster has Ken Burns CSS zoom animation (always alive, zero download)
- * - Video is PURE progressive enhancement — skip on weak networks
- * - Smart network detection:
- *     saveData / slow-2g / 2g / 3g → SKIP video entirely
- *     4G < 2Mbps           → skip
- *     4G >= 2Mbps          → try 720p
- *     4G >= 5Mbps          → try 1080p
- *     4G >= 15Mbps         → try 4K
- *     no API               → try 720p (conservative)
- * - WeChat x5 compatibility attributes on <video> element
- * - Tap-to-unlock: first user interaction retries autoplay if blocked
- * - Shorter timeout (8s), faster fallback to animated poster+canvas
+ * HLS FRAGMENTED STREAMING ENGINE v8
+ * - Video is MANDATORY (per requirement): always attempt to load
+ * - Uses HLS (Media Source Extensions): segmented, progressive
+ *   → first ~1.5MB segment plays almost immediately
+ *   → subsequent segments stream in while playing (no full 27MB wait)
+ * - Single 1080p rendition → ZERO quality reduction (no ABR downshift)
+ * - Self-hosted hls.min.js (same-origin, WeChat-safe)
+ * - Native HLS for Safari/iOS; hls.js (MSE) for Chromium/WeChat
+ * - MP4 hotlink fallback if HLS entirely fails
+ * - Poster (Ken Burns) = buffering cover until video can play
+ * - Tap-to-unlock for autoplay-blocked browsers
+ * - Memory bounded: maxBufferLength=30s, backBuffer=30s
  * ============================================================ */
 
 var V = document.getElementById('bgvideo');
 var P = document.getElementById('poster');
+var HLS_URL = 'playlist.m3u8'; // same-origin, in this folder
 
-// Real NASA ISS Earth video renditions (all public domain)
-var SRC = {
-  '4K' : 'https://svs.gsfc.nasa.gov/vis/a030000/a030600/a030623/iss_red_camera_2015_3840x1920.mp4',
-  '1080':'https://svs.gsfc.nasa.gov/vis/a030000/a030600/a030623/iss_red_camera_2015_1080p.mp4',
-  '720':'https://svs.gsfc.nasa.gov/vis/a030000/a030600/a030623/iss_red_camera_2015_720p.mp4'
-};
+// NASA MP4 direct (last-resort fallback, hotlinked)
+var MP4_FALLBACK = 'https://svs.gsfc.nasa.gov/vis/a030000/a030600/a030623/iss_red_camera_2015_1080p.mp4';
 
-// Returns quality string, or null to SKIP video entirely
-function pickInitialQuality(){
-  var conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+var state = {hls:null, revealed:false, fallbackTried:false};
 
-  // No API available — conservative: try smallest source
-  if(!conn) return '720';
-
-  // Hard skip: data-saver or too-slow connections
-  if(conn.saveData) return null;
-  var t = conn.effectiveType||'';
-  if(t==='slow-2g'||t==='2g') return null;
-  if(t==='3g') return null;
-
-  if(t==='4g'){
-    var d = conn.downlink||0;
-    if(d>=15) return '4K';
-    if(d>=5)  return '1080';
-    if(d>=2)  return '720';
-    return null; // < 2Mbps even on "4G" — skip
-  }
-  return '720'; // unknown effectiveType but API exists
-}
-
-function loadAndPlay(q){
-  V.src = SRC[q];
-  V.load();
-  var p = V.play();
-  if(p) p.catch(function(){ /* autoplay may need user interaction */ });
-}
-
-// Crossfade from poster to video
+// Crossfade poster → video
 function revealVideo(){
-  if(V.classList.contains('visible')) return;
+  if(state.revealed) return;
+  state.revealed = true;
   V.classList.add('visible');
+  P.classList.remove('loading');
   P.style.animationPlayState='paused'; // pause Ken Burns when video takes over
-  setTimeout(function(){
-    if(V.classList.contains('visible')) P.style.display='none';
-  },2200);
+  setTimeout(function(){ if(state.revealed) P.style.display='none'; },2200);
 }
 
-// Upgrade quality when current plays stably
-function maybeUpgrade(currentQ){
-  if(currentQ==='4K'||!currentQ) return;
-  var target = currentQ==='720' ? '1080' : '4K';
-  var upgradeTimer, stallCount=0;
+// --- Try native HLS (Safari / iOS) ---
+function tryNativeHls(){
+  if(V.canPlayType('application/vnd.apple.mpegurl')){
+    V.src = HLS_URL;
+    V.addEventListener('loadedmetadata',function(){ V.play().catch(function(){}); },{once:true});
+    V.addEventListener('canplay',revealVideo,{once:true});
+    return true;
+  }
+  return false;
+}
 
-  V.addEventListener('waiting',function(){stallCount++;});
-  V.addEventListener('playing',function(){
-    clearTimeout(upgradeTimer);
-    upgradeTimer=setTimeout(function(){
-      if(stallCount<=1 && !document.hidden) doUpgrade(target);
-    },10000);
+// --- Try hls.js (Chromium / WeChat / Firefox) ---
+function tryHlsJs(){
+  if(typeof Hls === 'undefined' || !Hls.isSupported()) return false;
+  var hls = new Hls({
+    maxBufferLength: 30,          // keep ~30s buffered ahead
+    maxMaxBufferLength: 60,
+    maxBufferSize: 60*1000*1000,  // 60MB hard cap
+    backBufferLength: 30,         // keep 30s behind for seeking
+    capLevelToPlayerSize: false,  // DO NOT reduce quality by player size
+    startLevel: -1,               // auto (single rendition)
+    fragLoadingMaxRetry: 10,
+    fragLoadingRetryDelay: 800,
+    manifestLoadingMaxRetry: 6,
+    manifestLoadingRetryDelay: 800,
+    enableWorker: true            // demux off main thread (perf)
   });
+  state.hls = hls;
+  hls.loadSource(HLS_URL);
+  hls.attachMedia(V);
+  hls.on(Hls.Events.MANIFEST_PARSED,function(){
+    V.play().catch(function(){});
+  });
+  hls.on(Hls.Events.FRAG_BUFFERED,function(){ /* progressive playback */ });
+  hls.on(Hls.Events.ERROR,function(ev,data){
+    if(data.fatal){
+      switch(data.type){
+        case Hls.ErrorTypes.NETWORK_ERROR:
+          hls.startLoad(); // auto-recover network
+          break;
+        case Hls.ErrorTypes.MEDIA_ERROR:
+          hls.recoverMediaError();
+          break;
+        default:
+          // unrecoverable → fall back to MP4
+          cleanupHls();
+          tryMp4Fallback();
+      }
+    }
+  });
+  V.addEventListener('canplay',revealVideo,{once:true});
+  return true;
 }
 
-// Seamless hidden preload then swap
-function doUpgrade(targetQ){
-  var hV=document.createElement('video');
-  hV.muted=true;hV.preload='auto';
-  hV.src=SRC[targetQ];
-  hV.addEventListener('canplaythrough',function(){
-    var t=V.currentTime||0;
-    V.src=SRC[targetQ];V.load();
-    V.currentTime=t;
-    V.play().catch(function(){});
-    hV.remove();
+function cleanupHls(){
+  if(state.hls){ try{state.hls.destroy();}catch(e){} state.hls=null; }
+}
+
+// --- Last-resort: direct MP4 (progressive download) ---
+function tryMp4Fallback(){
+  if(state.fallbackTried) return;
+  state.fallbackTried = true;
+  console.log('[video] HLS failed → MP4 fallback');
+  V.src = MP4_FALLBACK;
+  V.addEventListener('canplay',revealVideo,{once:true});
+  V.load();
+  V.play().catch(function(){});
+  // If MP4 also fails, poster+canvas remains (still acceptable)
+  V.addEventListener('error',function(){
+    P.classList.remove('loading');
+    P.style.animationPlayState='running';
   },{once:true});
 }
 
-// Visibility: pause/resume (save bandwidth)
-document.addEventListener('visibilitychange',function(){
-  if(document.hidden){try{V.pause();}catch(e){}
-  }else{try{V.play().catch(function(){});}catch(e){}
-  }
-});
-
-// Error: re-enable Ken Burns poster
-V.addEventListener('error',function(){
-  P.style.animationPlayState='running';
-});
-
-/* ---- TAP-TO-UNLOCK for browsers that block autoplay (WeChat, iOS Safari) ---- */
+// --- Tap-to-unlock (autoplay blocked by iOS/WeChat) ---
 var _tapUnlocked=false;
 function tryTapUnlock(){
-  if(_tapUnlocked||V.classList.contains('visible')||!V.src) return;
+  if(_tapUnlocked||state.revealed) return;
   _tapUnlocked=true;
   V.play().then(function(){ revealVideo(); }).catch(function(){});
 }
 document.addEventListener('touchstart',tryTapUnlock,{once:true});
 document.addEventListener('click',tryTapUnlock,{once:true});
 
-/* ---- Bootstrap sequence ---- */
-var Q=pickInitialQuality();
+// --- Visibility: save bandwidth when hidden ---
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden){try{V.pause();}catch(e){}}
+  else{try{V.play().catch(function(){});}catch(e){}}
+});
 
-if(document.readyState==='complete'){
-  initVideo(Q);
-}else{
-  window.addEventListener('load',function(){initVideo(Q);});
-}
-
-function initVideo(q){
-  // Skip video on weak networks — animated poster + canvas IS the experience
-  if(!q){
-    console.log('[video] Skipped: weak network or data-saver mode.');
-    enhanceForNoVideo();
-    return;
+// --- Boot ---
+(function boot(){
+  function start(){
+    if(tryNativeHls()) return;
+    if(tryHlsJs()) return;
+    tryMp4Fallback();
   }
-
-  requestAnimationFrame(function(){
-    requestAnimationFrame(function(){
-      loadAndPlay(q);
-
-      function onCanPlay(){
-        revealVideo();
-        try{V.playbackRate=0.7;}catch(e){}
-        maybeUpgrade(q);
-        V.removeEventListener('canplay',onCanPlay);
-        V.removeEventListener('loadeddata',onCanPlay);
-      }
-      V.addEventListener('canplay',onCanPlay,{once:true});
-      V.addEventListener('loadeddata',onCanPlay,{once:true});
-
-      // Faster fallback: 8s timeout (was 12s)
-      setTimeout(function(){
-        if(!V.classList.contains('visible')){
-          console.log('[video] 8s timeout — keeping animated poster + canvas');
-        }
-      },8000);
-    });
-  });
-}
-
-/* ---- Enhance experience when video is skipped ---- */
-function enhanceForNoVideo(){
-  P.style.opacity='0.96'; // slightly more visible
-}
-
+  if(document.readyState==='complete') start();
+  else window.addEventListener('load',start);
+})();
 
 /* ============================================================
  * COSMIC CANVAS OVERLAY (stars / nebula / shooting stars)
- * Independent of video state; slightly richer on mobile/no-video
+ * Independent of video state; slightly richer on mobile
  * ============================================================ */
 var c=document.getElementById('cosmos'),ctx=c.getContext('2d');
 var W,H,T=0;
@@ -313,7 +290,6 @@ function rand(a,b){return a+Math.random()*(b-a);}
 
 function initStars(){
   stars=[];
-  // More stars on smaller screens for richer fallback experience
   var baseCount = W<=520 ? 420 : (W<=720 ? 360 : 300);
   for(var i=0;i<baseCount;i++)
     stars.push({x:rand(0,W),y:rand(0,H),r:rand(.15,.55),a:rand(.08,.42),sp:rand(.0003,.001),tw:rand(.8,1.4),ph:rand(0,Math.PI*2)});
@@ -351,7 +327,6 @@ function drawStar(s){
   ctx.globalAlpha=1;
 }
 
-// shooting star
 var shooter={active:false,x:0,y:0,dx:0,dy:0,life:0,len:0};
 function maybeShooter(){
   if(!shooter.active&&Math.random()<.0025){
