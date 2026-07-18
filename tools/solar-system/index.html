@@ -20,10 +20,15 @@
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;border-radius:0!important;}
 html,body{width:100%;min-height:100%;overflow-x:hidden;overflow-y:auto;background:#000;font-family:'SF Pro Display','PingFang SC','-apple-system','Segoe UI',sans-serif;color:#e8e8f0;cursor:default;-webkit-font-smoothing:antialiased;}
 
-/* --- layer 0: real NASA poster (instant, no JS needed) --- */
-#poster{position:fixed;inset:0;z-index:0;width:100%;height:100%;object-fit:cover;object-position:center;opacity:.92;pointer-events:none;}
+/* --- layer 0: real NASA poster (instant, Ken Burns motion) --- */
+#poster{position:fixed;inset:0;z-index:0;width:100%;height:100%;object-fit:cover;object-position:center;opacity:.92;pointer-events:none;
+  animation:kenburns 24s ease-in-out infinite alternate;}
+@keyframes kenburns{
+  0%{transform:scale(1.0) translate(0,0);}
+  100%{transform:scale(1.06) translate(-0.3%,-0.2%);}
+}
 
-/* --- layer 1: NASA ISS 4K video (lazy-loaded) --- */
+/* --- layer 1: NASA ISS video (progressive enhancement) --- */
 #bgvideo{position:fixed;inset:0;z-index:1;width:100%;height:100%;object-fit:cover;object-position:center;opacity:0;filter:saturate(1.05) contrast(1.04);transition:opacity 2s ease;pointer-events:none;}
 #bgvideo.visible{opacity:.85;}
 
@@ -95,11 +100,13 @@ h1{font-size:clamp(2.6rem,6.5vw,5.2rem);font-weight:800;letter-spacing:-.025em;l
 </head>
 <body>
 
-<!-- Layer 0: real NASA EPIC Earth poster (instant paint) -->
+<!-- Layer 0: real NASA poster (Ken Burns animation, instant paint) -->
 <img id="poster" src="poster.jpg" alt="" aria-hidden="true">
 
-<!-- Layer 1: NASA ISS 4K video (loaded by adaptive engine) -->
-<video id="bgvideo" autoplay muted loop playsinline preload="none"></video>
+<!-- Layer 1: NASA ISS video (WeChat x5 compatible, progressive enhancement) -->
+<video id="bgvideo" autoplay muted loop playsinline webkit-playsinline
+  x5-video-player-type="h5" x5-video-player-fullscreen="" x5-webkit-airplay="allow"
+  preload="none"></video>
 
 <!-- Layer 2+ -->
 <canvas id="cosmos"></canvas>
@@ -129,12 +136,19 @@ h1{font-size:clamp(2.6rem,6.5vw,5.2rem);font-weight:800;letter-spacing:-.025em;l
 <script>
 (function(){
 /* ============================================================
- * ADAPTIVE VIDEO ENGINE
- * - Lazy loads after page interactive (poster shows instantly)
- * - Uses Network Information API for initial quality selection
- * - All sources are real NASA public-domain ISS Earth videos
- * - Auto-upgrades to 4K when bandwidth allows (adaptive bitrate)
- * - Pauses when tab hidden (saves bandwidth)
+ * ADAPTIVE VIDEO ENGINE v7
+ * - Poster has Ken Burns CSS zoom animation (always alive, zero download)
+ * - Video is PURE progressive enhancement — skip on weak networks
+ * - Smart network detection:
+ *     saveData / slow-2g / 2g / 3g → SKIP video entirely
+ *     4G < 2Mbps           → skip
+ *     4G >= 2Mbps          → try 720p
+ *     4G >= 5Mbps          → try 1080p
+ *     4G >= 15Mbps         → try 4K
+ *     no API               → try 720p (conservative)
+ * - WeChat x5 compatibility attributes on <video> element
+ * - Tap-to-unlock: first user interaction retries autoplay if blocked
+ * - Shorter timeout (8s), faster fallback to animated poster+canvas
  * ============================================================ */
 
 var V = document.getElementById('bgvideo');
@@ -147,67 +161,69 @@ var SRC = {
   '720':'https://svs.gsfc.nasa.gov/vis/a030000/a030600/a030623/iss_red_camera_2015_720p.mp4'
 };
 
-// Detect optimal starting quality via Network Information API
+// Returns quality string, or null to SKIP video entirely
 function pickInitialQuality(){
   var conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-  if(!conn) return '4K'; // no API → assume good net, aim for best
 
-  if(conn.saveData) return '720';
+  // No API available — conservative: try smallest source
+  if(!conn) return '720';
+
+  // Hard skip: data-saver or too-slow connections
+  if(conn.saveData) return null;
   var t = conn.effectiveType||'';
-  if(t==='slow-2g'||t==='2g') return '720';
-  if(t==='3g') return '1080';
+  if(t==='slow-2g'||t==='2g') return null;
+  if(t==='3g') return null;
+
   if(t==='4g'){
-    var d = conn.downlink; // Mbps estimate
-    if(d>=15) return '4K';      // fast 4G → go 4K
-    if(d>=5)  return '1080';     // decent 4G → 1080 first, upgrade later
-    return '720';               // weak 4G
+    var d = conn.downlink||0;
+    if(d>=15) return '4K';
+    if(d>=5)  return '1080';
+    if(d>=2)  return '720';
+    return null; // < 2Mbps even on "4G" — skip
   }
-  return '4K'; // unknown → optimistic
+  return '720'; // unknown effectiveType but API exists
 }
 
-// Load and play a given quality
 function loadAndPlay(q){
   V.src = SRC[q];
   V.load();
   var p = V.play();
-  if(p)p.catch(function(){ /* autoplay may need interaction */ });
+  if(p) p.catch(function(){ /* autoplay may need user interaction */ });
 }
 
-// Show video (crossfade from poster)
+// Crossfade from poster to video
 function revealVideo(){
+  if(V.classList.contains('visible')) return;
   V.classList.add('visible');
-  setTimeout(function(){ P.style.display='none'; },2200);
+  P.style.animationPlayState='paused'; // pause Ken Burns when video takes over
+  setTimeout(function(){
+    if(V.classList.contains('visible')) P.style.display='none';
+  },2200);
 }
 
-// Upgrade to 4K when current source plays stably
-function maybeUpgradeTo4K(currentQ){
-  if(currentQ==='4K')return;
-  var upgradeTimer;
-  var stallCount=0;
+// Upgrade quality when current plays stably
+function maybeUpgrade(currentQ){
+  if(currentQ==='4K'||!currentQ) return;
+  var target = currentQ==='720' ? '1080' : '4K';
+  var upgradeTimer, stallCount=0;
 
-  // Monitor for stalls (buffer underruns)
   V.addEventListener('waiting',function(){stallCount++;});
   V.addEventListener('playing',function(){
-    // Reset timer each time we resume playing
     clearTimeout(upgradeTimer);
-    // If playing stably for 10s with ≤1 stall, upgrade
     upgradeTimer=setTimeout(function(){
-      if(stallCount<=1 && !document.hidden){
-        upgradeTo4K();
-      }
+      if(stallCount<=1 && !document.hidden) doUpgrade(target);
     },10000);
   });
 }
 
-// Seamless upgrade to 4K: preload hidden, then swap
-function upgradeTo4K(){
+// Seamless hidden preload then swap
+function doUpgrade(targetQ){
   var hV=document.createElement('video');
-  hV.muted=true;hV.preload='auto';hV.crossOrigin='anonymous';
-  hV.src=SRC['4K'];
+  hV.muted=true;hV.preload='auto';
+  hV.src=SRC[targetQ];
   hV.addEventListener('canplaythrough',function(){
-    // Match current playback position
     var t=V.currentTime||0;
-    V.src=SRC['4K'];V.load();
+    V.src=SRC[targetQ];V.load();
     V.currentTime=t;
     V.play().catch(function(){});
     hV.remove();
@@ -221,15 +237,24 @@ document.addEventListener('visibilitychange',function(){
   }
 });
 
-// Error handling: keep poster visible if all video fails
+// Error: re-enable Ken Burns poster
 V.addEventListener('error',function(){
-  // poster stays visible, cosmic canvas still runs
+  P.style.animationPlayState='running';
 });
 
-/* ---- Adaptive bootstrap sequence ---- */
+/* ---- TAP-TO-UNLOCK for browsers that block autoplay (WeChat, iOS Safari) ---- */
+var _tapUnlocked=false;
+function tryTapUnlock(){
+  if(_tapUnlocked||V.classList.contains('visible')||!V.src) return;
+  _tapUnlocked=true;
+  V.play().then(function(){ revealVideo(); }).catch(function(){});
+}
+document.addEventListener('touchstart',tryTapUnlock,{once:true});
+document.addEventListener('click',tryTapUnlock,{once:true});
+
+/* ---- Bootstrap sequence ---- */
 var Q=pickInitialQuality();
 
-// Delayed lazy load: let poster paint first, then load video
 if(document.readyState==='complete'){
   initVideo(Q);
 }else{
@@ -237,34 +262,46 @@ if(document.readyState==='complete'){
 }
 
 function initVideo(q){
-  // Small delay to ensure poster is painted
+  // Skip video on weak networks — animated poster + canvas IS the experience
+  if(!q){
+    console.log('[video] Skipped: weak network or data-saver mode.');
+    enhanceForNoVideo();
+    return;
+  }
+
   requestAnimationFrame(function(){
     requestAnimationFrame(function(){
       loadAndPlay(q);
 
-      // Crossfade when video has enough data
       function onCanPlay(){
         revealVideo();
         try{V.playbackRate=0.7;}catch(e){}
-        maybeUpgradeTo4K(q);
+        maybeUpgrade(q);
         V.removeEventListener('canplay',onCanPlay);
         V.removeEventListener('loadeddata',onCanPlay);
       }
       V.addEventListener('canplay',onCanPlay,{once:true});
       V.addEventListener('loadeddata',onCanPlay,{once:true});
 
-      // Fallback: if canplay never fires (some browsers), show after timeout
+      // Faster fallback: 8s timeout (was 12s)
       setTimeout(function(){
-        if(!V.classList.contains('visible'))revealVideo();
-      },12000);
+        if(!V.classList.contains('visible')){
+          console.log('[video] 8s timeout — keeping animated poster + canvas');
+        }
+      },8000);
     });
   });
+}
+
+/* ---- Enhance experience when video is skipped ---- */
+function enhanceForNoVideo(){
+  P.style.opacity='0.96'; // slightly more visible
 }
 
 
 /* ============================================================
  * COSMIC CANVAS OVERLAY (stars / nebula / shooting stars)
- * Runs independently of video state
+ * Independent of video state; slightly richer on mobile/no-video
  * ============================================================ */
 var c=document.getElementById('cosmos'),ctx=c.getContext('2d');
 var W,H,T=0;
@@ -276,14 +313,19 @@ function rand(a,b){return a+Math.random()*(b-a);}
 
 function initStars(){
   stars=[];
-  for(var i=0;i<300;i++)stars.push({x:rand(0,W),y:rand(0,H),r:rand(.15,.55),a:rand(.06,.38),sp:rand(.0003,.001),tw:rand(.8,1.4),ph:rand(0,Math.PI*2)});
-  for(var i=0;i<70;i++)stars.push({x:rand(0,W),y:rand(0,H),r:rand(.4,1.1),a:rand(.18,.5),sp:rand(.0008,.0018),tw:rand(1.2,2.2),ph:rand(0,Math.PI*2),big:true});
+  // More stars on smaller screens for richer fallback experience
+  var baseCount = W<=520 ? 420 : (W<=720 ? 360 : 300);
+  for(var i=0;i<baseCount;i++)
+    stars.push({x:rand(0,W),y:rand(0,H),r:rand(.15,.55),a:rand(.08,.42),sp:rand(.0003,.001),tw:rand(.8,1.4),ph:rand(0,Math.PI*2)});
+  var bigCount = W<=520 ? 100 : 70;
+  for(var i=0;i<bigCount;i++)
+    stars.push({x:rand(0,W),y:rand(0,H),r:rand(.4,1.1),a:rand(.22,.55),sp:rand(.0008,.0018),tw:rand(1.2,2.2),ph:rand(0,Math.PI*2),big:true});
 }
 function initNebulas(){
   nebulas=[
-    {x:W*.2,y:H*.18,r:Math.min(W,H)*.4,c:'rgba(90,60,200,',a:.05},
-    {x:W*.8,y:H*.8,r:Math.min(W,H)*.32,c:'rgba(30,80,180,',a:.045},
-    {x:W*.55,y:H*.4,r:Math.min(W,H)*.25,c:'rgba(150,50,130,',a:.035}
+    {x:W*.2,y:H*.18,r:Math.min(W,H)*.4,c:'rgba(90,60,200,',a:.055},
+    {x:W*.8,y:H*.8,r:Math.min(W,H)*.32,c:'rgba(30,80,180,',a:.05},
+    {x:W*.55,y:H*.4,r:Math.min(W,H)*.25,c:'rgba(150,50,130,',a:.04}
   ];
 }
 function initAll(){initStars();initNebulas();}
