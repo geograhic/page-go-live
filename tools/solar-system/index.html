@@ -1,79 +1,223 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Solar System · Endril Tools</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solar System — 太阳系漫游工具 | Endril Tools</title>
+<meta name="description" content="基于真实天文数据的交互式太阳系三维漫游工具。">
+<link rel="canonical" href="https://html.endril.com/tools/solar-system/">
+<meta property="og:title" content="Solar System — 太阳系漫游 | Endril Tools">
+<meta property="og:url" content="https://html.endril.com/tools/solar-system/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Endril">
 <style>
-  :root{
-    --bg1:#05070f; --bg2:#0a0e1a; --accent:#7dd3fc; --accent2:#a78bfa;
-    --text:#e8edf6; --muted:#8a93a6;
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  html,body{height:100%}
-  body{
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;
-    color:var(--text);
-    background:
-      radial-gradient(1200px 600px at 70% -10%, rgba(124,58,237,.25), transparent 60%),
-      radial-gradient(900px 500px at 10% 110%, rgba(45,212,191,.18), transparent 55%),
-      linear-gradient(160deg,var(--bg1),var(--bg2));
-    min-height:100%;
-    display:flex; align-items:center; justify-content:center;
-    overflow:hidden; position:relative;
-  }
-  .stars{position:fixed; inset:0; pointer-events:none;
-    background-image:
-      radial-gradient(1px 1px at 20% 30%, #fff, transparent),
-      radial-gradient(1px 1px at 80% 20%, #cbd5e1, transparent),
-      radial-gradient(1.5px 1.5px at 50% 70%, #fff, transparent),
-      radial-gradient(1px 1px at 35% 80%, #e2e8f0, transparent),
-      radial-gradient(1px 1px at 65% 50%, #fff, transparent),
-      radial-gradient(1.5px 1.5px at 90% 80%, #cbd5e1, transparent);
-    opacity:.6; animation:tw 4s ease-in-out infinite alternate;
-  }
-  @keyframes tw{from{opacity:.35}to{opacity:.75}}
-  .card{
-    position:relative; z-index:2; width:min(520px,90vw); padding:40px 36px;
-    border-radius:22px; background:rgba(255,255,255,.06);
-    border:1px solid rgba(255,255,255,.12);
-    backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
-    box-shadow:0 20px 60px rgba(0,0,0,.45); text-align:center;
-  }
-  .brand{font-size:13px; letter-spacing:.28em; color:var(--muted); text-transform:uppercase; margin-bottom:18px}
-  .title{
-    font-size:34px; font-weight:800; line-height:1.1; margin-bottom:10px;
-    background:linear-gradient(90deg,var(--accent),var(--accent2));
-    -webkit-background-clip:text; background-clip:text; color:transparent;
-  }
-  .sub{color:var(--muted); font-size:15px; margin-bottom:22px}
-  .note{font-size:13px; color:var(--muted); line-height:1.7; margin-bottom:26px}
-  .links{display:flex; gap:12px; justify-content:center; flex-wrap:wrap}
-  a.btn{
-    text-decoration:none; font-size:14px; font-weight:600; padding:11px 20px;
-    border-radius:12px; color:var(--text); border:1px solid rgba(255,255,255,.16);
-    background:rgba(255,255,255,.05); transition:.2s;
-  }
-  a.btn:hover{background:rgba(255,255,255,.12); transform:translateY(-1px)}
-  a.btn.primary{background:linear-gradient(90deg,rgba(125,211,252,.9),rgba(167,139,250,.9)); color:#06121f; border:none}
-  .foot{margin-top:26px; font-size:11px; color:rgba(138,147,166,.7)}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;border-radius:0!important;}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'SF Pro Display','PingFang SC','-apple-system','Segoe UI',sans-serif;color:#e8e8f0;cursor:default;-webkit-font-smoothing:antialiased;}
+#cosmos{position:fixed;inset:0;z-index:0;width:100%;height:100%;}
+#overlay{position:fixed;inset:0;z-index:1;background:radial-gradient(ellipse 130% 85% at 25% 15%,rgba(45,20,95,.32) 0%,transparent 58%),radial-gradient(ellipse 110% 65% at 78% 82%,rgba(8,35,75,.28) 0%,transparent 52%),linear-gradient(180deg,rgba(0,0,0,0) 0%,rgba(0,0,0,.5) 100%);pointer-events:none;}
+
+.stage{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2.5rem 1.5rem;text-align:center;}
+
+.badge{display:inline-block;padding:.32rem .85rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:rgba(175,185,225,.82);font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;backdrop-filter:blur(10px);margin-bottom:2.2rem;}
+
+.title-block{max-width:700px;}
+h1{font-size:clamp(2.6rem,6.5vw,5.2rem);font-weight:800;letter-spacing:-.025em;line-height:1.06;background:linear-gradient(135deg,#a5b4fc 0%,#c084fc 30%,#60a5fa 65%,#93c5fd 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:.35rem;}
+.subtitle{font-size:clamp(.9rem,1.8vw,1.15rem);color:rgba(195,205,240,.6);font-weight:300;letter-spacing:.05em;margin-bottom:2.4rem;}
+
+.guide{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;max-width:740px;margin-bottom:2.4rem;}
+.gi{flex:1 1 200px;max-width:220px;padding:1.35rem 1.05rem;background:rgba(12,10,28,.55);border:1px solid rgba(135,125,195,.13);backdrop-filter:blur(18px);text-align:left;transition:border-color .3s,transform .22s;position:relative;overflow:hidden;}
+.gi::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:linear-gradient(180deg,#a78bfa,#6366f1);}
+.gi:hover{border-color:rgba(155,145,230,.36);transform:translateY(-2px);}
+.gi-n{font-size:1.85rem;font-weight:800;color:rgba(167,139,250,.26);line-height:1;margin-bottom:.3rem;font-family:'SF Mono',Consolas,monospace;}
+.gi-l{font-size:.8rem;font-weight:600;color:rgba(218,213,248,.88);margin-bottom:.28rem;}
+.gi-d{font-size:.7rem;color:rgba(168,162,208,.52);line-height:1.55;}
+
+.cta-row{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;align-items:center;}
+.btn{padding:.82rem 2.1rem;font-size:.83rem;font-weight:600;letter-spacing:.04em;text-decoration:none;border:1px solid transparent;cursor:pointer;transition:all .25s;display:inline-flex;align-items:center;gap:.5rem;}
+.btn-p{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border-color:rgba(135,118,255,.38);}
+.btn-p:hover{background:linear-gradient(135deg,#7b7ff2,#9c6df6);box-shadow:0 0 32px rgba(99,102,241,.28);}
+.btn-g{background:transparent;color:rgba(198,193,235,.78);border-color:rgba(158,153,212,.23);}
+.btn-g:hover{color:#fff;border-color:rgba(175,170,228,.48);background:rgba(255,255,255,.03);}
+
+.note{position:fixed;bottom:1.1rem;left:50%;transform:translateX(-50%);z-index:3;font-size:.63rem;color:rgba(148,143,188,.32);letter-spacing:.025em;text-align:center;white-space:nowrap;}
+.scanline{position:fixed;inset:0;z-index:3;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.003) 2px,rgba(255,255,255,.003) 4px);}
+
+@media(max-width:520px){
+  .guide{gap:.65rem;} .gi{padding:1rem .8rem;max-width:100%;flex:1 1 140px;}
+  .cta-row{flex-direction:column;width:100%;} .btn{width:100%;justify-content:center;}
+}
 </style>
 </head>
 <body>
-  <div class="stars"></div>
-  <div class="card">
-    <div class="brand">Endril · Tools</div>
-    <div class="title">Solar System</div>
-    <div class="sub">太阳系漫游工具 · 即将上线</div>
-    <div class="note">
-      本工具基于 <strong>Solar-Wanderer</strong>（MIT License, © 2026 hyqzz）二创整合，<br/>
-      提供交互式太阳系三维可视化。正式版本正在打磨中。
-    </div>
-    <div class="links">
-      <a class="btn primary" href="https://html.endril.com">返回 Endril</a>
-      <a class="btn" href="https://github.com/hyqzz/Solar-Wanderer" target="_blank" rel="noopener">查看源码</a>
-    </div>
-    <div class="foot">Temporary landing page · 正式版上线后此页将被替换</div>
+
+<canvas id="cosmos"></canvas>
+<div id="overlay"></div>
+<div class="scanline"></div>
+
+<div class="stage">
+  <div class="badge">Endril &middot; Tools</div>
+  <div class="title-block">
+    <h1>Solar System</h1>
+    <p class="subtitle">以光年丈量宇宙 &middot; 用指尖触碰星辰</p>
   </div>
+  <div class="guide">
+    <div class="gi"><div class="gi-n">01</div><div class="gi-l">真实轨道数据</div><div class="gi-d">NASA JPL 星历驱动<br>八大行星实时位置模拟</div></div>
+    <div class="gi"><div class="gi-n">02</div><div class="gi-l">沉浸式探索</div><div class="gi-d">自由缩放 &middot; 时间加速<br>从太阳到冥王星一镜到底</div></div>
+    <div class="gi"><div class="gi-n">03</div><div class="gi-l">开源项目</div><div class="gi-d">基于 Solar-Wanderer 构建<br>MIT 协议 &middot; 三维交互体验</div></div>
+  </div>
+  <div class="cta-row">
+    <a href="https://github.com/hyqzz/Solar-Wanderer" class="btn btn-p" target="_blank" rel="noopener">&#9654; 访问 Solar-Wanderer</a>
+    <a href="https://endril.com" class="btn btn-g" target="_blank" rel="noopener">返回 Endril</a>
+  </div>
+</div>
+
+<div class="note">Powered by Solar-Wanderer (MIT) &middot; Hosted on Endril</div>
+
+<script>
+(function(){
+var c=document.getElementById('cosmos'),ctx=c.getContext('2d');
+var W,H,T=0;
+var stars=[],nebulas=[],planets=[];
+
+function resize(){W=c.width=innerWidth;H=c.height=innerHeight;initAll();}
+window.addEventListener('resize',resize);
+
+function rand(a,b){return a+Math.random()*(b-a);}
+function initStars(){
+  stars=[];
+  for(var i=0;i<280;i++)stars.push({x:rand(0,W),y:rand(0,H),r:rand(.15,.55),a:rand(.08,.4),sp:rand(.0002,.0008),tw:rand(.8,1.2),ph:rand(0,Math.PI*2)});
+  for(var i=0;i<80;i++)stars.push({x:rand(0,W),y:rand(0,H),r:rand(.4,1.1),a:rand(.2,.55),sp:rand(.0006,.0015),tw:rand(1.2,2),ph:rand(0,Math.PI*2),big:true});
+}
+function initNebulas(){
+  nebulas=[
+    {x:W*.22,y:H*.16,r:Math.min(W,H)*.35,c:'rgba(120,60,200,',a:.06},
+    {x:W*.78,y:H*.82,r:Math.min(W,H)*.28,c:'rgba(40,80,180,',a:.05},
+    {x:W*.6,y:H*.3,r:Math.min(W,H)*.22,c:'rgba(160,60,140,',a:.04}
+  ];
+}
+function initPlanets(){
+  var cx=W*.72,cy=H*.68;
+  planets=[
+    {cx:W*.22,cy:H*.72,r:38,clr:'#cddc39',speed:.003,ang:0,name:'earth'},
+    {cx:W*.75,cy:H*.22,r:18,clr:'#e0e0e0',speed:.007,ang:2.3,name:'moon',parent:0,orbitR:70},
+    {cx:W*.12,cy:H*.25,r:55,clr:'#ff7043',speed:.0018,ang:4,name:'mars'}
+  ];
+}
+function initAll(){initStars();initNebulas();initPlanets();}
+
+// --- draw ---
+function drawNebula(n){
+  var g=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,n.r);
+  g.addColorStop(0,n.c+n.a+')');g.addColorStop(1,n.c+'0)');
+  ctx.fillStyle=g;ctx.fillRect(n.x-n.r,n.y-n.r,n.r*2,n.r*2);
+}
+
+function drawPlanet(p){
+  ctx.save();
+  var px=p.cx,py=p.cy;
+  if(p.parent!==undefined){
+    var par=planets[p.parent];
+    px=par.cx+Math.cos(T*p.speed+p.ang)*p.orbitR;
+    py=par.cy+Math.sin(T*p.speed+p.ang)*p.orbitR;
+  }else{
+    // orbit motion for standalone planets
+    var orbR=p.r*3+20;
+    px=p.cx+Math.cos(T*p.speed)*orbR;
+    py=p.cy+Math.sin(T*p.speed)*orbR;
+  }
+  p.curX=px;p.curY=py;
+
+  // glow
+  var gl=ctx.createRadialGradient(px,py,p.r*.4,px,py,p.r*2.8);
+  gl.addColorStop(0,p.clr+'18');gl.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=gl;ctx.beginPath();ctx.arc(px,py,p.r*2.8,0,Math.PI*2);ctx.fill();
+
+  // body gradient
+  var body=ctx.createRadialGradient(px-p.r*.3,py-p.r*.3,p.r*.1,px,py,p.r);
+  body.addColorStop(0,'#fff');body.addColorStop(.25,p.clr);body.addColorStop(1,'#111');
+  ctx.fillStyle=body;ctx.beginPath();ctx.arc(px,py,p.r,0,Math.PI*2);ctx.fill();
+
+  // atmosphere rim
+  ctx.strokeStyle=p.clr+'40';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(px,py,p.r+2,0,Math.PI*2);ctx.stroke();
+
+  // earth special: continents hint
+  if(p.name==='earth'){
+    ctx.save();
+    ctx.beginPath();ctx.arc(px,py,p.r,0,Math.PI*2);ctx.clip();
+    ctx.fillStyle='rgba(76,175,80,.25)';
+    ctx.beginPath();ctx.ellipse(px-p.r*.25,py-pr*.15,p.r*.5,p.r*.35,-.3,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.ellipse(px+p.r*.2,py+p.r*.3,p.r*.35,p.r*.25,.5,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+  }
+
+  // moon orbit line
+  if(p.parent!==undefined){
+    var par=planets[p.parent];
+    ctx.strokeStyle='rgba(255,255,255,.07)';ctx.lineWidth=.5;
+    ctx.beginPath();ctx.arc(par.curX||par.cx,par.curY||par.cy,p.orbitR,0,Math.PI*2);ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+function drawStar(s){
+  var twinkle=s.big?Math.sin(T*s.tw*3+s.ph)*.3+.7:Math.sin(T*s.tw+s.ph)*.15+.85;
+  var alpha=s.a*twinkle;
+  ctx.globalAlpha=alpha;
+  if(s.big){
+    var g=ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*3);
+    g.addColorStop(0,'rgba(220,225,255,1)');g.addColorStop(.4,'rgba(180,190,255,.3)');g.addColorStop(1,'rgba(150,170,255,0)');
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(s.x,s.y,s.r*3,0,Math.PI*2);ctx.fill();
+  }else{
+    ctx.fillStyle='#e8ecff';ctx.fillRect(s.x,s.y,s.r,s.r);
+  }
+  ctx.globalAlpha=1;
+}
+
+// --- shooting star ---
+var shooter={active:false,x:0,y:0,dx:0,dy:0,life:0,len:0};
+function maybeShooter(){
+  if(!shooter.active&&Math.random()<.003){
+    shooter.active=true;shooter.x=rand(0,W*.7);shooter.y=rand(0,H*.4);
+    var ang=rand(.2,.6);shooter.len=rand(60,160);
+    shooter.dx=Math.cos(ang)*12;shooter.dy=Math.sin(ang)*12;shooter.life=1;
+  }
+}
+function drawShooter(){
+  if(!shooter.active)return;
+  ctx.save();
+  var grad=ctx.createLinearGradient(shooter.x,shooter.y,shooter.x-shooter.dx*shooter.len/12,shooter.y-shooter.dy*shooter.len/12);
+  grad.addColorStop(0,'rgba(255,255,255,'+(shooter.life*.8)+')');
+  grad.addColorStop(1,'rgba(200,210,255,0)');
+  ctx.strokeStyle=grad;ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(shooter.x,shooter.y);
+  ctx.lineTo(shooter.x-shooter.dx*shooter.len/12,shooter.y-shooter.dy*shooter.len/12);ctx.stroke();
+  ctx.restore();
+  shooter.x+=shooter.dx;shooter.y+=shooter.dy;shooter.life-=.018;
+  if(shooter.life<=0||shooter.x>W+100||shooter.y>H+100)shooter.active=false;
+}
+
+// --- loop ---
+function frame(){
+  T+=.016;
+  ctx.clearRect(0,0,W,H);
+
+  // deep space base
+  var bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#05030e');bg.addColorStop(.35,'#0a0620');bg.addColorStop(.7,'#070d1a');bg.addColorStop(1,'#030810');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+
+  nebulas.forEach(drawNebula);
+  stars.forEach(drawStar);
+  maybeShooter();drawShooter();
+  planets.forEach(drawPlanet);
+
+  requestAnimationFrame(frame);
+}
+
+resize();
+frame();
+})();
+</script>
 </body>
 </html>
