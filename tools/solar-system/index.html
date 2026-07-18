@@ -220,13 +220,13 @@ function tryNativeHls(){
 function tryHlsJs(){
   if(typeof Hls === 'undefined' || !Hls.isSupported()) return false;
   var hls = new Hls({
-    capLevelToPlayerSize: true,   // phones don't pull 1080p they can't show → fewer stalls
-    startLevel: 0,                // begin at lowest rendition (480p) for instant first frame; ABR upgrades
+    capLevelToPlayerSize: false,  // NEVER reduce quality — HD always
+    startLevel: -1,               // auto-pick highest (1080p)
     maxBufferLength: 30,          // smooth playback (30s ahead)
     maxMaxBufferLength: 60,
     maxBufferSize: 60*1000*1000,  // 60MB hard cap
     backBufferLength: 15,         // light on memory (looping background)
-    abrEwmaDefaultEstimate: 800000, // assume ~0.8Mbps initially → sensible start level
+    abrEwmaDefaultEstimate: 5000000, // assume ~5Mbps → pick 1080p (user nets are good)
     abrBandWidthFactor: 0.95,     // conservative: leave headroom → avoid stalls
     abrBandWidthMinFactor: 0.70,
     fragLoadingMaxRetry: 15,      // resilient on flaky mobile nets
