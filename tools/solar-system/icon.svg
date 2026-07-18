@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#060818"/>
+      <stop offset="1" stop-color="#0c1330"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="52%" r="52%">
+      <stop offset="0" stop-color="#4f46e5" stop-opacity=".55"/>
+      <stop offset="1" stop-color="#4f46e5" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="planet" cx="38%" cy="33%" r="78%">
+      <stop offset="0" stop-color="#d6e1ff"/>
+      <stop offset="32%" stop-color="#7c83f6"/>
+      <stop offset="70%" stop-color="#4338ca"/>
+      <stop offset="100%" stop-color="#1b1457"/>
+    </radialGradient>
+    <linearGradient id="orbit" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#a78bfa"/>
+      <stop offset="1" stop-color="#22d3ee"/>
+    </linearGradient>
+  </defs>
+
+  <!-- deep sharp-edged field -->
+  <rect x="0" y="0" width="256" height="256" fill="url(#bg)"/>
+
+  <!-- ambient cosmic glow -->
+  <circle cx="128" cy="134" r="104" fill="url(#glow)"/>
+
+  <!-- angular orbit (rotated square = sharp diamond) -->
+  <rect x="44" y="52" width="168" height="168" transform="rotate(45 128 136)" fill="none" stroke="url(#orbit)" stroke-width="7" stroke-linejoin="miter" opacity=".9"/>
+
+  <!-- planet -->
+  <circle cx="128" cy="136" r="48" fill="url(#planet)"/>
+  <!-- soft highlight -->
+  <ellipse cx="110" cy="116" rx="21" ry="15" fill="#ffffff" opacity=".20"/>
+
+  <!-- sparkle (4-point star) -->
+  <path d="M196 52 L202 70 L220 76 L202 82 L196 100 L190 82 L172 76 L190 70 Z" fill="#eaf0ff"/>
+
+  <!-- scattered stars -->
+  <circle cx="58" cy="196" r="3" fill="#aab4ff" opacity=".75"/>
+  <circle cx="206" cy="186" r="2.4" fill="#9be7ff" opacity=".7"/>
+  <circle cx="46" cy="84" r="2" fill="#cdd6ff" opacity=".6"/>
+  <circle cx="168" cy="44" r="1.8" fill="#cdd6ff" opacity=".55"/>
+</svg>
