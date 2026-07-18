@@ -30,8 +30,8 @@
     "htmlFile": "index.html"
   },
   {
-    "name": "Solar System",
-    "description": "",
+    "name": "Solar System — 太阳系漫游工具 | Endril Tools",
+    "description": "基于真实天文数据的交互式太阳系三维漫游工具。",
     "path": "/tools/solar-system/",
     "htmlFile": "index.html"
   }
