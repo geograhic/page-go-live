@@ -9,10 +9,10 @@
     "isSubmission": true
   },
   {
-    "name": "坐标数据可视化地图工作室",
-    "description": "支持 Excel / CSV / TXT 数据导入、度分秒坐标解析、WGS84 / GCJ-02 / BD-09 坐标转换、多图源切换、点样式自定义，以及 GeoJSON / KML / Shapefile 矢量导出。",
-    "path": "/tools/20250920_APPS_坐标数据可视化/Excel坐标数据可视化地图_v20260714.html",
-    "htmlFile": "Excel坐标数据可视化地图_v20260714.html"
+    "name": "正在跳转至新版坐标数据可视化地图...",
+    "description": "",
+    "path": "/tools/20250920_APPS_坐标数据可视化/Excel坐标数据可视化地图_v20250920.html",
+    "htmlFile": "Excel坐标数据可视化地图_v20250920.html"
   },
   {
     "name": "KML 按位置分割与选择导出",
