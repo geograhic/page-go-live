@@ -42,3 +42,11 @@ body:
       description: 用于署名和贡献者名单（留空则匿名）
     validations:
       required: false
+
+  - type: input
+    id: website
+    attributes:
+      label: 个人网站 (Personal Website)
+      description: 你的个人网站或主页地址（留空则默认使用 Endril）
+    validations:
+      required: false
