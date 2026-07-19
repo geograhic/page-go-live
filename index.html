@@ -239,6 +239,82 @@
             margin-bottom: 10px;
         }
 
+        /* 贡献者卡片 & 名单面板 */
+        .contributors-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 100%);
+            border-left: 4px solid #764ba2;
+        }
+
+        .contributors-panel {
+            display: none;
+            margin: 20px auto 40px;
+            max-width: 900px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 0;
+            padding: 25px 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .contributors-panel h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .contributor {
+            padding: 14px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .contributor:last-child {
+            border-bottom: none;
+        }
+
+        .contributor-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+
+        .contributor-head strong {
+            color: #333;
+            font-size: 1.05em;
+        }
+
+        .contributor-head a {
+            color: #764ba2;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .contributor-head a:hover {
+            text-decoration: underline;
+        }
+
+        .contributor-count {
+            background: #764ba2;
+            color: white;
+            padding: 2px 10px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        .contributor-tools {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .contributor-tools .tag {
+            background: rgba(118, 75, 162, 0.12);
+            color: #764ba2;
+            padding: 4px 12px;
+            font-size: 0.85em;
+            border-radius: 0;
+        }
+
         footer {
             text-align: center;
             color: rgba(255, 255, 255, 0.7);
@@ -309,6 +385,7 @@
         </div>
 
         <div id="content"></div>
+        <div id="contributorsPanel" class="contributors-panel"></div>
 
         <footer>
             <p>&copy; 2026 在线网页工具站 | 由 GitHub Pages 驱动 | <a href="https://endril.com" target="_blank" style="color:inherit;text-decoration:underline;">Endril</a></p>
@@ -319,6 +396,8 @@
         // 全局状态
         let allTools = [];
         let filteredTools = [];
+        let authorsData = [];
+        let isFiltering = false;
 
         // DOM 元素
         const contentDiv = document.getElementById('content');
@@ -347,6 +426,15 @@
 
                 // 按名称排序
                 allTools.sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
+
+                // 加载贡献者名单
+                try {
+                    const aResp = await fetch('./authors.json');
+                    if (aResp.ok) {
+                        authorsData = await aResp.json();
+                        if (!Array.isArray(authorsData)) authorsData = [];
+                    }
+                } catch (e) { authorsData = []; }
 
                 filteredTools = [...allTools];
                 renderTools();
@@ -387,6 +475,49 @@
             `).join('');
 
             contentDiv.innerHTML = `<div class="tools-grid">${toolsHTML}</div>`;
+
+            // 在投稿卡片后注入「贡献者」卡片（仅非搜索状态）
+            if (!isFiltering && authorsData && authorsData.length) {
+                const grid = contentDiv.querySelector('.tools-grid');
+                const firstCard = grid && grid.querySelector('.tool-card');
+                if (firstCard) {
+                    firstCard.insertAdjacentHTML('afterend', contributorsCardHTML());
+                    const cc = document.getElementById('contributorsCard');
+                    if (cc) cc.addEventListener('click', toggleContributors);
+                }
+            }
+        }
+
+        // 贡献者卡片 HTML
+        function contributorsCardHTML() {
+            return `
+                <div class="tool-card contributors-card" id="contributorsCard" style="cursor:pointer;">
+                    <h3>贡献者 (${authorsData.length})</h3>
+                    <p>点击查看有哪些作者提供了哪些工具</p>
+                    <button class="tool-button">查看名单 &rarr;</button>
+                </div>
+            `;
+        }
+
+        // 切换贡献者名单面板
+        function toggleContributors() {
+            const panel = document.getElementById('contributorsPanel');
+            if (!panel) return;
+            if (panel.style.display === 'block') {
+                panel.style.display = 'none';
+                return;
+            }
+            panel.innerHTML = authorsData.map(a => `
+                <div class="contributor">
+                    <div class="contributor-head">
+                        <strong>${escapeHtml(a.name)}</strong>
+                        ${a.github ? `<a href="${a.url || 'https://github.com/' + a.github}" target="_blank" rel="noopener">@${escapeHtml(a.github)}</a>` : ''}
+                        <span class="contributor-count">${(a.count || (a.tools ? a.tools.length : 0))} 个工具</span>
+                    </div>
+                    <div class="contributor-tools">${(a.tools || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>
+                </div>
+            `).join('');
+            panel.style.display = 'block';
         }
 
         // 更新工具计数
@@ -401,6 +532,7 @@
         // 搜索功能
         function handleSearch() {
             const searchTerm = searchInput.value.toLowerCase().trim();
+            isFiltering = !!searchTerm;
 
             if (!searchTerm) {
                 filteredTools = [...allTools];
