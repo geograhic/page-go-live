@@ -1,9 +1,12 @@
 [
   {
-    "name": "示例工具",
-    "description": "这是一个示例工具，展示如何创建新工具。可以用它作为模板创建新的工具。",
-    "path": "/tools/example-tool/",
-    "htmlFile": "index.html"
+    "name": "提交你的网页工具",
+    "description": "你有好的网页工具？点击下方按钮提交，审核通过后将在本站上线展示。",
+    "path": "https://github.com/geograhic/page-go-live/issues/new?template=tool-submission.yml",
+    "htmlFile": "",
+    "buttonText": "我要上线",
+    "isExternal": true,
+    "isSubmission": true
   },
   {
     "name": "正在跳转至新版坐标数据可视化地图...",
