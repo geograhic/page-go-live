@@ -41,7 +41,7 @@ def main():
     description = get(fields, '简介')
     url = get(fields, '地址', 'URL')
     features = get(fields, '功能描述')
-    github = get(fields, 'GitHub')
+    github = get(fields, 'GitHub', '作者', '署名')
     website = get(fields, '网站', 'Website')
 
     if not name or not url:
