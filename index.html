@@ -370,7 +370,7 @@
     <canvas id="bgCanvas"></canvas>
     <div class="container">
         <header>
-            <h1>🛠️ 在线网页工具站</h1>
+            <h1><svg width="32" height="32" viewBox="0 0 32 32" fill="none" style="vertical-align:middle;margin-right:6px;" xmlns="http://www.w3.org/2000/svg"><rect width="28" height="28" rx="4" fill="url(#iconGrad)"/><g transform="translate(14,14)"><circle r="9" stroke="white" stroke-width="2" fill="none"/><path d="M0-6 L2.5-3.5 M0 6 L2.5 3.5 M6 0 L3.5-2.5 M-6 0 L-3.5-2.5" stroke="white" stroke-width="2" stroke-linecap="round"/><circle r="2.5" fill="white"/></g><defs><linearGradient id="iconGrad" x1="0" y1="0" x2="28" y2="28"><stop offset="0%" stop-color="#667eea"/><stop offset="100%" stop-color="#764ba2"/></linearGradient></defs></svg>在线网页工具站</h1>
             <p>高效实用的在线工具集合</p>
                     <button id="langToggle" onclick="setLang(curLang==='zh-CN'?'en':'zh-CN')" style="
                 background:rgba(255,255,255,0.2);color:white;border:none;padding:6px 16px;
@@ -491,7 +491,11 @@
             // Update static elements
             document.title = t('siteTitle');
             const h1 = document.querySelector('header h1');
-            if (h1) h1.textContent = '\ud83e\udd27 ' + t('siteTitle');
+            // Preserve SVG icon, only update text
+            const _svgIc = h1.querySelector('svg');
+            h1.innerHTML = '';
+            if (_svgIc) h1.appendChild(_svgIc);
+            h1.appendChild(document.createTextNode(' ' + t('siteTitle'));
             const hp = document.querySelector('header p');
             if (hp) hp.textContent = t('siteDesc');
             const si = document.getElementById('searchInput');
