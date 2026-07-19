@@ -618,7 +618,7 @@
                     <div class="contributor-head">
                         <strong>${escapeHtml(a.name)}</strong>
                         ${a.github ? `<a href="${a.url || 'https://endril.com'}" target="_blank" rel="noopener">@${escapeHtml(a.github)}</a>` : ''}
-                        `<span class="contributor-count">${(a.count || (a.tools ? a.tools.length : 0))} ` + t("toolCount") + "</span>"
+                        <span class="contributor-count">${(a.count || (a.tools ? a.tools.length : 0))} ${t("toolCount")}</span>
                     </div>
                     <div class="contributor-tools">${(a.tools || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>
                 </div>
