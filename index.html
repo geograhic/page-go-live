@@ -593,7 +593,7 @@
             }
 
             const toolsHTML = filteredTools.map(tool => `
-                <a href="${tool.path}" class="tool-card" title="${tool.isExternal ? '在新标签页打开' : '打开 ' + tool.name}" ${tool.isExternal ? 'target="_blank" rel="noopener"' : ''}>
+                <a href="${safeUrl(tool.path, '#')}" class="tool-card" title="${tool.isExternal ? '在新标签页打开' : '打开 ' + tool.name}" ${tool.isExternal ? 'target="_blank" rel="noopener"' : ''}>
                     <h3>${tool.isSubmission ? t('submissionName') : escapeHtml(tool.name)}</h3>
                     <p>${tool.isSubmission ? t('submissionDesc') : escapeHtml(tool.description)}</p>
                     <button class="tool-button">${tool.isSubmission ? t('submissionButton') : (tool.buttonText || t('openTool'))} →</button>
@@ -633,7 +633,7 @@
                 <div class="contributor">
                     <div class="contributor-head">
                         <strong>${escapeHtml(a.name)}</strong>
-                        ${a.github ? `<a href="${a.url || 'https://endril.com'}" target="_blank" rel="noopener">@${escapeHtml(a.github)}</a>` : ''}
+                        ${a.github ? `<a href="${safeUrl(a.url, 'https://endril.com')}" target="_blank" rel="noopener">@${escapeHtml(a.github)}</a>` : ''}
                         <span class="contributor-count">${(a.count || (a.tools ? a.tools.length : 0))} ${t("toolCount")}</span>
                     </div>
                     <div class="contributor-tools">${(a.tools || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>
@@ -655,10 +655,13 @@
 
         // 更新工具计数
         function updateToolCount() {
-            if (allTools.length === 0) {
+            // 投稿入口卡片不计入工具数量
+            const realAll = allTools.filter(t => !t.isSubmission);
+            if (realAll.length === 0) {
                 toolCount.textContent = t('noTools');
             } else {
-                toolCount.textContent = t('totalTools',{filtered:filteredTools.length,total:allTools.length});
+                const realFiltered = filteredTools.filter(t => !t.isSubmission);
+                toolCount.textContent = t('totalTools',{filtered:realFiltered.length,total:realAll.length});
             }
         }
 
@@ -691,6 +694,15 @@
                 "'": '&#039;'
             };
             return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        // 仅允许 http(s)/站内相对路径，拦截 javascript: 等危险 scheme
+        function safeUrl(url, fallback) {
+            const u = (url || '').trim();
+            if (/^https?:\/\//i.test(u) || u.startsWith('/') || u.startsWith('#')) {
+                return u;
+            }
+            return fallback || '';
         }
 
         // 事件监听

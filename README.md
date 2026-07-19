@@ -1,81 +1,64 @@
-# 网页工具站
+# 网页工具站 (page-go-live)
 
-🔧 一个基于 GitHub Pages 的网页工具集合站。
+🔧 一个基于 GitHub Pages 的网页工具集合站，支持**自动收录工具**与**投稿审核上线**。
+
+线上地址：<https://html.endril.com>
 
 ## 🎯 目标
 
-- 把本地网页工具转为在线可访问使用的网页工具
-- 上传工具后自动出现在首页
-- 零维护成本 - 无需手动维护工具列表
+- 把本地网页工具一键转为在线可访问的网页工具
+- 上传工具后自动出现在首页（无需手动维护工具列表）
+- 开放**投稿入口**：任何人可提交网页工具，审核通过后自动上线并记入贡献者名单
 
 ## 🚀 快速开始
 
 ### 部署到 GitHub Pages
 
-1. 进入仓库 **Settings** → **Pages**
-2. 在 **Source** 中选择 **Deploy from a branch**
-3. 选择分支为 **main**，文件夹为 **/ (root)**
-4. 点击 **Save**
-5. 几分钟后，访问 `https://yourusername.github.io/page-go-live` 即可看到首页
+1. 仓库 **Settings** → **Pages**
+2. **Source** 选择 **Deploy from a branch**
+3. 分支 **main**，文件夹 **/ (root)**
+4. 自定义域名已在 `CNAME` 中配置为 `html.endril.com`
 
-### 新增工具
+### 新增工具（维护者）
 
-1. 在 `tools/` 目录下创建新文件夹
+1. 在 `tools/` 下创建工具文件夹
    ```
    tools/my-tool/
    ```
+2. 至少放一个 `index.html`（或任意 `.html`）
+   - 若目录内有**多个 html 且无 `index.html`**，生成器会**自动选择真正的工具页**（跳过“正在跳转”类的占位页），不再依赖目录顺序
+3. 推送到 `main` 分支 → GitHub Actions 自动重新生成 `tools.json` 并上线
 
-2. 创建 HTML 文件（至少一个）
-   ```html
-   <!DOCTYPE html>
-   <html>
-   <head>
-       <meta charset="UTF-8">
-       <title>我的工具</title>
-       <meta name="description" content="这是我的工具描述">
-   </head>
-   <body>
-       <!-- 你的工具内容 -->
-   </body>
-   </html>
-   ```
+## 📥 投稿上线（任何人）
 
-3. 可以添加其他资源文件
-   ```
-   tools/my-tool/
-   ├── index.html
-   ├── style.css
-   ├── script.js
-   └── assets/
-       └── ...
-   ```
+1. 点击首页「提交你的网页工具」卡片 → 打开 Issue 表单
+2. 填写：工具名称、地址、简介、作者署名、你的主页（可选）
+3. 维护者给 Issue 打 `approved` 标签
+4. 自动执行：解析 Issue → 写入 `external-tools.json` 与 `authors.json` → 重新生成 `tools.json` → 提交并留言
 
-4. 提交并推送到 main 分支
-   ```bash
-   git add .
-   git commit -m "feat: 新增我的工具"
-   git push
-   ```
-
-5. GitHub Actions 自动执行，工具会自动出现在首页
+> 🔒 安全：投稿的「工具地址」与「作者主页」仅允许 `http/https`，`javascript:` 等危险链接会被自动丢弃；首页对所有展示文本做 HTML 转义。
 
 ## 📁 目录结构
 
 ```
 .
-├── index.html              # 首页
-├── tools.json              # 工具清单（自动生成）
-├── tools/                  # 工具目录
+├── index.html              # 首页（搜索 / 中英切换 / 贡献者面板 / 粒子背景）
+├── tools.json              # 工具清单（⚠️ 自动生成，勿手改）
+├── external-tools.json     # 审核通过的外部投稿工具（自动写入）
+├── authors.json            # 贡献者名单（自动累加）
+├── tools/                  # 工具目录（每个子目录一个工具）
 │   ├── example-tool/
-│   │   └── index.html
-│   └── my-tool/
-│       ├── index.html
-│       ├── style.css
-│       └── script.js
+│   └── .../
 ├── scripts/
 │   └── generate-tools-json.js  # 工具清单生成脚本
-└── .github/workflows/
-    └── update-tools.yml        # 自动更新工作流
+└── .github/
+    ├── workflows/
+    │   ├── update-tools.yml       # 监听 tools/** 与清单文件变更，自动重生成 tools.json
+    │   └── approve-submission.yml # 监听 approved 标签，自动上线投稿
+    ├── scripts/
+    │   └── approve_tool.py        # 解析 Issue 正文并入库
+    └── ISSUE_TEMPLATE/
+        └── tool-submission.yml    # 投稿表单模板
 ```
 
 ## 🔍 工具信息提取规则
@@ -87,21 +70,29 @@
 | 工具名称 | `<title>` 标签 | 文件夹名（humanized） |
 | 工具描述 | `<meta name="description">` | 不显示 |
 
-## 🛠️ 工具卡片展示
+## 🛠️ 首页功能
 
-首页会根据 `tools.json` 自动生成工具卡片，包含：
+- ✅ 自动加载 `tools.json` 与 `authors.json`
+- ✅ 搜索工具（按名称和描述，搜索态不展示贡献者卡片）
+- ✅ 工具计数（**不含**投稿入口卡片）
+- ✅ 中英双语切换（EN / 中文，偏好记忆到 `localStorage`，支持 `?lang=` 参数）
+- ✅ 贡献者名单卡片 + 点击展开面板
+- ✅ 响应式设计 + 向量流场粒子背景（尊重 `prefers-reduced-motion`）
+- ✅ 错误处理、加载状态、无结果提示
 
-- 工具名称
-- 工具描述
-- 打开工具按钮（链接到 `/tools/工具名/`）
+## 🔒 安全说明
+
+- 投稿链接（工具地址、作者主页）仅接受 `http/https`，自动拦截 `javascript:` 等危险协议
+- 首页对工具名 / 描述 / 贡献者名做 HTML 转义，避免 XSS
+- 投稿链接在新标签页打开并带 `rel="noopener"`
 
 ## 📝 工具最佳实践
 
 ### HTML 文件命名
 
-推荐使用 `index.html`，这样可以直接访问 `/tools/工具名/`
+推荐使用 `index.html`，这样可以直接访问 `/tools/工具名/`。
 
-也可以使用其他名字，如 `tool.html`, `app.html` 等
+也可以使用其他名字，如 `tool.html`, `app.html` 等（生成器会自动记录具体文件名）。
 
 ### 元标签示例
 
@@ -138,20 +129,18 @@
 
 ## 🔄 工作流说明
 
-1. **监听推送事件**
-   - 当 `main` 分支有推送时自动执行
-   - 或者手动在 Actions 页面触发 `workflow_dispatch`
+仓库内置两条 GitHub Actions：
 
-2. **生成工具清单**
-   ```bash
-   node scripts/generate-tools-json.js
-   ```
+1. **`update-tools.yml`（更新工具清单）**
+   - 触发：`main` 分支推送，且变更命中 `tools/**`、`scripts/generate-tools-json.js`、`external-tools.json`、`authors.json`
+   - 或手动在 Actions 页面触发 `workflow_dispatch`
+   - 动作：运行 `node scripts/generate-tools-json.js` → 若 `tools.json` 有变化则自动提交
 
-3. **检查变化**
-   - 如果 `tools.json` 有变化，自动提交
+2. **`approve-submission.yml`（审核通过工具投稿）**
+   - 触发：Issue 被打上 `approved` 标签
+   - 动作：解析 Issue 正文 → 写入 `external-tools.json` 与 `authors.json` → 重新生成 `tools.json` → 一并提交并留言
 
-4. **推送回仓库**
-   - 使用 `git push` 推送更新
+> 提示：手动修改 `external-tools.json` / `authors.json` 后直接 push，也会触发 `update-tools.yml` 重新生成 `tools.json`（外部投稿工具会因此合并进首页）。
 
 ## 📖 工具示例
 
@@ -189,31 +178,6 @@ node scripts/generate-tools-json.js
   共收录 1 个工具
 ```
 
-## 🔗 首页功能
-
-- ✅ 自动加载 `tools.json`
-- ✅ 搜索工具（按名称和描述）
-- ✅ 工具计数统计
-- ✅ 响应式设计（移动端适配）
-- ✅ 错误处理和加载状态
-- ✅ 无搜索结果提示
-
-## 🎨 首页样式
-
-- 现代简洁的设计
-- 渐变背景
-- 流畅的交互动画
-- 完全响应式布局
-- 深色和浅色卡片对比
-
-## 📱 移动端适配
-
-首页和工具都应该支持移动设备访问：
-
-```html
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-```
-
 ## ❓ 常见问题
 
 ### 工具没有出现在首页？
@@ -236,7 +200,7 @@ node scripts/generate-tools-json.js
 
 ### 如何修改已发布的工具？
 
-直接修改 `tools/工具名/` 下的文件，推送到 main 分支即可，无需重新注册。
+直接修改 `tools/工具名/` 下的文件，推送到 `main` 分支即可，无需重新注册。
 
 ## 📄 许可证
 
@@ -244,6 +208,5 @@ node scripts/generate-tools-json.js
 
 ## 🤝 贡献
 
-欢迎添加更多实用工具！
-
-按照 [新增工具](#新增工具) 部分的步骤即可。
+- **普通用户**：通过首页「提交你的网页工具」卡片提交你的网页工具
+- **维护者**：直接在 `tools/` 下新增工具目录并推送 `main` 分支

@@ -48,11 +48,41 @@ function findHtmlFile(toolDir) {
     if (files.includes('index.html')) {
         return { fileName: 'index.html', fullPath: path.join(toolDir, 'index.html') };
     }
-    const htmlFile = files.find(file => file.endsWith('.html'));
-    if (htmlFile) {
-        return { fileName: htmlFile, fullPath: path.join(toolDir, htmlFile) };
+    const htmlFiles = files.filter(f => f.endsWith('.html'));
+    if (htmlFiles.length === 0) {
+        return null;
     }
-    return null;
+    if (htmlFiles.length === 1) {
+        const f = htmlFiles[0];
+        return { fileName: f, fullPath: path.join(toolDir, f) };
+    }
+    // 多个 HTML 且无 index.html：启发式选「真正的工具页」，避免选中「正在跳转」类占位页
+    const scored = htmlFiles.map(f => {
+        const full = path.join(toolDir, f);
+        let size = 0;
+        let isStub = false;
+        try {
+            size = fs.statSync(full).size;
+            const fd = fs.openSync(full, 'r');
+            const buf = Buffer.alloc(2048);
+            const n = fs.readSync(fd, buf, 0, 2048, 0);
+            fs.closeSync(fd);
+            const head = buf.slice(0, n).toString('utf-8');
+            isStub = /正在跳转|跳转至|redirect|window\.location\s*=/.test(head);
+        } catch (e) { /* ignore */ }
+        return { f, size, isStub };
+    });
+    // 优先非占位页；若全是占位页，退回文件最大的
+    const pool = scored.filter(s => !s.isStub);
+    const chosenPool = pool.length ? pool : scored;
+    chosenPool.sort((a, b) => b.size - a.size);
+    const chosen = chosenPool[0].f;
+    if (scored.length !== chosenPool.length) {
+        console.warn(`⚠ 目录含多个 HTML 且无 index.html，已跳过 ${scored.length - chosenPool.length} 个疑似占位页，选择: ${chosen}`);
+    } else {
+        console.warn(`⚠ 目录含多个 HTML 且无 index.html，已选择体积最大的: ${chosen}（其余: ${htmlFiles.filter(f => f !== chosen).join(', ')}）`);
+    }
+    return { fileName: chosen, fullPath: path.join(toolDir, chosen) };
 }
 
 function extractTitle(htmlContent) {

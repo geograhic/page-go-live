@@ -6,6 +6,8 @@ on:
     paths:
       - 'tools/**'
       - 'scripts/generate-tools-json.js'
+      - 'external-tools.json'
+      - 'authors.json'
   workflow_dispatch:
 
 permissions:

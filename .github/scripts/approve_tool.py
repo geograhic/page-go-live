@@ -35,14 +35,22 @@ def get(fields, *keys):
     return ''
 
 
+def safe_url(value):
+    """仅允许 http/https 协议，拦截 javascript: 等危险 scheme。"""
+    v = (value or '').strip()
+    if re.match(r'^https?://', v, re.IGNORECASE):
+        return v
+    return ''
+
+
 def main():
     fields = parse_fields(ISSUE_BODY)
     name = get(fields, '工具名称')
     description = get(fields, '简介')
-    url = get(fields, '地址', 'URL')
+    url = safe_url(get(fields, '地址', 'URL'))
     features = get(fields, '功能描述')
     github = get(fields, 'GitHub', '作者', '署名')
-    website = get(fields, 'URL', '主页', 'Website')
+    website = safe_url(get(fields, '主页', 'Website'))
 
     if not name or not url:
         print('✗ 缺少工具名称或地址/URL，跳过入库')
