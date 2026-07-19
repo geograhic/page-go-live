@@ -9,10 +9,10 @@
     "isSubmission": true
   },
   {
-    "name": "正在跳转至新版坐标数据可视化地图...",
+    "name": "坐标数据可视化地图工作室",
     "description": "",
-    "path": "/tools/20250920_APPS_坐标数据可视化/Excel坐标数据可视化地图_v20250920.html",
-    "htmlFile": "Excel坐标数据可视化地图_v20250920.html"
+    "path": "/tools/20250920_APPS_坐标数据可视化/Excel坐标数据可视化地图_v20260714.html",
+    "htmlFile": "Excel坐标数据可视化地图_v20260714.html"
   },
   {
     "name": "KML 按位置分割与选择导出",
