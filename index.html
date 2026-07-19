@@ -9,7 +9,7 @@
     <link rel="mask-icon" href="favicon.svg" color="#764ba2">
 
     <!-- 基础 SEO -->
-    <title>在线网页工具站 | Endril</title>
+    <title>在线网页工具站</title>
     <meta name="description" content="Endril 在线网页工具站 — 精选高效实用的网页工具集合，涵盖 GIS、坐标可视化、KML/SHP 转换等。提交你的网页工具，审核通过后上线展示。">
     <meta name="keywords" content="在线工具,网页工具,GIS工具,KML转换,SHP转换,坐标可视化,Endril,工具箱">
     <meta name="author" content="Endril">
@@ -492,7 +492,7 @@
         function contributorsCardHTML() {
             return `
                 <div class="tool-card contributors-card" id="contributorsCard" style="cursor:pointer;">
-                    <h3>作者名单 (${authorsData.length})</h3>
+                    <h3>作者名单 (${authorsData.length}人)</h3>
                     <p>点击查看有哪些作者提供了哪些工具</p>
                     <button class="tool-button">查看名单 &rarr;</button>
                 </div>
@@ -511,7 +511,7 @@
                 <div class="contributor">
                     <div class="contributor-head">
                         <strong>${escapeHtml(a.name)}</strong>
-                        ${a.github ? `<a href="${a.url || 'https://github.com/' + a.github}" target="_blank" rel="noopener">@${escapeHtml(a.github)}</a>` : ''}
+                        ${a.github ? `<a href="${a.url || 'https://endril.com'}" target="_blank" rel="noopener">@${escapeHtml(a.github)}</a>` : ''}
                         <span class="contributor-count">${(a.count || (a.tools ? a.tools.length : 0))} 个工具</span>
                     </div>
                     <div class="contributor-tools">${(a.tools || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>
