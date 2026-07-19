@@ -42,6 +42,7 @@ def main():
     url = get(fields, '地址', 'URL')
     features = get(fields, '功能描述')
     github = get(fields, 'GitHub')
+    website = get(fields, '网站', 'Website')
 
     if not name or not url:
         print('✗ 缺少工具名称或地址/URL，跳过入库')
@@ -89,10 +90,13 @@ def main():
                 found = True
                 break
         if not found:
+            # Author URL: prefer personal website > endril.com as default
+            author_url = website if website else 'https://endril.com'
+            author_name = github  # display name defaults to github username; could add a dedicated field later
             authors.append({
-                'name': github,
+                'name': author_name,
                 'github': github,
-                'url': 'https://github.com/' + github,
+                'url': author_url,
                 'tools': [name],
                 'count': 1,
                 'joinedAt': datetime.date.today().isoformat()
