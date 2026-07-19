@@ -340,10 +340,10 @@
             }
 
             const toolsHTML = filteredTools.map(tool => `
-                <a href="${tool.path}" class="tool-card" title="打开 ${tool.name}">
+                <a href="${tool.path}" class="tool-card" title="${tool.isExternal ? '在新标签页打开' : '打开 ' + tool.name}" ${tool.isExternal ? 'target="_blank" rel="noopener"' : ''}>
                     <h3>${escapeHtml(tool.name)}</h3>
                     <p>${escapeHtml(tool.description)}</p>
-                    <button class="tool-button">打开工具 &rarr;</button>
+                    <button class="tool-button">${tool.buttonText || '打开工具'} &rarr;</button>
                 </a>
             `).join('');
 
