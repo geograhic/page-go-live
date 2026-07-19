@@ -427,6 +427,9 @@
                 toolCount: '\u4e2a\u5de5\u5177',
                 langToggle: 'EN',
                 footer: '\u00a9 2026 \u5728\u7ebf\u7f51\u9875\u5de5\u5177\u7ad9 | \u7531 GitHub Pages \u9a71\u52a8 | '
+                submissionName: '\u63d0\u4ea4\u4f60\u7684\u7f51\u9875\u5de5\u5177',
+                submissionDesc: '\u4f60\u6709\u597d\u7684\u7f51\u9875\u5de5\u5177\uff1f\u70b9\u51fb\u4e0b\u65b9\u6309\u94ae\u63d0\u4ea4\uff0c\u5ba1\u6838\u901a\u8fc7\u540e\u5c06\u5728\u672c\u7ad9\u4e0a\u7ebf\u5c55\u793a\u3002',
+                submissionButton: '\u6211\u8981\u4e0a\u7ebf'
             },
             en: {
                 siteTitle: 'Online Web Tools',
@@ -448,6 +451,9 @@
                 toolCount: 'tools',
                 langToggle: '\u4e2d\u6587',
                 footer: '\u00a9 2026 Online Web Tools | Powered by GitHub Pages | '
+                submissionName: 'Submit Your Web Tool',
+                submissionDesc: 'Have a great web tool? Submit it below. Once approved, it will be featured on this site.',
+                submissionButton: 'Submit Now'
             }
         };
 
@@ -574,9 +580,9 @@
 
             const toolsHTML = filteredTools.map(tool => `
                 <a href="${tool.path}" class="tool-card" title="${tool.isExternal ? '在新标签页打开' : '打开 ' + tool.name}" ${tool.isExternal ? 'target="_blank" rel="noopener"' : ''}>
-                    <h3>${escapeHtml(tool.name)}</h3>
-                    <p>${escapeHtml(tool.description)}</p>
-                    <button class="tool-button">${tool.buttonText || t('openTool')} &rarr;</button>
+                    <h3>${tool.isSubmission ? t('submissionName') : escapeHtml(tool.name)}</h3>
+                    <p>${tool.isSubmission ? t('submissionDesc') : escapeHtml(tool.description)}</p>
+                    <button class="tool-button">${tool.isSubmission ? t('submissionButton') : (tool.buttonText || t('openTool'))} →</button>
                 </a>
             `).join('');
 
