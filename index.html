@@ -631,7 +631,7 @@
             if (allTools.length === 0) {
                 toolCount.textContent = 't('noTools')';
             } else {
-                toolCount.textContent = `共 ${filteredTools.length} / ${allTools.length} 个工具`;
+                toolCount.textContent = t('totalTools',{filtered:filteredTools.length,total:allTools.length});
             }
         }
 
