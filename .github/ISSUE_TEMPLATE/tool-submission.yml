@@ -38,8 +38,8 @@ body:
   - type: input
     id: github
     attributes:
-      label: GitHub 用户名
-      description: 用于署名和贡献者名单（留空则匿名）
+      label: 作者署名
+      description: 显示在贡献者名单中（留空则匿名）
     validations:
       required: false
 
