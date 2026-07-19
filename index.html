@@ -58,7 +58,7 @@
             padding: 12px 20px;
             font-size: 1em;
             border: none;
-            border-radius: 8px;
+            border-radius: 0;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             outline: none;
             transition: box-shadow 0.3s;
@@ -72,7 +72,7 @@
             background: rgba(255, 255, 255, 0.2);
             color: white;
             padding: 10px 20px;
-            border-radius: 8px;
+            border-radius: 0;
             font-weight: 600;
             backdrop-filter: blur(10px);
         }
@@ -86,7 +86,7 @@
 
         .tool-card {
             background: white;
-            border-radius: 12px;
+            border-radius: 0;
             padding: 25px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
@@ -126,7 +126,7 @@
             color: white;
             border: none;
             padding: 10px 20px;
-            border-radius: 6px;
+            border-radius: 0;
             font-size: 0.95em;
             font-weight: 600;
             cursor: pointer;
@@ -180,7 +180,7 @@
             border: 2px solid rgba(255, 255, 255, 0.3);
             color: white;
             padding: 30px;
-            border-radius: 12px;
+            border-radius: 0;
             text-align: center;
             backdrop-filter: blur(10px);
         }
@@ -248,10 +248,10 @@
         </header>
 
         <div class="search-section">
-            <input 
-                type="text" 
-                class="search-input" 
-                id="searchInput" 
+            <input
+                type="text"
+                class="search-input"
+                id="searchInput"
                 placeholder="搜索工具名称或描述..."
             >
             <div class="tool-count" id="toolCount">加载中...</div>
@@ -260,7 +260,7 @@
         <div id="content"></div>
 
         <footer>
-            <p>© 2024 在线网页工具站 | 由 GitHub Pages 驱动</p>
+            <p>&copy; 2026 在线网页工具站 | 由 <a href="https://endril.com" target="_blank" style="color:inherit;text-decoration:underline;">Endril</a> 驱动</p>
         </footer>
     </div>
 
@@ -304,7 +304,7 @@
                 console.error('加载工具列表失败:', error);
                 contentDiv.innerHTML = `
                     <div class="error-state">
-                        <h2>⚠️ 加载失败</h2>
+                        <h2>&#9888; 加载失败</h2>
                         <p>无法加载工具列表，请检查 tools.json 文件是否存在。</p>
                         <p style="font-size: 0.9em; margin-top: 10px; opacity: 0.8;">
                             错误信息: ${error.message}
@@ -320,7 +320,7 @@
             if (filteredTools.length === 0) {
                 contentDiv.innerHTML = `
                     <div class="empty-state">
-                        <h2>📭 暂无结果</h2>
+                        <h2>&#128222; 暂无结果</h2>
                         <p>${allTools.length === 0 ? '还没有添加工具，敬请期待！' : '没有找到匹配的工具，请尝试其他搜索词。'}</p>
                     </div>
                 `;
@@ -331,7 +331,7 @@
                 <a href="${tool.path}" class="tool-card" title="打开 ${tool.name}">
                     <h3>${escapeHtml(tool.name)}</h3>
                     <p>${escapeHtml(tool.description)}</p>
-                    <button class="tool-button">打开工具 →</button>
+                    <button class="tool-button">打开工具 &rarr;</button>
                 </a>
             `).join('');
 
