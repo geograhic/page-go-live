@@ -1,0 +1,57 @@
+name: 审核通过工具投稿
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  approve:
+    # 仅当被打上 approved 标签时运行
+    if: github.event.label.name == 'approved'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: 解析 Issue 并入库
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: python .github/scripts/approve_tool.py
+
+      - name: 重新生成工具清单
+        run: node scripts/generate-tools-json.js
+
+      - name: 提交更改
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add external-tools.json authors.json tools.json
+          if git diff --quiet --cached; then
+            echo "无变化，跳过提交"
+          else
+            git commit -m "feat: 审核通过 #${{ github.event.issue.number }} - 自动上线工具"
+            git push
+          fi
+
+      - name: 在 Issue 下留言
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number }}
+        run: |
+          gh issue comment "$ISSUE" --body "✅ 已审核通过，工具已自动上线并记入贡献者名单。感谢你的贡献！"
