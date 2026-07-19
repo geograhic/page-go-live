@@ -530,7 +530,7 @@
                     </div>
                 `;
 
-                const response = await fetch('./tools.json');
+                const response = await fetch('./tools.json?v=20260719');
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
@@ -545,7 +545,7 @@
 
                 // 加载贡献者名单
                 try {
-                    const aResp = await fetch('./authors.json');
+                    const aResp = await fetch('./authors.json?v=20260719');
                     if (aResp.ok) {
                         authorsData = await aResp.json();
                         if (!Array.isArray(authorsData)) authorsData = [];
@@ -804,3 +804,4 @@
     </script>
 </body>
 </html>
+
