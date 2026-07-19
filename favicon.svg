@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#667eea"/>
+      <stop offset="1" stop-color="#764ba2"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+  <!-- 行星 -->
+  <circle cx="30" cy="36" r="11" fill="#ffffff" opacity="0.95"/>
+  <!-- 轨道环 -->
+  <ellipse cx="30" cy="36" rx="23" ry="9" fill="none" stroke="#ffffff" stroke-width="2.5" opacity="0.85" transform="rotate(-22 30 36)"/>
+  <!-- 卫星 -->
+  <circle cx="51" cy="19" r="3.6" fill="#ffffff"/>
+  <line x1="51" y1="13.5" x2="51" y2="24.5" stroke="#ffffff" stroke-width="1.6"/>
+  <line x1="45.5" y1="19" x2="56.5" y2="19" stroke="#ffffff" stroke-width="1.6"/>
+</svg>
