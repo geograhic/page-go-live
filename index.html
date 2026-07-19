@@ -20,7 +20,7 @@
     <!-- Open Graph -->
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Endril 在线网页工具站">
-    <meta property="og:title" content="在线网页工具站 | Endril">
+    <meta property="og:title" content="在线网页工具站">
     <meta property="og:description" content="精选高效实用的网页工具集合。提交你的网页工具，审核通过后上线展示。">
     <meta property="og:url" content="https://html.endril.com/">
     <meta property="og:image" content="https://html.endril.com/favicon.svg">
@@ -28,7 +28,7 @@
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="在线网页工具站 | Endril">
+    <meta name="twitter:title" content="在线网页工具站">
     <meta name="twitter:description" content="精选高效实用的网页工具集合。提交你的网页工具，审核通过后上线展示。">
 
     <!-- 结构化数据 -->
@@ -442,7 +442,7 @@
                 emptyNoMatch: 'No matching tools found. Try other keywords.',
                 openTool: 'Open Tool',
                 authorList: 'Authors',
-                authorCount: '',
+                authorCount: ' people',
                 authorDesc: 'Click to see which authors contributed which tools',
                 viewList: 'View List',
                 toolCount: 'tools',
@@ -475,7 +475,7 @@
             if (!I18N[lang]) return;
             curLang = lang;
             localStorage.setItem('pgl-lang', lang);
-            const url = new URL(window.location.url || window.location.href);
+            const url = new URL(window.location.href);
             url.searchParams.set('lang', lang);
             history.replaceState(null, '', url.toString());
             applyLang();
@@ -552,7 +552,7 @@
                         <h2>&#9888; ${t('noTools')}</h2>
                         <p>${t('loadFailMsg')}</p>
                         <p style="font-size: 0.9em; margin-top: 10px; opacity: 0.8;">
-                            ${error.message} ${error.message}
+                            ${error.message}
                         </p>
                     </div>
                 `;
@@ -599,8 +599,8 @@
             return `
                 <div class="tool-card contributors-card" id="contributorsCard" style="cursor:pointer;">
                     <h3>${t('authorList') + ' (' + authorsData.length + t('authorCount') + ')'}</h3>
-                    <p>t('authorDesc')</p>
-                    <button class="tool-button">${t('viewList')} →<</button>
+                    <p>${t('authorDesc')}</p>
+                    <button class="tool-button">${t('viewList')} →</button>
                 </div>
             `;
         }
@@ -671,6 +671,7 @@
 
         // 初始化
         loadTools();
+        applyLang();
 
         /* ===== 向量流场粒子背景 ===== */
         (function () {
