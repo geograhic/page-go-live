@@ -516,7 +516,7 @@
                 contentDiv.innerHTML = `
                     <div class="loading">
                         <div class="spinner"></div>
-                        <p>t('loading')</p>
+                        <p>${t('loading')}</p>
                     </div>
                 `;
 
@@ -549,14 +549,14 @@
                 console.error('加载工具列表失败:', error);
                 contentDiv.innerHTML = `
                     <div class="error-state">
-                        <h2>&#9888; t('noTools')</h2>
-                        <p>t('loadFailMsg')</p>
+                        <h2>&#9888; ${t('noTools')}</h2>
+                        <p>${t('loadFailMsg')}</p>
                         <p style="font-size: 0.9em; margin-top: 10px; opacity: 0.8;">
                             ${error.message} ${error.message}
                         </p>
                     </div>
                 `;
-                toolCount.textContent = 't('noTools')';
+                toolCount.textContent = t('noTools');
             }
         }
 
@@ -566,7 +566,7 @@
                 contentDiv.innerHTML = `
                     <div class="empty-state">
                         <h2>&#128222; 暂无结果</h2>
-                        <p>${allTools.length === 0 ? 't('emptyNoTools')' : 't('emptyNoMatch')'}</p>
+                        <p>${allTools.length === 0 ? t('emptyNoTools') : t('emptyNoMatch')}</p>
                     </div>
                 `;
                 return;
@@ -600,7 +600,7 @@
                 <div class="tool-card contributors-card" id="contributorsCard" style="cursor:pointer;">
                     <h3>`t('authorList') + ' (' + authorsData.length + t('authorCount') + ')'`</h3>
                     <p>t('authorDesc')</p>
-                    <button class="tool-button">t('viewList') + ' &rarr;'</button>
+                    <button class="tool-button">${t('viewList')} →<</button>
                 </div>
             `;
         }
@@ -629,7 +629,7 @@
         // 更新工具计数
         function updateToolCount() {
             if (allTools.length === 0) {
-                toolCount.textContent = 't('noTools')';
+                toolCount.textContent = t('noTools');
             } else {
                 toolCount.textContent = t('totalTools',{filtered:filteredTools.length,total:allTools.length});
             }
