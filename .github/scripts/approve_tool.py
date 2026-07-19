@@ -90,8 +90,8 @@ def main():
                 found = True
                 break
         if not found:
-            # Author URL: prefer personal website > endril.com as default
-            author_url = website if website else 'https://endril.com'
+            # Author URL: only set if explicitly provided
+            author_url = website or 
             author_name = github  # display name defaults to github username; could add a dedicated field later
             authors.append({
                 'name': author_name,
