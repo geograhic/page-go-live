@@ -18,6 +18,17 @@
             padding: 20px;
         }
 
+        /* 向量流场粒子背景 */
+        #bgCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
         .container {
             max-width: 1200px;
             margin: 0 auto;
@@ -241,6 +252,7 @@
     </style>
 </head>
 <body>
+    <canvas id="bgCanvas"></canvas>
     <div class="container">
         <header>
             <h1>🛠️ 在线网页工具站</h1>
@@ -382,6 +394,125 @@
 
         // 初始化
         loadTools();
+
+        /* ===== 向量流场粒子背景 ===== */
+        (function () {
+            const canvas = document.getElementById('bgCanvas');
+            const ctx = canvas.getContext('2d');
+            const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            let W = 0, H = 0, DPR = 1;
+            let particles = [];
+            const mouse = { x: -1e4, y: -1e4, active: false };
+
+            function spawn() {
+                return {
+                    x: Math.random() * W,
+                    y: Math.random() * H,
+                    vx: 0, vy: 0,
+                    life: 80 + Math.random() * 160
+                };
+            }
+
+            function initParticles() {
+                // 按屏幕面积自适应，封顶 560
+                const target = Math.max(120, Math.min(560, Math.floor((W * H) / 2600)));
+                particles = [];
+                for (let i = 0; i < target; i++) particles.push(spawn());
+            }
+
+            function resize() {
+                DPR = Math.min(window.devicePixelRatio || 1, 2);
+                W = window.innerWidth;
+                H = window.innerHeight;
+                canvas.width = Math.floor(W * DPR);
+                canvas.height = Math.floor(H * DPR);
+                canvas.style.width = W + 'px';
+                canvas.style.height = H + 'px';
+                ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+                initParticles();
+            }
+
+            // 流场角度：层叠正弦 → 平滑演化的涡旋场（数学味）
+            function fieldAngle(x, y, t) {
+                const s = 0.0022;
+                const n = Math.sin(x * s + t)
+                        + Math.cos(y * s - t * 0.8)
+                        + Math.sin((x + y) * s * 0.6 + t * 0.4);
+                return n * Math.PI;
+            }
+
+            let t = 0;
+            function frame() {
+                t += reduceMotion ? 0 : 0.0035;
+                ctx.clearRect(0, 0, W, H);
+
+                const R = Math.min(280, W * 0.24);   // 鼠标影响半径
+                const R2 = R * R;
+
+                for (let i = 0; i < particles.length; i++) {
+                    const p = particles[i];
+
+                    // 流场力
+                    const a = fieldAngle(p.x, p.y, t);
+                    p.vx += Math.cos(a) * 0.18;
+                    p.vy += Math.sin(a) * 0.18;
+
+                    // 鼠标漩涡 + 轻微外推
+                    if (mouse.active) {
+                        const dx = p.x - mouse.x;
+                        const dy = p.y - mouse.y;
+                        const d2 = dx * dx + dy * dy;
+                        if (d2 < R2 && d2 > 0.01) {
+                            const d = Math.sqrt(d2);
+                            const f = 1 - d / R;
+                            p.vx += (-dy / d) * f * 1.7 + (dx / d) * f * 0.4;
+                            p.vy += (dx / d) * f * 1.7 + (dy / d) * f * 0.4;
+                        }
+                    }
+
+                    p.vx *= 0.94;
+                    p.vy *= 0.94;
+
+                    const px = p.x, py = p.y;
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.life--;
+
+                    if (p.x < -12 || p.x > W + 12 || p.y < -12 || p.y > H + 12 || p.life <= 0) {
+                        Object.assign(p, spawn());
+                        continue;
+                    }
+
+                    const speed = Math.hypot(p.vx, p.vy);
+                    const alpha = Math.min(0.55, 0.1 + speed * 0.14);
+                    ctx.strokeStyle = 'rgba(225,235,255,' + alpha + ')';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(px, py);
+                    ctx.lineTo(p.x, p.y);
+                    ctx.stroke();
+                }
+
+                if (!reduceMotion) requestAnimationFrame(frame);
+            }
+
+            window.addEventListener('resize', resize);
+            window.addEventListener('mousemove', e => {
+                mouse.x = e.clientX; mouse.y = e.clientY; mouse.active = true;
+            });
+            window.addEventListener('mouseout', () => { mouse.active = false; });
+            window.addEventListener('touchmove', e => {
+                if (e.touches[0]) {
+                    mouse.x = e.touches[0].clientX;
+                    mouse.y = e.touches[0].clientY;
+                    mouse.active = true;
+                }
+            }, { passive: true });
+
+            resize();
+            if (reduceMotion) frame();   // 静态一帧
+            else requestAnimationFrame(frame);
+        })();
     </script>
 </body>
 </html>
