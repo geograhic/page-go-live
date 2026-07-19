@@ -1,9 +1,11 @@
 [
   {
-    "name": "示例工具",
-    "description": "这是一个示例工具，展示如何创建新工具。可以用它作为模板创建新的工具。",
-    "path": "/tools/example-tool/",
-    "htmlFile": "index.html"
+    "name": "提交你的网页工具",
+    "description": "你有好的网页工具？点击下方按钮提交，审核通过后将在本站上线展示。",
+    "path": "https://github.com/geograhic/page-go-live/issues/new?title=工具投稿：%E6%8A%95%E7%A8%BF%E4%BD%A0%E7%9A%84%E7%BD%91%E9%A1%B5%E5%B7%A5%E5%85%B7&body=%E8%AF%B7%E5%A1%AB%E5%86%99%E4%BB%A5%E4%B8%8B%E4%BF%A1%E6%81%AF%EF%BC%9A%0A%0A-%20**%E5%B7%A5%E5%85%B7%E5%90%8D%E7%A7%B0**%EF%BC%9A%0A-%20**%E7%AE%80%E4%BB%8B**%EF%BC%88%E4%B8%80%E5%8F%A5%E8%AF%9D%EF%BC%89%EF%BC%9A%0A-%20**%E5%9C%B0%E5%80%80/URL**%EF%BC%88GitHub%E3%80%81CodePen%E7%AD%89%EF%BC%89%EF%BC%9A%0A-%20**%E5%8A%9F%E8%83%BD%E6%8F%8F%E8%BF%B0**%EF%BC%9A%0A%0A%E6%88%91%E4%BB%AC%E4%BC%9A%E5%AE%A1%E6%A0%B8%E5%90%8E%E5%9B%9E%E5%A4%8D%E3%80%82",
+    "htmlFile": "",
+    "buttonText": "我要上线",
+    "isExternal": true
   },
   {
     "name": "正在跳转至新版坐标数据可视化地图...",
