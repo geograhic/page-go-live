@@ -31,6 +31,19 @@ const SUBMISSION_ENTRY = {
 };
 
 /**
+ * 规范化工具路径用于去重比较：
+ * - 去掉 https://html.endril.com 等本站域名前缀
+ * - 统一尾部斜杠（全部去除）
+ * - 大小写不敏感比较
+ */
+function normalizePath(rawPath) {
+    let p = (rawPath || '').trim().replace(/\/+$/, '');
+    // 去掉本站域名前缀（支持 http/https、带或不带 www）
+    p = p.replace(/^https?:\/\/(www\.)?html\.endril\.com/i, '');
+    return p.toLowerCase();
+}
+
+/**
  * 将文件夹名转换为可读的名称
  */
 function humanizeToolName(folderName) {
@@ -167,14 +180,28 @@ function generateToolsJson() {
         });
     }
 
-    // 外部投稿
+    // 外部投稿（去重：若外部投稿 URL 指向的路径已存在于 tools/ 目录扫描结果中则跳过，
+    // 避免同一工具出现两张卡片）
     const external = loadExternalTools();
+    // 构建已扫描路径集合（规范化：去 https://html.endril.com 前缀、统一尾部斜杠）
+    const scannedPaths = new Set(
+        scanned.map(t => normalizePath(t.path))
+    );
+    let dedupedExternal = [];
     if (external.length) {
-        console.log(`✓ 合并 ${external.length} 个外部投稿工具`);
+        dedupedExternal = external.filter(e => {
+            const ep = normalizePath(e.path);
+            if (scannedPaths.has(ep)) {
+                console.log(`  ⚠ 跳过重复: "${e.name}" → 路径 ${ep} 已存在于 tools/ 目录`);
+                return false;
+            }
+            return true;
+        });
+        console.log(`✓ 合并 ${dedupedExternal.length} 个外部投稿工具${external.length - dedupedExternal.length > 0 ? `（已过滤 ${external.length - dedupedExternal.length} 个重复）` : ''}`);
     }
 
     // 其余工具按名称排序，投稿入口始终置顶
-    const rest = [...scanned, ...external].sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
+    const rest = [...scanned, ...dedupedExternal].sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
     const allTools = [SUBMISSION_ENTRY, ...rest];
 
     try {
