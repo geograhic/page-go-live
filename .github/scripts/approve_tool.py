@@ -195,9 +195,13 @@ def main():
                     urls.append(website)
                 a['urls'] = urls
                 a['url'] = urls[0] if urls else ''
-                # 链接文字：仅首次设置（不覆盖已有值），允许后续投稿更新显示名
-                if 'linkText' not in a or not a.get('linkText'):
-                    a['linkText'] = author_link
+                # 显示名称：仅当本次投稿显式填写且与原值不同时才更新
+                # （留空不覆盖已有名字，避免被登录名降级）
+                if display_name and display_name != a.get('name'):
+                    a['name'] = display_name
+                # 链接文字：同上逻辑（显式填写且不同才更新）
+                if link_text and link_text != a.get('linkText'):
+                    a['linkText'] = link_text
                 found = True
                 break
         if not found:
