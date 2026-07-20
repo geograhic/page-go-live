@@ -95,18 +95,26 @@ def main():
                 if name not in a.get('tools', []):
                     a['tools'].append(name)
                     a['count'] = len(a['tools'])
-                if website:
-                    a['url'] = website
+                # 多主页：追加并去重，不再覆盖
+                urls = a.get('urls')
+                if not isinstance(urls, list):
+                    urls = [a['url']] if a.get('url') else []
+                if website and website not in urls:
+                    urls.append(website)
+                a['urls'] = urls
+                a['url'] = urls[0] if urls else ''
                 found = True
                 break
         if not found:
             # Author URL: only set if explicitly provided
             author_url = website or ''
+            author_urls = [website] if website else []
             author_name = github  # display name defaults to github username; could add a dedicated field later
             authors.append({
                 'name': author_name,
                 'github': github,
                 'url': author_url,
+                'urls': author_urls,
                 'tools': [name],
                 'count': 1,
                 'joinedAt': datetime.date.today().isoformat()

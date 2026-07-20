@@ -315,6 +315,27 @@
             border-radius: 0;
         }
 
+        .contributor-urls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 6px;
+        }
+
+        .contributor-urls .home-link {
+            background: rgba(118, 75, 162, 0.18);
+            color: #764ba2;
+            padding: 3px 10px;
+            font-size: 0.8em;
+            border-radius: 12px;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .contributor-urls .home-link:hover {
+            background: rgba(118, 75, 162, 0.32);
+        }
+
         footer {
             text-align: center;
             color: rgba(255, 255, 255, 0.7);
@@ -629,16 +650,30 @@
         function renderContributorsPanel() {
             const panel = document.getElementById('contributorsPanel');
             if (!panel) return;
-            panel.innerHTML = authorsData.map(a => `
+            panel.innerHTML = authorsData.map(a => {
+                const urls = Array.isArray(a.urls) ? a.urls.slice() : (a.url ? [a.url] : []);
+                const primary = safeUrl(urls[0] || '', 'https://endril.com') || 'https://endril.com';
+                let extraLinks = '';
+                if (urls.length > 1) {
+                    extraLinks = '<div class="contributor-urls">' + urls.slice(1).map(u => {
+                        const hu = safeUrl(u, '');
+                        if (!hu) return '';
+                        let host = hu;
+                        try { host = new URL(hu).hostname; } catch (e) {}
+                        return `<a class="home-link" href="${hu}" target="_blank" rel="noopener">${escapeHtml(host)}</a>`;
+                    }).join('') + '</div>';
+                }
+                return `
                 <div class="contributor">
                     <div class="contributor-head">
                         <strong>${escapeHtml(a.name)}</strong>
-                        ${a.github ? `<a href="${safeUrl(a.url, 'https://endril.com')}" target="_blank" rel="noopener">@${escapeHtml(a.github)}</a>` : ''}
+                        ${a.github ? `<a href="${primary}" target="_blank" rel="noopener">@${escapeHtml(a.github)}</a>` : ''}
                         <span class="contributor-count">${(a.count || (a.tools ? a.tools.length : 0))} ${t("toolCount")}</span>
                     </div>
                     <div class="contributor-tools">${(a.tools || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>
-                </div>
-            `).join('');
+                    ${extraLinks}
+                </div>`;
+            }).join('');
             panel.style.display = 'block';
         }
 
