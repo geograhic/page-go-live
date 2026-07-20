@@ -18,13 +18,13 @@ body:
     id: intro
     attributes:
       label: 简介
-      description: 用一句话介绍你的工具（会显示在卡片上）。若工具已在本站 tools/ 中且你留空，将自动采用工具本身的简介；你填写的内容优先。
+      description: 用一句话介绍你的工具（会显示在卡片上）。站外工具留空则卡片描述为空白；若地址指向本站已存在的 tools/ 工具，投稿会被自动忽略、以站内版本为准（见下方说明）。
     validations:
       required: false
   - type: markdown
     attributes:
       value: |
-        💡 简介留空规则：如果工具已托管在本站 `tools/` 下，且你未填写「简介」与「功能描述」，系统会自动采用该工具自身的简介；只要你填了任意一项，就以你填写的为准。
+        💡 已托管工具：若投稿地址指向本站已存在的 `tools/` 工具，系统会自动识别并忽略重复投稿，页面以该工具自身的简介为准；你在此表单填写的「简介 / 功能描述」不会影响其展示。若要更新展示信息，请直接修改 `tools/` 下对应文件夹的页面。站外工具（GitHub Pages / CodePen 等）则以你填写的「简介 / 功能描述」为准，留空则卡片描述为空白。
   - type: input
     id: url
     attributes:
@@ -36,7 +36,7 @@ body:
     id: features
     attributes:
       label: 功能描述
-      description: 详细描述工具的功能与用途。若留空且工具已在本站 tools/ 中，将自动回退到工具本身的简介。
+      description: 详细描述工具的功能与用途（站外工具以此为准；留空则卡片描述为空白）。注意：指向本站 tools/ 的投稿会被自动忽略重复，此栏不影响站内版本。
     validations:
       required: false
   - type: input
