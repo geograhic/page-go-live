@@ -19,15 +19,47 @@
 3. 分支 **main**，文件夹 **/ (root)**
 4. 自定义域名已在 `CNAME` 中配置为 `html.endril.com`
 
-### 新增工具（维护者）
+### 新增工具（维护者直传，最快路径）
 
-1. 在 `tools/` 下创建工具文件夹
+仓库 owner / 有写权限的维护者，**直接把工具文件夹推到 `tools/` 即可自动上线**——这比走 Issue 投稿更直接。`update-tools.yml` 监听 `tools/**`，推送后会自动重生成 `tools.json` 并触发部署，无需经过审核流。
+
+1. 在 `tools/` 下创建工具文件夹，放入入口 HTML 及其静态资源：
    ```
    tools/my-tool/
+   ├── index.html        ← 入口（必须有）
+   ├── style.css         ← 可引用的静态资源
+   ├── app.js
+   └── assets/           ← 图片 / wasm 等
    ```
-2. 至少放一个 `index.html`（或任意 `.html`）
-   - 若目录内有**多个 html 且无 `index.html`**，生成器会**自动选择真正的工具页**（跳过“正在跳转”类的占位页），不再依赖目录顺序
-3. 推送到 `main` 分支 → GitHub Actions 自动重新生成 `tools.json` 并上线
+2. 入口建议命名为 `index.html`（或任意 `.html`）。若目录内**多个 html 且无 `index.html`**，生成器会按「跳过『正在跳转』类占位页 + 选体积最大者」的启发式自动选真正的工具页。
+3. 在 `index.html` 写清 `<title>` 与 `<meta name="description">`（决定卡片名与描述，写法见下方「工具最佳实践」）。
+4. 推送 `main` 分支 → Actions 自动重新生成 `tools.json` 并上线。
+
+#### 支持的语言 / 技术栈
+
+本站是**纯静态站点（GitHub Pages），无服务器端运行时**，因此只承载「浏览器里能直接打开运行」的工具：
+
+| ✅ 支持 | ❌ 不支持 |
+|------|------|
+| HTML / CSS / JavaScript（原生或 React/Vue/Svelte 等构建产物） | 服务端 Python / Node / PHP / Ruby / Java 后端 |
+| TypeScript（编译为 JS 后） | 数据库 / 需要常驻进程的服务 |
+| WebAssembly（C/C++/Rust/Go/AssemblyScript 编译的 `.wasm`） | 任何依赖后端 API 的工具（除非另建后端如 Cloudflare Worker 让前端调用） |
+| 浏览器内解释型（如 Pyodide 等 WASM 方案） | — |
+
+> 一句话：**只要最终是一个能在浏览器直接运行的 `index.html`（含其引用的 css/js/wasm/图片），就能放。**
+
+#### 直接传文件夹的各种结果
+
+| 文件夹内容 | 结果 |
+|-----------|------|
+| 含 `index.html`（+ 同目录静态资源） | ✅ 完美：卡片出现，干净 URL `/tools/my-tool/` |
+| 含某个 `.html`（非 index.html） | ⚠️ 可用：卡片指向 `/tools/my-tool/<文件>.html` |
+| 含 HTML 但无 `<title>` | 卡片名退化为「文件夹名 Humanize」（如 `my-tool` → `My Tool`） |
+| 含 HTML 但无 `<meta name="description">` | 卡片描述为空 |
+| **没有任何 `.html` 文件** | ⊘ 被静默跳过，不生成卡片（文件夹仅留在 git 中） |
+| 含超大二进制（视频 / 模型） | 能托管，但会撑大仓库、拖慢 clone |
+
+> ⚠️ 文件夹 push 后即成为**公开仓库文件**，源码人人可见；任何写在前端的密钥都等于公开，请勿在工具代码中放入密钥 / API Key。
 
 ## 📥 投稿上线（任何人）
 
