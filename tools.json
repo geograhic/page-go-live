@@ -10,32 +10,38 @@
   },
   {
     "name": "神秘数字 MYSTERIOUS NUMERALS",
-    "description": "MYSTERIOUS NUMERALS--像素风网页猜数字小游戏，纯浏览器静态运行，支持英雄技能、金币宝石、IQ挑战、战绩存档与排行榜。Web版由 C 语言原作移植。",
+    "description": "MYSTERIOUS NUMERALS，纯浏览器静态运行，支持英雄技能、金币宝石、IQ挑战、战绩存档与排行榜。Web版由 C 语言原作移植。",
     "path": "/tools/misterious-numeral-web/",
-    "htmlFile": "index.html"  },
+    "htmlFile": "index.html"
+  },
   {
     "name": "坐标数据可视化地图工作室",
     "description": "坐标数据可视化地图工作室：支持 Excel / CSV / TXT 数据导入、度分秒坐标解析、WGS84 / GCJ-02 / BD-09 坐标转换、多种地图图源切换、点样式自定义，以及 GeoJSON / KML / Shapefile 矢量导出。",
     "path": "/tools/20250920_APPS_坐标数据可视化/Excel坐标数据可视化地图_v20260714.html",
-    "htmlFile": "Excel坐标数据可视化地图_v20260714.html"  },
+    "htmlFile": "Excel坐标数据可视化地图_v20260714.html"
+  },
   {
     "name": "KML 按位置分割与选择导出",
     "description": "",
     "path": "/tools/kml按位置分割工具/",
-    "htmlFile": "index.html"  },
+    "htmlFile": "index.html"
+  },
   {
     "name": "KML 合并/分割工具",
     "description": "",
     "path": "/tools/kml合并分割工具/",
-    "htmlFile": "index.html"  },
+    "htmlFile": "index.html"
+  },
   {
     "name": "SHP → KML 转换工具",
     "description": "",
     "path": "/tools/shp转kml工具/",
-    "htmlFile": "index.html"  },
+    "htmlFile": "index.html"
+  },
   {
     "name": "Solar System — 太阳系漫游工具 | Endril Tools",
     "description": "基于真实天文数据的交互式太阳系三维漫游工具。",
     "path": "/tools/solar-system/",
-    "htmlFile": "index.html"  }
+    "htmlFile": "index.html"
+  }
 ]
