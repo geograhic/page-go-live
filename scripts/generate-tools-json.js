@@ -98,57 +98,6 @@ function extractDescription(htmlContent) {
 }
 
 /**
- * 检测工具的网页图标，返回站点根相对路径（或绝对 URL）。
- * 优先级：
- *   1. <link rel="icon"/"shortcut icon" href="...">（排除 apple-touch-icon）
- *   2. <link rel="apple-touch-icon" href="...">
- *   3. 文件夹内标准文件：favicon.svg / .png / .ico / apple-touch-icon.png / icon.png
- * 找不到则返回空字符串（渲染时回退到站点图标）。
- */
-function extractIcon(htmlContent, folderName, toolDir) {
-    const linkTags = htmlContent.match(/<link\b[^>]*>/gi) || [];
-    let href = null;
-    // 第 1 遍：rel="icon" 或 "shortcut icon"（不要 apple-touch-icon）
-    for (const tag of linkTags) {
-        if (/rel\s*=\s*["'][^"']*\bicon\b[^"']*["']/i.test(tag) && !/apple-touch-icon/i.test(tag)) {
-            const m = tag.match(/href\s*=\s*["']([^"']+)["']/i);
-            if (m) { href = m[1].trim(); break; }
-        }
-    }
-    // 第 2 遍：apple-touch-icon
-    if (!href) {
-        for (const tag of linkTags) {
-            if (/apple-touch-icon/i.test(tag)) {
-                const m = tag.match(/href\s*=\s*["']([^"']+)["']/i);
-                if (m) { href = m[1].trim(); break; }
-            }
-        }
-    }
-    // 第 3 遍：标准文件
-    if (!href) {
-        const candidates = ['favicon.svg', 'favicon.png', 'favicon.ico', 'apple-touch-icon.png', 'icon.png'];
-        for (const c of candidates) {
-            if (fs.existsSync(path.join(toolDir, c))) { href = c; break; }
-        }
-    }
-    if (!href) return '';
-    if (/^https?:\/\//i.test(href)) return href;          // 绝对外部 URL
-    if (href.startsWith('/')) return href;                // 站点根相对
-    return `/tools/${folderName}/${href.replace(/^\.\//, '')}`; // 工具内相对
-}
-
-/**
- * 为外部投稿工具尽力推导图标：取其域名 favicon.ico（渲染失败会回退站点图标）
- */
-function deriveExternalIcon(url) {
-    try {
-        return new URL(url).origin + '/favicon.ico';
-    } catch (_) {
-        return '';
-    }
-}
-
-/**
  * 规范化路径用于去重比较：去掉域名前缀、统一尾部斜杠、转小写
  */
 function normalizePath(p) {
@@ -222,25 +171,16 @@ function generateToolsJson() {
             ? `/tools/${entry.name}/`
             : `/tools/${entry.name}/${htmlFileInfo.fileName}`;
 
-        const icon = extractIcon(htmlContent, entry.name, toolDir);
-
         scanned.push({
             name: name,
             description: description || '',
             path: toolPath,
-            htmlFile: htmlFileInfo.fileName,
-            icon: icon
+            htmlFile: htmlFileInfo.fileName
         });
     }
 
     // 外部投稿
-    const external = loadExternalTools().map(e => {
-        if (!e.icon && e.path && /^https?:\/\//i.test(e.path) && !e.isSubmission) {
-            const derived = deriveExternalIcon(e.path);
-            if (derived) e.icon = derived;
-        }
-        return e;
-    });
+    const external = loadExternalTools();
     if (external.length) {
         console.log(`✓ 合并 ${external.length} 个外部投稿工具`);
     }
