@@ -171,6 +171,21 @@
             -webkit-box-orient: vertical;
         }
 
+        .tool-card .tool-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            object-fit: cover;
+            background: #f0f2f5;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            margin-bottom: 14px;
+            display: block;
+        }
+
+        .tool-card.contributors-card .tool-icon {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
         .tool-button {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -615,6 +630,7 @@
 
             const toolsHTML = filteredTools.map(tool => `
                 <a href="${safeUrl(tool.path, '#')}" class="tool-card" title="${tool.isExternal ? '在新标签页打开' : '打开 ' + tool.name}" ${tool.isExternal ? 'target="_blank" rel="noopener"' : ''}>
+                    <img class="tool-icon" src="${escapeHtml(tool.icon || '/favicon.svg')}" alt="" loading="lazy" onerror="this.onerror=null;this.src='/favicon.svg'">
                     <h3>${tool.isSubmission ? t('submissionName') : escapeHtml(tool.name)}</h3>
                     <p>${tool.isSubmission ? t('submissionDesc') : escapeHtml(tool.description)}</p>
                     <button class="tool-button">${tool.isSubmission ? t('submissionButton') : (tool.buttonText || t('openTool'))} →</button>
@@ -639,6 +655,7 @@
         function contributorsCardHTML() {
             return `
                 <div class="tool-card contributors-card" id="contributorsCard" style="cursor:pointer;">
+                    <img class="tool-icon" src="/favicon.svg" alt="" loading="lazy" onerror="this.onerror=null;this.src='/favicon.svg'">
                     <h3>${t('authorList') + ' (' + authorsData.length + (curLang === 'zh-CN' ? '人' : (authorsData.length === 1 ? ' person' : ' people')) + ')'}</h3>
                     <p>${t('authorDesc')}</p>
                     <button class="tool-button">${t('viewList')} →</button>
