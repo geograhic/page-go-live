@@ -613,13 +613,19 @@
                 return;
             }
 
-            const toolsHTML = filteredTools.map(tool => `
-                <a href="${safeUrl(tool.path, '#')}" class="tool-card" title="${tool.isExternal ? '在新标签页打开' : '打开 ' + tool.name}" ${tool.isExternal ? 'target="_blank" rel="noopener"' : ''}>
+            const toolsHTML = filteredTools.map(tool => {
+                const subUrl = tool.isSubmission
+                    ? (tool.path.replace(/\.yml$/, curLang === 'en' ? '-en.yml' : '.yml'))
+                    : safeUrl(tool.path, '#');
+                const extAttr = tool.isExternal ? ' target="_blank" rel="noopener"' : '';
+                const title = tool.isExternal ? (curLang === 'en' ? 'Open in new tab' : '在新标签页打开') : '';
+                return `
+                <a href="${subUrl}" class="tool-card" title="${tool.isSubmission ? '' : title + tool.name}"${extAttr}>
                     <h3>${tool.isSubmission ? t('submissionName') : escapeHtml(tool.name)}</h3>
                     <p>${tool.isSubmission ? t('submissionDesc') : escapeHtml(tool.description)}</p>
                     <button class="tool-button">${tool.isSubmission ? t('submissionButton') : (tool.buttonText || t('openTool'))} →</button>
-                </a>
-            `).join('');
+                </a>`;
+            }).join('');
 
             contentDiv.innerHTML = `<div class="tools-grid">${toolsHTML}</div>`;
 
