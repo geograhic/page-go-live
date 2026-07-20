@@ -1,5 +1,7 @@
 # 网页工具站 (page-go-live)
 
+> 🌐 中文文档。[English documentation →](README_EN.md)
+
 🔧 一个基于 GitHub Pages 的网页工具集合站，支持**自动收录工具**与**投稿审核上线**。
 
 线上地址：<https://html.endril.com>
