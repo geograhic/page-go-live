@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>神秘数字 MYSTERIOUS NUMERALS - 像素风猜数字小游戏 | 开发者李义洵 endril.com</title>
+<meta name="description" content="MYSTERIOUS NUMERALS（LJL版）是由李义洵开发的像素风网页猜数字小游戏，纯浏览器静态运行，支持英雄技能、金币宝石、IQ挑战、战绩存档与排行榜。Web版由 C 语言原作移植。">
+<meta name="keywords" content="神秘数字,猜数字,像素游戏,网页小游戏,C语言游戏,猜数游戏,李义洵,endril,Mysterious Numerals">
+<meta name="author" content="李义洵">
+<meta name="theme-color" content="#1a1c2c">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://endril.com/">
+
+<!-- 像素方块风格图标 -->
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="apple-touch-icon" href="favicon.svg">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="神秘数字 MYSTERIOUS NUMERALS - 像素风猜数字小游戏">
+<meta property="og:description" content="纯浏览器运行的像素风猜数字游戏，含英雄技能、金币宝石、IQ挑战与战绩排行榜。">
+<meta property="og:url" content="https://endril.com/">
+<meta property="og:image" content="https://endril.com/favicon.svg">
+<meta property="og:site_name" content="endril.com">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="神秘数字 MYSTERIOUS NUMERALS">
+<meta name="twitter:description" content="像素风网页猜数字小游戏，由李义洵开发。">
+<meta name="twitter:image" content="https://endril.com/favicon.svg">
+
+<!-- 结构化数据（SEO） -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Game",
+  "name": "MYSTERIOUS NUMERALS (LJL版)",
+  "alternateName": "神秘数字",
+  "description": "像素风网页猜数字小游戏，由 C 语言原作移植，纯静态浏览器运行。",
+  "genre": ["猜数字", "益智", "像素游戏"],
+  "url": "https://endril.com/",
+  "image": "https://endril.com/favicon.svg",
+  "author": {
+    "@type": "Person",
+    "name": "李义洵",
+    "url": "https://endril.com/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "endril.com"
+  },
+  "inLanguage": "zh-CN",
+  "applicationCategory": "Game"
+}
+</script>
+
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- 加载画面 -->
+<div id="loading">
+  <div class="loader-title">MYSTERIOUS<br>NUMERALS</div>
+  <div class="loader-sub">LJL版 · WEB EDITION</div>
+  <div class="loading-bar-wrap"><div class="loading-bar" id="loadBar"></div></div>
+  <div class="loading-pct" id="loadPct">0%</div>
+  <div class="loader-sub blink">LOADING...</div>
+</div>
+
+<div id="app">
+
+  <!-- 主菜单 -->
+  <div class="screen active" id="menuScreen">
+    <div class="menu-title">
+      <span class="big">MYSTERIOUS NUMERALS</span>
+      <span class="ver">(LJL版 · Web)</span>
+    </div>
+    <div class="menu-buttons">
+      <div class="btn" data-action="start">[ 开始游戏 ] (A)</div>
+      <div class="btn" data-action="heroes">[ 英雄详细 ] (O)</div>
+      <div class="btn" data-action="data">[ 游戏战绩 ] (D)</div>
+      <div class="btn" data-action="settings">[ 游戏设置 ] (S)</div>
+    </div>
+    <div class="menu-hint">点击选项开始 · 也可按键盘快捷键<br>★★★★★★★★★★★★★★★★</div>
+  </div>
+
+  <!-- 游戏设置 -->
+  <div class="screen" id="settingsScreen">
+    <div class="panel">
+      <div class="panel-title">*** 设置 ***</div>
+      <div class="panel-sub">请设置你想猜的整数范围</div>
+      <div class="setting-row">
+        <label>Mysterious Numeral 最小为：</label>
+        <input class="setting-input" id="setMin" type="number" value="0" inputmode="numeric">
+      </div>
+      <div class="setting-row">
+        <label>Mysterious Numeral 最大为：</label>
+        <input class="setting-input" id="setMax" type="number" value="20" inputmode="numeric">
+      </div>
+
+      <!-- 字体大小调节 -->
+      <div class="font-slider-wrap">
+        <div class="font-slider-label">
+          <span>🔤 界面字体大小</span>
+          <b id="fontSizeVal">115%</b>
+        </div>
+        <input type="range" id="fontSlider" min="80" max="160" value="115" step="5">
+        <div style="text-align:justify;font-size:9px;color:#8888aa;margin-top:6px;">
+          Small ←———————————————→ Large
+        </div>
+      </div>
+
+      <div class="action-bar">
+        <div class="btn btn-accent" id="confirmSettings">确认并开始游戏</div>
+        <div class="btn" id="viewSourceBtn">📄 查看源码</div>
+        <div class="btn" data-back="menu">返回主界面</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 英雄详细 -->
+  <div class="screen" id="heroesScreen">
+    <div class="panel">
+      <div class="panel-title">英雄详细</div>
+      <div class="hero-detail">
+        <div class="hd-name">① 赣州枪手</div>
+        <div class="hd-skill">主动技能1【赏金】：金币收益翻倍</div>
+      </div>
+      <div class="hero-detail">
+        <div class="hd-name">② 画饼大王</div>
+        <div class="hd-skill">主动技能1【画饼】：免费复活一次</div>
+      </div>
+      <div class="hero-detail">
+        <div class="hd-name">③ 牛马怪</div>
+        <div class="hd-skill">被动技能1【我是牛马】 无敌牛马 勇闯天下!</div>
+      </div>
+      <div class="action-bar">
+        <div class="btn" data-back="menu">按E键返回主界面</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 源码查看 -->
+  <div class="screen" id="srcScreen">
+    <div class="panel">
+      <div class="panel-title">C语言源码 · main.c</div>
+      <div class="src-scroll"><pre class="src-code" id="srcCode"></pre></div>
+      <!-- 编程经历（可折叠） -->
+      <div class="docx-section">
+        <button class="docx-toggle" id="docxToggle" onclick="toggleDocx()">▼ 展开编程经历</button>
+        <div class="docx-body" id="docxBody">
+          <p><b>程序调试反思 — Mysterious Numerals</b></p>
+          <p>Mysterious Numerals 从构思到设计到测试并经过不断增加新功能和不断调试，历经24个版本，时间总跨度整整一个月（2023年4月13日至5月16日）。</p>
+          <p><b>最后一次调试（v2.4）</b>：从发现 bug 到找出错误根源并修复，耗时长达8小时——5月15日17点开始调试到凌晨0点未果；16日早6:30起床继续1小时依然徒劳；中午再调1小时无功而返；晚上苦战2个多小时，终于定位错误根源并修复。</p>
+          <p><b>调试方法论总结：</b></p>
+          <p>① 插入打印语句（白盒测试，观察每步数据变化，彻底读懂执行过程）</p>
+          <p>② 用注释切掉无关代码区域，逐步缩小范围向临界区靠近</p>
+          <p>③ 分而治之策略将问题局部化</p>
+          <p>④ 改错后立即回归测试并不断调试</p>
+          <p>⑤ 调试时若出现新bug，乘胜追击改完后再继续改最初的bug</p>
+          <p>⑥ 良好的设计风格至关重要——不可贪图一时方便造成后患无穷甚至垃圾代码</p>
+          <p>⑦ 函数内少用全局变量、少用goto</p>
+          <p>调试就像一步步找病因线索，像侦探游戏。每找到一条线索就离真相更近一步。bug迟迟不消失让人急躁——花了大量时间还试出新bug时甚至会怀疑开发环境而非程序本身。上课上到一半还在想为什么出错，下课没回想内容就赶回宿舍继续调试……太耗时间时甚至想过放弃这好不容易编出的程序。</p>
+          <p style="color:var(--accent)">—— 李义洵 · 2023年5月</p>
+        </div>
+      </div>
+
+      <div class="action-bar">
+        <div class="btn" data-back="menu">返回主界面</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 数据管理 -->
+  <div class="screen" id="dataScreen">
+    <div class="panel">
+      <div class="panel-title">🎮 游戏战绩</div>
+
+      <!-- 标签切换 -->
+      <div class="data-tabs">
+        <div class="tab-btn active" data-tab="profile">👤 档案</div>
+        <div class="tab-btn" data-tab="history">📜 战绩</div>
+        <div class="tab-btn" data-tab="rank">🏆 排行</div>
+        <div class="tab-btn" data-tab="glory">🏅 荣誉</div>
+      </div>
+
+      <!-- 用户档案 tab（精简版） -->
+      <div class="tab-content active" id="tab-profile">
+        <div class="profile-card">
+          <!-- 头像 + 昵称 一行搞定 -->
+          <div style="display:flex;align-items:center;gap:10px;justify-content:center;margin-bottom:12px;">
+            <div class="profile-avatar-lg" id="profileAvatar" style="margin:0;width:44px;height:44px;font-size:24px;">😎</div>
+            <input id="profileNameInput" type="text" placeholder="昵称" maxlength="12" style="flex:1;min-width:0;font-family:inherit;font-size:12px;background:var(--bg-dark);color:var(--accent);border:2px solid var(--border);padding:8px 12px;text-align:center;">
+            <button class="btn btn-sm" onclick="openAvatarModal()">🎭</button>
+          </div>
+          <!-- 数据统计 -->
+          <div class="profile-stats">
+            <div class="ps-item"><b>场次</b><span id="dTotalGames">0</span></div>
+            <div class="ps-item"><b>金币</b><span id="dTotalGold">0</span></div>
+            <div class="ps-item"><b>宝石</b><span id="dTotalGem">0</span></div>
+            <div class="ps-item"><b>最高分</b><span id="dHighScore">0</span></div>
+            <div class="ps-item"><b>一击杀</b><span id="dOneHit">0</span></div>
+          </div>
+          <!-- 操作：一行紧凑 -->
+          <div style="display:flex;gap:8px;margin-top:14px;">
+            <button class="btn btn-sm" onclick="saveProfile()" style="flex:1;">💾 保存</button>
+            <button class="btn btn-sm" id="screenshotBtn" style="flex:1;">📸 截图</button>
+            <button class="btn btn-sm btn-accent" onclick="exportData()" style="flex:1;">📤 导出</button>
+            <label class="btn btn-sm" style="flex:1;padding:0;display:flex;align-items:center;justify-content:center;">📥 导入<input type="file" accept=".json" onchange="importData(event)" style="display:none"></label>
+          </div>
+          <div style="margin-top:10px;text-align:center;">
+            <button class="btn btn-sm" onclick="clearAllData()" style="background:var(--red);border-color:#500;">🗑️ 清除数据</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 历史战绩 tab -->
+      <div class="tab-content" id="tab-history">
+        <div class="history-list" id="historyList">
+          <div class="empty-hint">暂无战绩记录，去玩一局吧！</div>
+        </div>
+      </div>
+
+      <!-- 排行榜 tab -->
+      <div class="tab-content" id="tab-rank">
+        <div class="rank-list" id="rankList">
+          <div class="empty-hint">排行榜为空</div>
+        </div>
+      </div>
+
+      <!-- 荣誉 tab -->
+      <div class="tab-content" id="tab-glory">
+        <div id="gloryPanel" style="text-align:center;">
+          <div class="panel-sub" id="gloryCount">已获荣誉 0 项</div>
+          <div id="gloryList" class="rules"></div>
+        </div>
+      </div>
+
+      <div class="action-bar" style="margin-top:14px;">
+        <div class="btn btn-sm" data-back="menu">← 返回主界面</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 头像选择弹面板 -->
+  <div id="avatarModal">
+    <div class="avatar-modal-box">
+      <div class="avatar-modal-title">🎭 选择你的头像</div>
+      <div class="avatar-modal-grid" id="modalAvatarGrid"></div>
+      <div class="btn btn-accent" onclick="closeAvatarModal()" style="font-size:clamp(10px,2vw,12px);">确定</div>
+    </div>
+  </div>
+
+  <!-- 英雄选择 -->
+  <div class="screen" id="heroSelectScreen">
+    <div class="panel">
+      <div class="panel-title">★ 游戏已开始！★</div>
+      <div class="panel-sub">亲爱的召唤师，请选择本次探险英雄</div>
+      <div class="hero-grid" id="heroGrid">
+        <div class="hero-card" data-hero="1">
+          <div class="hname">① 赣州枪手</div>
+          <div class="hskill">主动技能1【赏金】：金币收益翻倍</div>
+        </div>
+        <div class="hero-card" data-hero="2">
+          <div class="hname">② 画饼大王</div>
+          <div class="hskill">主动技能1【画饼】：免费复活一次</div>
+        </div>
+        <div class="hero-card" data-hero="3">
+          <div class="hname">③ 牛马怪</div>
+          <div class="hskill">被动技能1【我是牛马】 无敌牛马 勇闯天下!</div>
+        </div>
+      </div>
+      <div class="action-bar">
+        <div class="btn" data-back="menu">按E键返回主界面</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 游戏进行 -->
+  <div class="screen" id="gameScreen">
+    <div class="panel">
+      <div class="game-top">
+        <div class="stat"><span class="slabel">英雄</span><span class="sval" id="gHero">-</span></div>
+        <div class="stat"><span class="slabel">金币</span><span class="sval" id="gGold">0</span></div>
+        <div class="stat"><span class="slabel">宝石</span><span class="sval" id="gGem">0</span></div>
+        <div class="stat"><span class="slabel">得分</span><span class="sval" id="gScore">0</span></div>
+      </div>
+      <div class="rules" id="gameRules"></div>
+      <div class="attempts-dots" id="attemptsDots"></div>
+      <div class="guess-input-row">
+        <input class="guess-input" id="guessInput" type="number" placeholder="输入你的猜测" inputmode="numeric" autocomplete="off">
+        <div class="btn btn-accent" id="submitGuess" style="flex:0 0 auto;">猜!</div>
+      </div>
+      <div class="feedback" id="feedback">请猜数（提示：Misterious Numeral 是整数）</div>
+      <div class="action-bar">
+        <div class="btn" data-back="menu" id="gameBackBtn">按E键返回主界面</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- 通用弹窗 -->
+<div class="overlay" id="overlay">
+  <div class="modal" id="modalBox">
+    <h3 id="modalTitle"></h3>
+    <div id="modalBody"></div>
+    <div class="modal-actions" id="modalActions"></div>
+  </div>
+</div>
+
+<!-- 返回主界面浮动按钮（小屏更易点） -->
+<div class="btn back-btn" id="floatingBack" data-back="menu" style="display:none;">⟵ 主界面</div>
+
+<script src="game.js"></script>
+</body>
+</html>
