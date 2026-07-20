@@ -9,8 +9,8 @@
     "isSubmission": true
   },
   {
-    "name": "神秘数字 MYSTERIOUS NUMERALS - 像素风猜数字小游戏 | 开发者李义洵 endril.com",
-    "description": "MYSTERIOUS NUMERALS（LJL版）是由李义洵开发的像素风网页猜数字小游戏，纯浏览器静态运行，支持英雄技能、金币宝石、IQ挑战、战绩存档与排行榜。Web版由 C 语言原作移植。",
+    "name": "神秘数字 MYSTERIOUS NUMERALS",
+    "description": "MYSTERIOUS NUMERALS--像素风网页猜数字小游戏，纯浏览器静态运行，支持英雄技能、金币宝石、IQ挑战、战绩存档与排行榜。Web版由 C 语言原作移植。",
     "path": "/tools/misterious-numeral-web/",
     "htmlFile": "index.html"
   },
