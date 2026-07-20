@@ -7,6 +7,8 @@ body:
     attributes:
       value: |
         感谢投稿！请填写以下信息，我们审核通过后会自动上线并记入贡献者名单。
+
+        🌐 这是**中文**模板。[English template →](../../issues/new?template=tool-submission-en.yml)
   - type: input
     id: name
     attributes:
