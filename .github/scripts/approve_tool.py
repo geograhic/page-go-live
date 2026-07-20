@@ -125,8 +125,10 @@ def main():
     description = clean(get(fields, '简介'))
     url = safe_url(clean(get(fields, '地址', 'URL')))
     features = clean(get(fields, '功能描述'))
-    # handle（作者标识）是匹配键；兼容旧模板的「作者署名」字段
-    handle = clean(get(fields, '标识', 'Handle', 'ID')) or clean(get(fields, 'GitHub', '作者', '署名'))
+    # 匹配键 = GitHub 登录名（由工作流从 Issue 作者自动传入，零手填、零歧义）
+    # 兼容旧版：若环境未传 ISSUE_AUTHOR（如本地手动跑），回退到表单「作者署名」
+    author_login = (os.environ.get('ISSUE_AUTHOR', '') or '').strip() or \
+        clean(get(fields, 'GitHub', '作者', '署名', '标识', 'Handle', 'ID'))
     display_name = clean(get(fields, '显示名称', 'DisplayName'))
     link_text = clean(get(fields, '链接文字', 'LinkText', '链接', '主页链接文字'))
     website = safe_url(clean(get(fields, '主页', 'Website')))
@@ -159,7 +161,7 @@ def main():
         'path': url,
         'htmlFile': '',
         'isExternal': True,
-        'author': handle or '',
+        'author': author_login or '',
         'fromIssue': ISSUE_NUMBER
     }
     external.append(entry)
@@ -168,9 +170,9 @@ def main():
     print(f'✓ external-tools.json 新增: {name}')
 
     # ── authors.json ──
-    if handle:
-        # 显示名称：优先用户填写，其次回退到 handle
-        author_display = display_name or handle
+    if author_login:
+        # 显示名称：优先用户填写，其次回退到登录名
+        author_display = display_name or author_login
         # 链接文字：优先用户填写，其次回退到显示名称
         author_link = link_text or author_display
 
@@ -181,7 +183,7 @@ def main():
                 authors = json.load(f)
         found = False
         for a in authors:
-            if a.get('github', '').lower() == handle.lower():
+            if a.get('github', '').lower() == author_login.lower():
                 if name not in a.get('tools', []):
                     a['tools'].append(name)
                     a['count'] = len(a['tools'])
@@ -204,7 +206,7 @@ def main():
             author_urls = [website] if website else []
             authors.append({
                 'name': author_display,
-                'github': handle,
+                'github': author_login,
                 'url': author_url,
                 'urls': author_urls,
                 'linkText': author_link,
@@ -214,9 +216,9 @@ def main():
             })
         with open(authors_path, 'w', encoding='utf-8') as f:
             json.dump(authors, f, ensure_ascii=False, indent=2)
-        print(f'✓ authors.json 更新: {handle}({author_display}) 贡献 {name}')
+        print(f'✓ authors.json 更新: {author_login}({author_display}) 贡献 {name}')
     else:
-        print('ℹ 未提供作者标识，不记入贡献者名单')
+        print('ℹ 未提供 GitHub 登录名，不记入贡献者名单')
 
 
 if __name__ == '__main__':
