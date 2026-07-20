@@ -44,6 +44,15 @@ def safe_url(value):
     return ''
 
 
+def clean(value):
+    """归一化字段值：GitHub Issue 表单把留空的选填项渲染成 '_No response_'，
+    需视为空，否则会污染工具名称/简介等字段。"""
+    v = (value or '').strip()
+    if v.lower().replace('_', '').replace(' ', '') == 'noresponse':
+        return ''
+    return v
+
+
 def find_html_file(tool_dir):
     """在工具目录中挑选入口 HTML（与生成器 generate-tools-json.js 逻辑一致）。"""
     try:
@@ -112,12 +121,12 @@ def resolve_local_description(url):
 
 def main():
     fields = parse_fields(ISSUE_BODY)
-    name = get(fields, '工具名称')
-    description = get(fields, '简介')
-    url = safe_url(get(fields, '地址', 'URL'))
-    features = get(fields, '功能描述')
-    github = get(fields, 'GitHub', '作者', '署名')
-    website = safe_url(get(fields, '主页', 'Website'))
+    name = re.sub(r'\s+', ' ', clean(get(fields, '工具名称'))).strip()
+    description = clean(get(fields, '简介'))
+    url = safe_url(clean(get(fields, '地址', 'URL')))
+    features = clean(get(fields, '功能描述'))
+    github = clean(get(fields, 'GitHub', '作者', '署名'))
+    website = safe_url(clean(get(fields, '主页', 'Website')))
 
     if not name or not url:
         print('✗ 缺少工具名称或地址/URL，跳过入库')
