@@ -667,7 +667,7 @@
                 <div class="contributor">
                     <div class="contributor-head">
                         <strong>${escapeHtml(a.name)}</strong>
-                        ${a.github ? `<a href="${primary}" target="_blank" rel="noopener">@${escapeHtml(a.github)}</a>` : ''}
+                        ${a.github ? `<a href="${primary}" target="_blank" rel="noopener">@${escapeHtml(a.linkText || a.github)}</a>` : ''}
                         <span class="contributor-count">${(a.count || (a.tools ? a.tools.length : 0))} ${t("toolCount")}</span>
                     </div>
                     <div class="contributor-tools">${(a.tools || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>

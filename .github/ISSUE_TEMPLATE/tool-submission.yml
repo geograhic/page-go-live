@@ -40,12 +40,25 @@ body:
     validations:
       required: false
   - type: input
-    id: github
+    id: handle
     attributes:
-      label: 作者署名
-      description: 显示在贡献者名单中（留空则匿名）
+      label: 作者标识（Handle / ID）
+      description: '唯一标识符，用于匹配同一作者（如：Endril、zhangsan）。页面上显示为 @你的标识。留空则不记入贡献者名单。'
     validations:
       required: false
+
+  - type: input
+    id: display_name
+    attributes:
+      label: 显示名称（可选）
+      description: 贡献者名单中展示的名字（留空则使用上面的「作者标识」）
+    validations:
+      required: false
+
+  - type: markdown
+    attributes:
+      value: |
+        📝 作者标识是匹配键：相同标识=同一人，不同标识=不同人（即使显示名称相同也会分开显示）。主页链接文字控制 URL 超链接上展示的文本。
 
   - type: input
     id: website
@@ -54,3 +67,9 @@ body:
       description: 个人主页、团队页面或组织地址（可选）
     validations:
       required: false
+
+  - type: input
+    id: link_text
+    attributes:
+      label: 主页链接文字（可选）
+      description: 主页 URL 链接上显示的文字（留空则使用「显示名称」或「作者标识」）

@@ -125,7 +125,10 @@ def main():
     description = clean(get(fields, '简介'))
     url = safe_url(clean(get(fields, '地址', 'URL')))
     features = clean(get(fields, '功能描述'))
-    github = clean(get(fields, 'GitHub', '作者', '署名'))
+    # handle（作者标识）是匹配键；兼容旧模板的「作者署名」字段
+    handle = clean(get(fields, '标识', 'Handle', 'ID')) or clean(get(fields, 'GitHub', '作者', '署名'))
+    display_name = clean(get(fields, '显示名称', 'DisplayName'))
+    link_text = clean(get(fields, '链接文字', 'LinkText', '链接', '主页链接文字'))
     website = safe_url(clean(get(fields, '主页', 'Website')))
 
     if not name or not url:
@@ -156,7 +159,7 @@ def main():
         'path': url,
         'htmlFile': '',
         'isExternal': True,
-        'author': github or '',
+        'author': handle or '',
         'fromIssue': ISSUE_NUMBER
     }
     external.append(entry)
@@ -165,7 +168,12 @@ def main():
     print(f'✓ external-tools.json 新增: {name}')
 
     # ── authors.json ──
-    if github:
+    if handle:
+        # 显示名称：优先用户填写，其次回退到 handle
+        author_display = display_name or handle
+        # 链接文字：优先用户填写，其次回退到显示名称
+        author_link = link_text or author_display
+
         authors_path = os.path.join(REPO_ROOT, 'authors.json')
         authors = []
         if os.path.exists(authors_path):
@@ -173,7 +181,7 @@ def main():
                 authors = json.load(f)
         found = False
         for a in authors:
-            if a.get('github', '').lower() == github.lower():
+            if a.get('github', '').lower() == handle.lower():
                 if name not in a.get('tools', []):
                     a['tools'].append(name)
                     a['count'] = len(a['tools'])
@@ -185,27 +193,30 @@ def main():
                     urls.append(website)
                 a['urls'] = urls
                 a['url'] = urls[0] if urls else ''
+                # 链接文字：仅首次设置（不覆盖已有值），允许后续投稿更新显示名
+                if 'linkText' not in a or not a.get('linkText'):
+                    a['linkText'] = author_link
                 found = True
                 break
         if not found:
             # Author URL: only set if explicitly provided
             author_url = website or ''
             author_urls = [website] if website else []
-            author_name = github  # display name defaults to github username; could add a dedicated field later
             authors.append({
-                'name': author_name,
-                'github': github,
+                'name': author_display,
+                'github': handle,
                 'url': author_url,
                 'urls': author_urls,
+                'linkText': author_link,
                 'tools': [name],
                 'count': 1,
                 'joinedAt': datetime.date.today().isoformat()
             })
         with open(authors_path, 'w', encoding='utf-8') as f:
             json.dump(authors, f, ensure_ascii=False, indent=2)
-        print(f'✓ authors.json 更新: {github} 贡献 {name}')
+        print(f'✓ authors.json 更新: {handle}({author_display}) 贡献 {name}')
     else:
-        print('ℹ 未提供 GitHub 用户名，不记入贡献者名单')
+        print('ℹ 未提供作者标识，不记入贡献者名单')
 
 
 if __name__ == '__main__':
