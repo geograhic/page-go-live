@@ -31,19 +31,6 @@ const SUBMISSION_ENTRY = {
 };
 
 /**
- * 规范化工具路径用于去重比较：
- * - 去掉 https://html.endril.com 等本站域名前缀
- * - 统一尾部斜杠（全部去除）
- * - 大小写不敏感比较
- */
-function normalizePath(rawPath) {
-    let p = (rawPath || '').trim().replace(/\/+$/, '');
-    // 去掉本站域名前缀（支持 http/https、带或不带 www）
-    p = p.replace(/^https?:\/\/(www\.)?html\.endril\.com/i, '');
-    return p.toLowerCase();
-}
-
-/**
  * 将文件夹名转换为可读的名称
  */
 function humanizeToolName(folderName) {
@@ -110,6 +97,69 @@ function extractDescription(htmlContent) {
     return m2 ? m2[1].trim() : null;
 }
 
+/**
+ * 检测工具的网页图标，返回站点根相对路径（或绝对 URL）。
+ * 优先级：
+ *   1. <link rel="icon"/"shortcut icon" href="...">（排除 apple-touch-icon）
+ *   2. <link rel="apple-touch-icon" href="...">
+ *   3. 文件夹内标准文件：favicon.svg / .png / .ico / apple-touch-icon.png / icon.png
+ * 找不到则返回空字符串（渲染时回退到站点图标）。
+ */
+function extractIcon(htmlContent, folderName, toolDir) {
+    const linkTags = htmlContent.match(/<link\b[^>]*>/gi) || [];
+    let href = null;
+    // 第 1 遍：rel="icon" 或 "shortcut icon"（不要 apple-touch-icon）
+    for (const tag of linkTags) {
+        if (/rel\s*=\s*["'][^"']*\bicon\b[^"']*["']/i.test(tag) && !/apple-touch-icon/i.test(tag)) {
+            const m = tag.match(/href\s*=\s*["']([^"']+)["']/i);
+            if (m) { href = m[1].trim(); break; }
+        }
+    }
+    // 第 2 遍：apple-touch-icon
+    if (!href) {
+        for (const tag of linkTags) {
+            if (/apple-touch-icon/i.test(tag)) {
+                const m = tag.match(/href\s*=\s*["']([^"']+)["']/i);
+                if (m) { href = m[1].trim(); break; }
+            }
+        }
+    }
+    // 第 3 遍：标准文件
+    if (!href) {
+        const candidates = ['favicon.svg', 'favicon.png', 'favicon.ico', 'apple-touch-icon.png', 'icon.png'];
+        for (const c of candidates) {
+            if (fs.existsSync(path.join(toolDir, c))) { href = c; break; }
+        }
+    }
+    if (!href) return '';
+    if (/^https?:\/\//i.test(href)) return href;          // 绝对外部 URL
+    if (href.startsWith('/')) return href;                // 站点根相对
+    return `/tools/${folderName}/${href.replace(/^\.\//, '')}`; // 工具内相对
+}
+
+/**
+ * 为外部投稿工具尽力推导图标：取其域名 favicon.ico（渲染失败会回退站点图标）
+ */
+function deriveExternalIcon(url) {
+    try {
+        return new URL(url).origin + '/favicon.ico';
+    } catch (_) {
+        return '';
+    }
+}
+
+/**
+ * 规范化路径用于去重比较：去掉域名前缀、统一尾部斜杠、转小写
+ */
+function normalizePath(p) {
+    if (!p) return '';
+    return p
+        .replace(/^https?:\/\/[^/]+/, '')   // 去掉域名
+        .replace(/\/index\.html$/, '/')     // 统一 index.html 结尾
+        .replace(/\/+$/, '')                // 去掉尾部斜杠
+        .toLowerCase();
+}
+
 // 读取经审核通过的外部投稿
 function loadExternalTools() {
     if (!fs.existsSync(EXTERNAL_FILE)) return [];
@@ -172,33 +222,39 @@ function generateToolsJson() {
             ? `/tools/${entry.name}/`
             : `/tools/${entry.name}/${htmlFileInfo.fileName}`;
 
+        const icon = extractIcon(htmlContent, entry.name, toolDir);
+
         scanned.push({
             name: name,
             description: description || '',
             path: toolPath,
-            htmlFile: htmlFileInfo.fileName
+            htmlFile: htmlFileInfo.fileName,
+            icon: icon
         });
     }
 
-    // 外部投稿（去重：若外部投稿 URL 指向的路径已存在于 tools/ 目录扫描结果中则跳过，
-    // 避免同一工具出现两张卡片）
-    const external = loadExternalTools();
-    // 构建已扫描路径集合（规范化：去 https://html.endril.com 前缀、统一尾部斜杠）
-    const scannedPaths = new Set(
-        scanned.map(t => normalizePath(t.path))
-    );
-    let dedupedExternal = [];
+    // 外部投稿
+    const external = loadExternalTools().map(e => {
+        if (!e.icon && e.path && /^https?:\/\//i.test(e.path) && !e.isSubmission) {
+            const derived = deriveExternalIcon(e.path);
+            if (derived) e.icon = derived;
+        }
+        return e;
+    });
     if (external.length) {
-        dedupedExternal = external.filter(e => {
-            const ep = normalizePath(e.path);
-            if (scannedPaths.has(ep)) {
-                console.log(`  ⚠ 跳过重复: "${e.name}" → 路径 ${ep} 已存在于 tools/ 目录`);
-                return false;
-            }
-            return true;
-        });
-        console.log(`✓ 合并 ${dedupedExternal.length} 个外部投稿工具${external.length - dedupedExternal.length > 0 ? `（已过滤 ${external.length - dedupedExternal.length} 个重复）` : ''}`);
+        console.log(`✓ 合并 ${external.length} 个外部投稿工具`);
     }
+
+    // 去重：外部投稿若指向已存在的 tools/ 文件夹，跳过（避免重复卡片）
+    const scannedPaths = new Set(scanned.map(s => normalizePath(s.path)));
+    const dedupedExternal = external.filter(e => {
+        const np = normalizePath(e.path);
+        if (np && scannedPaths.has(np)) {
+            console.log(`⚠ 跳过重复: "${e.name}" → 路径 ${np} 已存在于 tools/ 目录`);
+            return false;
+        }
+        return true;
+    });
 
     // 其余工具按名称排序，投稿入口始终置顶
     const rest = [...scanned, ...dedupedExternal].sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
