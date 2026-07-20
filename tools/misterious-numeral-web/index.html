@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>神秘数字 MYSTERIOUS NUMERALS</title>
-<meta name="description" content="MYSTERIOUS NUMERALS--像素风网页猜数字小游戏，纯浏览器静态运行，支持英雄技能、金币宝石、IQ挑战、战绩存档与排行榜。Web版由 C 语言原作移植。">
+<meta name="description" content="MYSTERIOUS NUMERALS，纯浏览器静态运行，支持英雄技能、金币宝石、IQ挑战、战绩存档与排行榜。Web版由 C 语言原作移植。">
 <meta name="keywords" content="神秘数字,猜数字,像素游戏,网页小游戏,C语言游戏,猜数游戏,李义洵,endril,Mysterious Numerals">
 <meta name="author" content="李义洵">
 <meta name="theme-color" content="#1a1c2c">
@@ -143,7 +143,10 @@
   <!-- 源码查看 -->
   <div class="screen" id="srcScreen">
     <div class="panel">
-      <div class="panel-title">C语言源码 · main.c</div>
+      <div class="src-head">
+        <div class="panel-title" style="margin-bottom:0;">C语言源码 · main.c</div>
+        <button class="btn btn-sm" id="copySrcBtn" onclick="copySource()">📋 复制源码</button>
+      </div>
       <div class="src-scroll"><pre class="src-code" id="srcCode"></pre></div>
       <!-- 编程经历（可折叠） -->
       <div class="docx-section">

@@ -591,6 +591,33 @@ function injectSource() {
   $("#srcCode").textContent = C_SOURCE;
 }
 
+/* 一键复制 C 语言源码（兼容 file:// 与旧浏览器） */
+function copySource() {
+  const text = C_SOURCE;
+  const btn = $("#copySrcBtn");
+  const done = () => {
+    const old = btn.textContent;
+    btn.textContent = "✅ 已复制!";
+    setTimeout(() => { btn.textContent = old; }, 1500);
+  };
+  const fallback = () => {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); done(); }
+    catch (e) { alert("复制失败，请手动选择复制"); }
+    document.body.removeChild(ta);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done).catch(fallback);
+  } else {
+    fallback();
+  }
+}
+
 /* ===================== 游戏逻辑 ===================== */
 function resetGameState() {
   G.gold = 0; G.gem = 0; G.totalgem = 0; G.totalgold = 0;
