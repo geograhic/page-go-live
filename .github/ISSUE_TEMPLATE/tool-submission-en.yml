@@ -8,7 +8,7 @@ body:
       value: |
         Thanks for your submission! Fill in the info below. Once approved, your tool goes live automatically and is added to the contributors list.
 
-        🌐 This is the **English** template. [中文模板 →](../../issues/new?template=tool-submission.yml)
+        🌐 This is the **English** template. [中文模板 →](https://github.com/geograhic/page-go-live/issues/new?template=tool-submission.yml)
   - type: input
     id: name
     attributes:
