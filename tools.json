@@ -15,15 +15,6 @@
     "htmlFile": "index.html"
   },
   {
-    "name": "神秘数字 NUMERALS  MYSTERIOUS",
-    "description": "_No response_ _No response_",
-    "path": "https://html.endril.com/tools/misterious-numeral-web/",
-    "htmlFile": "",
-    "isExternal": true,
-    "author": "geograhic",
-    "fromIssue": "2"
-  },
-  {
     "name": "坐标数据可视化地图工作室",
     "description": "坐标数据可视化地图工作室：支持 Excel / CSV / TXT 数据导入、度分秒坐标解析、WGS84 / GCJ-02 / BD-09 坐标转换、多种地图图源切换、点样式自定义，以及 GeoJSON / KML / Shapefile 矢量导出。",
     "path": "/tools/20250920_APPS_坐标数据可视化/Excel坐标数据可视化地图_v20260714.html",
