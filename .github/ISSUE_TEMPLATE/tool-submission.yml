@@ -24,14 +24,25 @@ body:
   - type: markdown
     attributes:
       value: |
-        💡 已托管工具：若投稿地址指向本站已存在的 `tools/` 工具，系统会自动识别并忽略重复投稿，页面以该工具自身的简介为准；你在此表单填写的「简介 / 功能描述」不会影响其展示。若要更新展示信息，请直接修改 `tools/` 下对应文件夹的页面。站外工具（GitHub Pages / CodePen 等）则以你填写的「简介 / 功能描述」为准，留空则卡片描述为空白。
+        💡 已托管工具：若投稿地址指向本站已存在的 `tools/` 工具，系统会自动识别并忽略重复投稿，页面以该工具自身的简介为准；你在此表单填写的「简介 / 功能描述」不会影响其展示。若要更新展示信息，请直接修改 `tools/` 下对应文件夹的页面。站外地址（任意可访问链接）则以你填写的「简介 / 功能描述」为准，留空则卡片描述为空白。上传代码的投稿将由维护者部署后自动生成信息。
   - type: input
     id: url
     attributes:
       label: 地址 / URL
-      description: 工具托管地址（GitHub 仓库、GitHub Pages、CodePen 等可访问链接）
+      description: 工具的访问地址（你的网站、任意前端托管平台、GitHub Pages、CodePen 等均可）。若工具尚未部署，可留空并直接上传代码附件（见下方说明）。
+      placeholder: https://example.com/my-tool 或留空上传代码
     validations:
-      required: true
+      required: false
+
+  - type: markdown
+    attributes:
+      value: |
+        📦 **工具代码上传（可选）**：如果你的工具尚未部署到任何地址，可以直接将工具代码文件作为**附件**拖拽/粘贴到此 Issue 中（支持 HTML / CSS / JS 及相关资源文件）。审核通过后，维护者会将代码部署到本站 `tools/` 目录下上线展示。
+
+        > 💡 **两种提交方式任选其一或同时使用**：
+        > - **填写地址**：工具已有在线地址 → 填写 URL 即可
+        > - **上传代码**：工具未部署 → 留空地址，上传代码附件 → 维护者代为部署到本站
+
   - type: textarea
     id: features
     attributes:
