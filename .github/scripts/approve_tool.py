@@ -121,16 +121,17 @@ def resolve_local_description(url):
 
 def main():
     fields = parse_fields(ISSUE_BODY)
-    name = re.sub(r'\s+', ' ', clean(get(fields, '工具名称'))).strip()
-    description = clean(get(fields, '简介'))
+    # 双语匹配：中文标签 + 英文标签子串（提交模板有 tool-submission.yml / tool-submission-en.yml 两个版本）
+    name = re.sub(r'\s+', ' ', clean(get(fields, '工具名称', 'Tool Name'))).strip()
+    description = clean(get(fields, '简介', 'Intro', 'Summary'))
     url = safe_url(clean(get(fields, '地址', 'URL')))
-    features = clean(get(fields, '功能描述'))
+    features = clean(get(fields, '功能描述', 'Features', 'Description'))
     # 匹配键 = GitHub 登录名（由工作流从 Issue 作者自动传入，零手填、零歧义）
     # 兼容旧版：若环境未传 ISSUE_AUTHOR（如本地手动跑），回退到表单「作者署名」
     author_login = (os.environ.get('ISSUE_AUTHOR', '') or '').strip() or \
         clean(get(fields, 'GitHub', '作者', '署名', '标识', 'Handle', 'ID'))
-    display_name = clean(get(fields, '显示名称', 'DisplayName'))
-    link_text = clean(get(fields, '链接文字', 'LinkText', '链接', '主页链接文字'))
+    display_name = clean(get(fields, '显示名称', 'DisplayName', 'Display'))
+    link_text = clean(get(fields, '链接文字', 'LinkText', '链接', '主页链接文字', 'Link'))
     website = safe_url(clean(get(fields, '主页', 'Website')))
 
     if not name or not url:
