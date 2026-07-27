@@ -95,6 +95,31 @@
             background: linear-gradient(to bottom, #2a5689 0%, #96c2e3 100%);
         }
 
+        /* 云端主题配色：把全站紫色主题色切换为天空蓝 */
+        body.cloud-theme .tool-button {
+            background: linear-gradient(135deg, #2a5689 0%, #5b8fc9 100%);
+        }
+        body.cloud-theme .contributors-card {
+            border-left-color: #2a5689;
+        }
+        body.cloud-theme .contributor-head a {
+            color: #2a5689;
+        }
+        body.cloud-theme .contributor-count {
+            background: #2a5689;
+        }
+        body.cloud-theme .contributor-tools .tag {
+            background: rgba(42, 86, 137, 0.12);
+            color: #2a5689;
+        }
+        body.cloud-theme .contributor-urls .home-link {
+            background: rgba(42, 86, 137, 0.18);
+            color: #2a5689;
+        }
+        body.cloud-theme .contributor-urls .home-link:hover {
+            background: rgba(42, 86, 137, 0.32);
+        }
+
         .container {
             max-width: 1200px;
             margin: 0 auto;
@@ -1246,16 +1271,20 @@
             const cloudCanvas = document.getElementById('cloudBgCanvas');
             if (!vectorCanvas || !cloudCanvas) return;
 
+            const metaTheme = document.querySelector('meta[name="theme-color"]');
+
             if (currentBgTheme === 'cloud') {
                 document.body.classList.add('cloud-theme');
                 vectorCanvas.classList.add('cloud-active');
                 cloudCanvas.classList.add('active');
                 CloudBackground.start();
+                if (metaTheme) metaTheme.setAttribute('content', '#2a5689');
             } else {
                 document.body.classList.remove('cloud-theme');
                 vectorCanvas.classList.remove('cloud-active');
                 cloudCanvas.classList.remove('active');
                 CloudBackground.stop();
+                if (metaTheme) metaTheme.setAttribute('content', '#667eea');
             }
         }
 
