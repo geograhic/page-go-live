@@ -6,6 +6,7 @@ on:
     paths:
       - 'tools/**'
       - 'scripts/generate-tools-json.js'
+      - 'scripts/generate-sitemap.js'
       - 'external-tools.json'
       - 'authors.json'
   workflow_dispatch:
@@ -35,10 +36,13 @@ jobs:
       - name: 生成各工具级 favicon.ico
         run: node scripts/gen-tool-favicons.mjs
 
+      - name: 生成站点地图（随工具清单自动更新）
+        run: node scripts/generate-sitemap.js
+
       - name: 检查是否有变化
         id: check
         run: |
-          if git diff --quiet tools.json 'tools/*/favicon.ico'; then
+          if git diff --quiet tools.json 'tools/*/favicon.ico' sitemap.xml; then
             echo "changed=false" >> $GITHUB_OUTPUT
           else
             echo "changed=true" >> $GITHUB_OUTPUT
@@ -49,6 +53,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add tools.json 'tools/*/favicon.ico'
-          git commit -m "chore: 自动更新工具清单 / 生成工具级 favicon.ico"
+          git add tools.json 'tools/*/favicon.ico' sitemap.xml
+          git commit -m "chore: 自动更新工具清单 / 生成工具级 favicon.ico / 站点地图"
           git push
