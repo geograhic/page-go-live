@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" sizes="512x512" href="favicon.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <meta name="description" content="坐标数据可视化地图工作室：支持 Excel / CSV / TXT 数据导入、度分秒坐标解析、WGS84 / GCJ-02 / BD-09 坐标转换、多种地图图源切换、点样式自定义，以及 GeoJSON / KML / Shapefile 矢量导出。">
+    <meta name="keywords" content="坐标,地图,可视化,Excel,CSV,TXT,GeoJSON,KML,Shapefile,WGS84,GCJ02,BD09,在线地图,数据导入">
+    <meta name="author" content="Endril">
+    <meta name="theme-color" content="#2196F3">
+    <meta name="color-scheme" content="light">
+    <link rel="canonical" href="https://html.endril.com/tools/20250920_APPS_%E5%9D%90%E6%A0%87%E6%95%B0%E6%8D%AE%E5%8F%AF%E8%A7%86%E5%8C%96/">
+    <meta property="og:title" content="坐标数据可视化地图工作室">
+    <meta property="og:description" content="坐标数据可视化地图工作室：支持 Excel / CSV / TXT 数据导入、度分秒坐标解析、WGS84 / GCJ-02 / BD-09 坐标转换、多种地图图源切换、点样式自定义，以及 GeoJSON / KML / Shapefile 矢量导出。">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://html.endril.com/tools/20250920_APPS_%E5%9D%90%E6%A0%87%E6%95%B0%E6%8D%AE%E5%8F%AF%E8%A7%86%E5%8C%96/">
+    <meta property="og:image" content="https://html.endril.com/tools/20250920_APPS_%E5%9D%90%E6%A0%87%E6%95%B0%E6%8D%AE%E5%8F%AF%E8%A7%86%E5%8C%96/favicon.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="坐标数据可视化地图工作室">
+    <meta name="twitter:description" content="坐标数据可视化地图工作室：支持 Excel / CSV / TXT 数据导入、度分秒坐标解析、WGS84 / GCJ-02 / BD-09 坐标转换、多种地图图源切换、点样式自定义，以及 GeoJSON / KML / Shapefile 矢量导出。">
+    <meta name="twitter:image" content="https://html.endril.com/tools/20250920_APPS_%E5%9D%90%E6%A0%87%E6%95%B0%E6%8D%AE%E5%8F%AF%E8%A7%86%E5%8C%96/favicon.png">
+    <title>坐标数据可视化地图工作室</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    
+    <link rel="stylesheet" href="./style.css">
+
+</head>
+<body>
+    <div class="app">
+        <button id="btn-toggle-sidebar" title="收起 / 展开侧边栏" data-i18n-title="toggle_title" aria-label="切换侧边栏">‹</button>
+        <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+        <aside class="sidebar">
+            <header>
+                <h1 data-i18n="app_title">坐标数据可视化地图</h1>
+                <h2 data-i18n="app_subtitle">支持 Excel / CSV / TXT 及手动输入</h2>
+                <div class="lang-bar">
+                    <label data-i18n="lang_label">界面语言</label>
+                    <select id="ui-lang">
+                        <option value="zh-CN">简体中文</option>
+                        <option value="zh-TW">繁體中文</option>
+                        <option value="en">English</option>
+                        <option value="ru">Русский</option>
+                        <option value="vi">Tiếng Việt</option>
+                        <option value="ja">日本語</option>
+                        <option value="ko">한국어</option>
+                    </select>
+                </div>
+                <button id="btn-close-sidebar" class="btn-close-sidebar" title="收起侧边栏" aria-label="收起侧边栏">×</button>
+            </header>
+
+            <div class="panel">
+                <div class="panel-title" data-i18n="panel1_title">1. 导入数据</div>
+                <div class="drop-zone" id="drop-zone">
+                    <div data-i18n="drop_main">点击或拖拽文件到此处</div>
+                    <div style="font-size:12px;color:#999;margin-top:4px" data-i18n="drop_sub">支持 .xlsx .xls .csv .txt .tsv .json</div>
+                </div>
+                <input type="file" id="file-input" accept=".xlsx,.xls,.csv,.txt,.tsv,.json" multiple>
+
+                <div class="form-group" style="margin-top:10px">
+                    <label data-i18n="crs_label">数据坐标系</label>
+                    <select id="input-crs">
+                        <option value="auto" data-i18n="crs_auto">自动检测 / 默认 WGS-84</option>
+                        <option value="wgs84" data-i18n="crs_wgs84">WGS-84</option>
+                        <option value="gcj02" data-i18n="crs_gcj02">GCJ-02（火星 / 高德）</option>
+                        <option value="bd09" data-i18n="crs_bd09">BD-09（百度）</option>
+                    </select>
+                    <div id="crs-warning" class="crs-warning hidden"></div>
+                    <button id="btn-convert" class="btn btn-block btn-sm hidden">转换坐标系以匹配当前地图</button>
+                </div>
+
+                <div class="form-group">
+                    <button id="btn-load-sample" class="btn btn-secondary btn-sm" data-i18n="btn_load_sample">加载示例数据</button>
+                </div>
+
+                <div class="form-group manual-input">
+                    <label data-i18n="manual_label">手动输入坐标</label>
+                    <textarea id="manual-input" data-i18n="manual_ph" placeholder="每行一个点，示例：&#10;北京 116.4074 39.9042&#10;116.4074,39.9042 上海&#10;也可支持度分秒格式： 116°24'26.6&quot;E 39°54'15.1&quot;N"></textarea>
+                    <button id="btn-parse-manual" class="btn btn-sm btn-block" data-i18n="btn_parse_manual">解析手动输入</button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title" data-i18n="panel2_title">2. 地图图源</div>
+                <div class="form-group">
+                    <select id="map-source"></select>
+                </div>
+                <div id="custom-source" class="form-group hidden">
+                    <label data-i18n="custom_url_label">自定义瓦片 URL</label>
+                    <input type="text" id="custom-url" data-i18n="custom_url_ph" placeholder="https://.../{z}/{x}/{y}.png">
+                    <div class="row" style="margin-top:8px">
+                        <select id="custom-crs">
+                            <option value="wgs84" data-i18n="ccrs_wgs84">WGS84</option>
+                            <option value="gcj02" data-i18n="ccrs_gcj02">GCJ02</option>
+                            <option value="bd09" data-i18n="ccrs_bd09">BD09</option>
+                        </select>
+                        <button id="btn-add-custom" class="btn btn-sm" data-i18n="btn_add_custom">添加</button>
+                    </div>
+                    <div style="font-size:12px;color:#888;margin-top:4px" data-i18n="custom_hint">使用 {x} {y} {z}，可选 {s} 表示子域</div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title" data-i18n="panel3_title">3. 样式设置</div>
+                <div class="row">
+                    <div class="form-group">
+                        <label data-i18n="style_shape_label">形状</label>
+                        <select id="style-shape">
+                            <option value="circle" data-i18n="shape_circle">圆形</option>
+                            <option value="square" data-i18n="shape_square">方形</option>
+                            <option value="diamond" data-i18n="shape_diamond">菱形</option>
+                            <option value="triangle" data-i18n="shape_triangle">三角形</option>
+                            <option value="pin" data-i18n="shape_pin">图钉</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="style_size_label">大小</label>
+                        <input type="number" id="style-size" value="14" min="4" max="40">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <label data-i18n="style_fill_label">填充色</label>
+                        <input type="color" id="style-fill-color" value="#ff5722">
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="style_opacity_label">不透明度</label>
+                        <input type="number" id="style-fill-opacity" value="0.85" min="0" max="1" step="0.05">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <label data-i18n="style_border_color_label">边框色</label>
+                        <input type="color" id="style-border-color" value="#ffffff">
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="style_border_width_label">边框宽</label>
+                        <input type="number" id="style-border-width" value="2" min="0" max="5">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label><input type="checkbox" id="style-label"> <span data-i18n="style_label_label">显示名称标签</span></label>
+                    <select id="style-label-column" class="hidden"></select>
+                </div>
+                <div class="form-group">
+                    <label><input type="checkbox" id="style-connect"> <span data-i18n="style_connect_label">连接点</span></label>
+                </div>
+                <div class="row hidden" id="line-controls">
+                    <div class="form-group">
+                        <label data-i18n="style_line_color_label">线颜色</label>
+                        <input type="color" id="style-line-color" value="#2196F3">
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="style_line_width_label">线宽</label>
+                        <input type="number" id="style-line-width" value="2" min="1" max="10">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label><input type="checkbox" id="style-cluster" checked> <span data-i18n="style_cluster_label">开启聚合</span></label>
+                </div>
+                <button id="btn-apply-style" class="btn btn-block btn-sm" data-i18n="btn_apply_style">应用样式</button>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title" data-i18n="panel4_title">4. 导出与下载</div>
+                <button id="btn-export-csv" class="btn btn-block btn-sm" data-i18n="btn_export_csv">导出 CSV</button>
+                <div class="export-sep"></div>
+                <div class="form-group" style="margin-top:4px">
+                    <label data-i18n="geo_format_label">矢量导出格式</label>
+                    <select id="geo-format">
+                        <option value="geojson" data-i18n="fmt_geojson">GeoJSON (.geojson)</option>
+                        <option value="kml" data-i18n="fmt_kml">KML (.kml)</option>
+                        <option value="shp" data-i18n="fmt_shp">Shapefile (.shp / .dbf / .shx / .prj)</option>
+                    </select>
+                </div>
+                <button id="btn-export-geo" class="btn btn-block btn-sm btn-primary" data-i18n="geo_export_btn">导出矢量数据</button>
+                <div class="export-sep"></div>
+                <button id="btn-export-offline" class="btn btn-block btn-sm btn-success" data-i18n="btn_export_offline">导出离线 HTML 地图</button>
+                <button id="btn-download-sample" class="btn btn-block btn-sm btn-secondary" data-i18n="btn_download_sample">下载示例文件包</button>
+                <button id="btn-clear" class="btn btn-block btn-sm btn-warning" data-i18n="btn_clear">清空数据</button>
+            </div>
+
+            <div id="status" class="status"></div>
+            <div id="data-preview"></div>
+        </aside>
+
+        <main class="map-container">
+            <div id="map"></div>
+            <div class="map-controls">
+                <button id="btn-zoom-in" class="btn btn-sm">+</button>
+                <button id="btn-zoom-out" class="btn btn-sm">−</button>
+                <button id="btn-fit" class="btn btn-sm" data-i18n="btn_fit" data-i18n-title="fit_title">适配</button>
+                <button id="btn-fullscreen" class="btn btn-sm" title="全屏预览地图" data-i18n-title="fullscreen_title">⛶</button>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <span class="modal-close" id="modal-close">&times;</span>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="spinner"></div>
+        <div id="loading-text">处理中...</div>
+    </div>
+
+    
+    <script src="./app.js"></script>
+
+</body>
+</html>
