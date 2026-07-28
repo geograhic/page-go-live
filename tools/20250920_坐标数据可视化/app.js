@@ -57,7 +57,10 @@
             mapSourceId: 'gaode-vector',
             customSource: null,
             markerLayer: null,
-            lineLayer: null
+            lineLayer: null,
+            pendingFiles: null,
+            rawHeaders: [],
+            rawHasHeader: false
         };
         let map;
         let baseLayer;
@@ -159,35 +162,48 @@
                 .replace(/[南]/g, 'S')
                 .replace(/[北]/g, 'N');
         }
+        function applyDir(dir, num) {
+            if (!dir) return num;
+            if (dir === 'W' || dir === 'S') return -Math.abs(num);
+            return Math.abs(num);
+        }
         function parseCoord(str) {
             if (str === null || str === undefined) return null;
-            const s = normalizeCoordString(str);
+            let s = normalizeCoordString(str);
             if (!s) return null;
-            const num = Number(s.replace(/,/g, ''));
-            if (!isNaN(num)) return num;
-            const patterns = [
-                { r: /^([+-]?\d+(?:\.\d+)?)\s*°\s*(\d+(?:\.\d+)?)\s*'\s*(\d+(?:\.\d+)?)\s*"\s*([NSEW])?$/, dirLast: true },
-                { r: /^([NSEW])\s*([+-]?\d+(?:\.\d+)?)\s*°\s*(\d+(?:\.\d+)?)\s*'\s*(\d+(?:\.\d+)?)\s*"$/, dirFirst: true },
-                { r: /^([+-]?\d+(?:\.\d+)?)\s*°\s*(\d+(?:\.\d+)?)\s*'\s*([NSEW])?$/, dirLast: true, ddm: true },
-                { r: /^([NSEW])\s*([+-]?\d+(?:\.\d+)?)\s*°\s*(\d+(?:\.\d+)?)\s*'$/, dirFirst: true, ddm: true }
-            ];
-            for (const p of patterns) {
-                const m = s.match(p.r);
-                if (!m) continue;
-                let dir, deg, min, sec;
-                if (p.dirLast) {
-                    deg = parseFloat(m[1]); min = parseFloat(m[2]);
-                    sec = p.ddm ? 0 : parseFloat(m[3]);
-                    dir = p.ddm ? m[3] : m[4];
-                } else {
-                    dir = m[1]; deg = parseFloat(m[2]); min = parseFloat(m[3]);
-                    sec = p.ddm ? 0 : parseFloat(m[4]);
+            // 移除千分位逗号并规整空白
+            s = s.replace(/,/g, '').replace(/\s+/g, ' ').trim();
+
+            // 提取并移除半球字母（N/S/E/W），可出现在开头或结尾
+            const dirMatch = s.match(/[NSEW]/i);
+            let dir = null;
+            if (dirMatch) {
+                dir = dirMatch[0].toUpperCase();
+                s = s.replace(/[NSEW]/i, '').trim();
+            }
+            if (s === '') return null;
+
+            // 1) 纯十进制（已无字母）
+            const num = Number(s);
+            if (!isNaN(num)) return applyDir(dir, num);
+
+            // 2) 度分秒 / 度分（以 ° ' " : 或空白分隔）
+            const tokens = s.split(/[°'"\:]+|\s+/).filter(t => t !== '');
+            if (tokens.length >= 1) {
+                const deg = parseFloat(tokens[0]);
+                if (!isNaN(deg)) {
+                    let val = Math.abs(deg);
+                    let sign = deg < 0 ? -1 : 1;
+                    if (tokens.length >= 2) {
+                        const min = parseFloat(tokens[1]);
+                        if (!isNaN(min)) val += min / 60;
+                    }
+                    if (tokens.length >= 3) {
+                        const sec = parseFloat(tokens[2]);
+                        if (!isNaN(sec)) val += sec / 3600;
+                    }
+                    return applyDir(dir, sign * val);
                 }
-                if (isNaN(deg) || isNaN(min)) continue;
-                let sign = 1;
-                if (dir === 'W' || dir === 'S') sign = -1;
-                if (deg < 0) sign = -sign;
-                return sign * (Math.abs(deg) + min / 60 + sec / 3600);
             }
             return null;
         }
@@ -212,10 +228,10 @@
             const norm = headers.map(normalizeHeader);
             let nameIdx = -1, latIdx = -1, lngIdx = -1, crsIdx = -1;
             norm.forEach((h, i) => {
-                if (LAT_SYNONYMS.some(k => h.includes(k)) && !LNG_SYNONYMS.some(k => h.includes(k))) latIdx = i;
-                if (LNG_SYNONYMS.some(k => h.includes(k)) && !LAT_SYNONYMS.some(k => h.includes(k))) lngIdx = i;
-                if (NAME_SYNONYMS.some(k => h.includes(k))) nameIdx = i;
-                if (CRS_SYNONYMS.some(k => h.includes(k))) crsIdx = i;
+                if (latIdx < 0 && LAT_SYNONYMS.some(k => h.includes(k)) && !LNG_SYNONYMS.some(k => h.includes(k))) latIdx = i;
+                if (lngIdx < 0 && LNG_SYNONYMS.some(k => h.includes(k)) && !LAT_SYNONYMS.some(k => h.includes(k))) lngIdx = i;
+                if (nameIdx < 0 && NAME_SYNONYMS.some(k => h.includes(k))) nameIdx = i;
+                if (crsIdx < 0 && CRS_SYNONYMS.some(k => h.includes(k))) crsIdx = i;
             });
             return { nameIdx, latIdx, lngIdx, crsIdx };
         }
@@ -390,6 +406,105 @@
         function processRows(rows) {
             const hasHeader = isHeaderRow(rows[0]);
             return parseRowsToPoints(rows, hasHeader);
+        }
+
+        // ========================== 手动指定列解析 ==========================
+        // 由用户在下拉框中明确选择经度/纬度/名称/坐标系列，而非由机器猜测
+        function parseRowsToPointsExplicit(rows, hasHeader, sel) {
+            const headers = hasHeader ? rows[0].map(h => String(h === undefined ? '' : h).trim()) : rows[0].map((_, i) => '列' + (i + 1));
+            const { nameIdx, latIdx, lngIdx, crsIdx } = sel;
+            if (latIdx < 0 || lngIdx < 0) {
+                throw new Error(t('colsel_pick_required'));
+            }
+            const start = hasHeader ? 1 : 0;
+            const points = [];
+            for (let i = start; i < rows.length; i++) {
+                const row = rows[i];
+                if (!row || row.length === 0) continue;
+                const rawLng = parseCoord(row[lngIdx]);
+                const rawLat = parseCoord(row[latIdx]);
+                if (rawLng === null || rawLat === null) continue;
+                if (!isValidLatLng(rawLat, rawLng)) continue;
+
+                const name = nameIdx >= 0 ? String(row[nameIdx] || '').trim() : ('点' + (points.length + 1));
+                let crs = crsIdx >= 0 ? inferCRSFromValue(row[crsIdx]) : null;
+                if (!crs) crs = inferCRSFromHeaders(headers);
+                if (appState.inputCRS !== 'auto') crs = appState.inputCRS;
+
+                const props = {};
+                headers.forEach((h, idx) => { props[h] = row[idx] === undefined ? '' : row[idx]; });
+
+                points.push({
+                    id: points.length + 1,
+                    name: name,
+                    lng: rawLng,
+                    lat: rawLat,
+                    crs: crs,
+                    originalLng: rawLng,
+                    originalLat: rawLat,
+                    properties: props
+                });
+            }
+            return { points, columns: headers };
+        }
+        function showColumnSelector() {
+            const panel = document.getElementById('column-selector');
+            if (panel) panel.classList.remove('hidden');
+        }
+        function hideColumnSelector() {
+            const panel = document.getElementById('column-selector');
+            if (panel) panel.classList.add('hidden');
+        }
+        function populateColumnSelector(headers, def) {
+            [['col-name', def.nameIdx], ['col-lng', def.lngIdx], ['col-lat', def.latIdx], ['col-crs', def.crsIdx]].forEach(([id, d]) => {
+                const sel = document.getElementById(id);
+                if (!sel) return;
+                sel.innerHTML = '';
+                const o0 = document.createElement('option');
+                o0.value = '-1';
+                o0.textContent = t('colsel_none');
+                sel.appendChild(o0);
+                headers.forEach((h, i) => {
+                    const o = document.createElement('option');
+                    o.value = String(i);
+                    o.textContent = (h === undefined || h === '') ? ('列' + (i + 1)) : h;
+                    sel.appendChild(o);
+                });
+                sel.value = String(d);
+            });
+        }
+        async function applyColumnSelection() {
+            if (!appState.pendingFiles || appState.pendingFiles.length === 0) return;
+            showLoading(t('gen_offline') ? '正在解析...' : '正在解析...');
+            try {
+                const sel = {
+                    nameIdx: parseInt(document.getElementById('col-name').value, 10),
+                    lngIdx: parseInt(document.getElementById('col-lng').value, 10),
+                    latIdx: parseInt(document.getElementById('col-lat').value, 10),
+                    crsIdx: parseInt(document.getElementById('col-crs').value, 10)
+                };
+                if (sel.lngIdx < 0 || sel.latIdx < 0) {
+                    showStatus(t('colsel_pick_required'), 'error');
+                    return;
+                }
+                const allPoints = [];
+                for (const file of appState.pendingFiles) {
+                    const rows = await parseFile(file);
+                    if (!rows || rows.length < 2) continue;
+                    const res = parseRowsToPointsExplicit(rows, appState.rawHasHeader, sel);
+                    allPoints.push(...res.points);
+                }
+                if (allPoints.length === 0) {
+                    showStatus(t('parse_no_coord'), 'error');
+                    return;
+                }
+                hideColumnSelector();
+                loadData(allPoints, appState.rawHeaders);
+            } catch (e) {
+                showStatus(t('parse_fail_msg') + e.message, 'error');
+            } finally {
+                hideLoading();
+            }
         }
 
         // ========================== 地图初始化与图层 ==========================
@@ -676,7 +791,17 @@
                 opt.textContent = sourceDisplayName(s);
                 select.appendChild(opt);
             });
+            // 自定义图源不在 MAP_SOURCES 中，需手动补回，否则切换语言后会被重置为第一项
+            if (appState.customSource) {
+                const opt = document.createElement('option');
+                opt.value = 'custom';
+                opt.textContent = SOURCE_NAMES['custom'] || '自定义';
+                select.appendChild(opt);
+            }
             select.value = appState.mapSourceId;
+            // 同步自定义面板显隐，保持与当前选择一致
+            const customPanel = document.getElementById('custom-source');
+            if (customPanel) customPanel.classList.toggle('hidden', appState.mapSourceId !== 'custom');
         }
         function loadData(points, columns) {
             appState.points = points;
@@ -694,20 +819,33 @@
             loadData(SAMPLE_DATA.map(p => ({ ...p })), ['名称', '经度', '纬度', '坐标系']);
         }
         async function handleFiles(files) {
+            if (!files || files.length === 0) return;
             showLoading('正在解析文件...');
             try {
-                const allPoints = [];
-                for (const file of files) {
-                    const rows = await parseFile(file);
-                    if (!rows || rows.length < 2) continue;
-                    const result = processRows(rows);
-                    allPoints.push(...result.points);
-                }
-                if (allPoints.length === 0) {
+                appState.pendingFiles = Array.from(files);
+                const first = files[0];
+                const rows = await parseFile(first);
+                if (!rows || rows.length < 1) {
                     showStatus(t('parse_no_coord'), 'error');
                     return;
                 }
-                loadData(allPoints, []);
+                const hasHeader = isHeaderRow(rows[0]);
+                const headers = hasHeader
+                    ? rows[0].map(h => String(h === undefined ? '' : h).trim())
+                    : rows[0].map((_, i) => '列' + (i + 1));
+                let def;
+                if (hasHeader) {
+                    const c = detectColumns(headers);
+                    def = { nameIdx: c.nameIdx, latIdx: c.latIdx, lngIdx: c.lngIdx, crsIdx: c.crsIdx };
+                } else {
+                    const fb = fallbackNumericColumns(rows);
+                    def = { nameIdx: -1, latIdx: fb.latIdx, lngIdx: fb.lngIdx, crsIdx: -1 };
+                }
+                appState.rawHeaders = headers;
+                appState.rawHasHeader = hasHeader;
+                populateColumnSelector(headers, def);
+                showColumnSelector();
+                showStatus(t('colsel_hint'), 'info');
             } catch (e) {
                 showStatus(t('parse_fail_msg') + e.message, 'error');
             } finally {
@@ -1033,7 +1171,19 @@
                 'offline_done': '离线 HTML 地图已生成，可直接打开或分享',
                 'offline_fail': '离线地图生成失败：',
                 'csv_done': 'CSV 已导出',
-                'parse_fail_msg': '解析失败：'
+                'parse_fail_msg': '解析失败：',
+                'colsel_title': '选择经纬度列',
+                'colsel_desc': '请在下拉框中指定每一列对应的字段，再点击“应用列选择”',
+                'colsel_name': '名称列',
+                'colsel_lng': '经度列',
+                'colsel_lat': '纬度列',
+                'colsel_crs': '坐标系列',
+                'colsel_none': '（无）',
+                'colsel_apply': '应用列选择',
+                'colsel_hint': '已识别全部列字段，请选择经度/纬度列后点击“应用列选择”',
+                'colsel_pick_required': '请先选择经度列和纬度列',
+                'btn_download_format_sample': '下载多格式示例',
+                'format_sample_done': '已下载多格式坐标示例'
             },
             'zh-TW': {
                 'app_title': '座標資料視覺化地圖',
@@ -1172,7 +1322,19 @@
                 'offline_done': 'Offline HTML map generated, can be opened or shared',
                 'offline_fail': 'Offline map generation failed: ',
                 'csv_done': 'CSV exported',
-                'parse_fail_msg': 'Parse failed: '
+                'parse_fail_msg': 'Parse failed: ',
+                'colsel_title': 'Select Lon/Lat Columns',
+                'colsel_desc': 'Choose which column maps to each field, then click "Apply Column Selection"',
+                'colsel_name': 'Name column',
+                'colsel_lng': 'Longitude column',
+                'colsel_lat': 'Latitude column',
+                'colsel_crs': 'CRS column',
+                'colsel_none': '(none)',
+                'colsel_apply': 'Apply Column Selection',
+                'colsel_hint': 'All columns detected. Pick the longitude/latitude columns then click "Apply Column Selection"',
+                'colsel_pick_required': 'Please select the longitude and latitude columns first',
+                'btn_download_format_sample': 'Download Multi-format Sample',
+                'format_sample_done': 'Multi-format coordinate sample downloaded'
             },
             'ru': {
                 'app_title': 'Карта визуализации координатных данных',
@@ -1748,6 +1910,28 @@
             download(csv, '坐标导入示例.csv', 'text/csv;charset=utf-8;');
             download(txt, '坐标导入示例.txt', 'text/plain;charset=utf-8;');
         }
+        function csvCell(v) {
+            v = String(v);
+            if (/[",\n\r]/.test(v)) return '"' + v.replace(/"/g, '""') + '"';
+            return v;
+        }
+        const MULTI_FORMAT_SAMPLE_ROWS = [
+            ['名称', '十进制经度', '十进制纬度', '度分秒经度', '度分秒纬度', '度分经度', '度分纬度', '冒号经度', '冒号纬度'],
+            ['北京', '116.4074', '39.9042', '116°24\'26.6"E', '39°54\'15.1"N', '116°24.4433\'E', '39°54.2517\'N', '116:24:26.6E', '39:54:15.1N'],
+            ['上海', '121.4737', '31.2304', '121°28\'25.3"E', '31°13\'49.4"N', '121°28.422\'E', '31°13.823\'N', '121:28:25.3E', '31:13:49.4N'],
+            ['广州', '113.2644', '23.1291', '113°15\'51.8"E', '23°07\'44.8"N', '113°15.863\'E', '23°07.747\'N', '113:15:51.8E', '23:07:44.8N'],
+            ['成都', '104.0665', '30.5723', '104°03\'59.4"E', '30°34\'20.3"N', '104°03.990\'E', '30°34.338\'N', '104:03:59.4E', '30:34:20.3N'],
+            ['西安', '108.9398', '34.3416', '108°56\'23.3"E', '34°20\'29.8"N', '108°56.388\'E', '34°20.497\'N', '108:56:23.3E', '34:20:29.8N'],
+            ['杭州', '120.1551', '30.2741', '120°09\'18.4"E', '30°16\'26.8"N', '120°09.306\'E', '30°16.446\'N', '120:09:18.4E', '30:16:26.8N'],
+            ['武汉', '114.3054', '30.5928', '114°18\'19.4"E', '30°35\'34.1"N', '114°18.323\'E', '30°35.569\'N', '114:18:19.4E', '30:35:34.1N'],
+            ['深圳', '114.0579', '22.5431', '114°03\'28.4"E', '22°32\'35.2"N', '114°03.473\'E', '22°32.587\'N', '114:03:28.4E', '22:32:35.2N']
+        ];
+        function downloadMultiFormatSample() {
+            const lines = MULTI_FORMAT_SAMPLE_ROWS.map(r => r.map(csvCell).join(','));
+            const csv = '\uFEFF' + lines.join('\n');
+            download(csv, '坐标格式示例.csv', 'text/csv;charset=utf-8;');
+            showStatus(t('format_sample_done'), 'success');
+        }
 
         // ========================== 事件绑定 ==========================
         function bindEvents() {
@@ -1763,6 +1947,9 @@
             });
             fileInput.addEventListener('change', e => { if (e.target.files.length) handleFiles(e.target.files); });
 
+            const btnApplyCols = document.getElementById('btn-apply-cols');
+            if (btnApplyCols) btnApplyCols.addEventListener('click', applyColumnSelection);
+
             document.getElementById('btn-parse-manual').addEventListener('click', handleManualInput);
             document.getElementById('btn-load-sample').addEventListener('click', loadSampleData);
             document.getElementById('btn-apply-style').addEventListener('click', renderMarkers);
@@ -1770,14 +1957,20 @@
             document.getElementById('btn-export-offline').addEventListener('click', exportOfflineHTML);
             document.getElementById('btn-export-geo').addEventListener('click', exportVector);
             document.getElementById('btn-download-sample').addEventListener('click', downloadSampleFiles);
+            const btnDownloadFormat = document.getElementById('btn-download-format-sample');
+            if (btnDownloadFormat) btnDownloadFormat.addEventListener('click', downloadMultiFormatSample);
             const uiLang = document.getElementById('ui-lang');
             if (uiLang) uiLang.addEventListener('change', e => { currentLang = e.target.value; applyI18n(); });
             document.getElementById('btn-clear').addEventListener('click', () => {
                 appState.points = [];
                 appState.columns = [];
                 appState.convertOnDisplay = false;
+                appState.pendingFiles = null;
+                appState.rawHeaders = [];
+                appState.rawHasHeader = false;
                 document.getElementById('manual-input').value = '';
                 document.getElementById('file-input').value = '';
+                hideColumnSelector();
                 updateDataPreview();
                 renderMarkers();
                 refreshCRSWarning();
