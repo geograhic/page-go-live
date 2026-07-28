@@ -3,9 +3,41 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KML 合并/分割工具</title>
+<title>KML 合并/分割工具 | Endril 在线地理工具</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <link rel="stylesheet" href="style.css">
+<meta name="description" content="在线 KML / KMZ 合并与分割工具：支持按属性字段、名称、文件夹、几何类型、地理范围或数量等分拆分；合并时可统一或按文件分配颜色；支持 WGS84⇋GCJ02 坐标转换与 KMZ 压缩导出。纯浏览器运行，数据不出本地。">
+<meta name="keywords" content="KML合并,KML分割,KMZ,在线KML工具,按属性分割,坐标转换,WGS84,GCJ02,Endril">
+<meta name="author" content="李义洵">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#0f1117">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Endril Tools">
+<meta property="og:title" content="KML 合并/分割工具 | Endril 在线地理工具">
+<meta property="og:description" content="在线 KML / KMZ 合并与分割工具：支持按属性字段、名称、文件夹、几何类型、地理范围或数量等分拆分；合并时可统一或按文件分配颜色；支持 WGS84⇋GCJ02 坐标转换与 KMZ 压缩导出。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:url" content="https://html.endril.com/tools/kml%E5%90%88%E5%B9%B6%E5%88%86%E5%89%B2%E5%B7%A5%E5%85%B7/">
+<meta property="og:image" content="https://html.endril.com/favicon.svg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="KML 合并/分割工具 | Endril 在线地理工具">
+<meta name="twitter:description" content="在线 KML / KMZ 合并与分割工具：支持按属性字段、名称、文件夹、几何类型、地理范围或数量等分拆分；合并时可统一或按文件分配颜色。">
+<meta name="twitter:image" content="https://html.endril.com/favicon.svg">
+<link rel="canonical" href="https://html.endril.com/tools/kml%E5%90%88%E5%B9%B6%E5%88%86%E5%89%B2%E5%B7%A5%E5%85%B7/">
+<link rel="icon" href="https://html.endril.com/favicon.svg" type="image/svg+xml">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "KML 合并/分割工具",
+  "description": "在线 KML / KMZ 合并与分割工具：支持按属性字段、名称、文件夹、几何类型、地理范围或数量等分拆分；合并时可统一或按文件分配颜色；支持 WGS84⇋GCJ02 坐标转换与 KMZ 压缩导出。",
+  "applicationCategory": "UtilityApplication",
+  "operatingSystem": "Any",
+  "url": "https://html.endril.com/tools/kml%E5%90%88%E5%B9%B6%E5%88%86%E5%89%B2%E5%B7%A5%E5%85%B7/",
+  "author": { "@type": "Person", "name": "李义洵", "url": "https://endril.com" },
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "CNY" },
+  "publisher": { "@type": "Organization", "name": "Endril", "url": "https://endril.com" }
+}
+</script>
 </head>
 <body>
 
@@ -245,6 +277,11 @@
 
   <footer class="status-bar">
     <span id="status-text">就绪</span>
+  </footer>
+
+  <footer class="dev-credit">
+    <span>开发者 <a href="https://endril.com" target="_blank" rel="author noopener">李义洵</a> · Endril</span>
+    <a href="https://endril.com" target="_blank" rel="noopener">endril.com</a>
   </footer>
 
   <!-- 移动端底部导航（仅窄屏显示） -->
