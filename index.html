@@ -485,12 +485,12 @@
     <div class="container">
         <noscript>
             <div style="max-width:640px;margin:0 auto 22px;padding:16px;color:#fff;background:rgba(0,0,0,0.28);border-radius:0;line-height:1.7;">
-                <p>Endril 在线网页工具站是一个免费托管并分享网页工具与本地页面的平台：提交你的在线网页工具或本地页面，审核通过后即刻上线（page-go-live），让更多人看到、用到你的网页。本站工具列表由 JavaScript 动态加载，请启用 JavaScript 以浏览全部工具；或前往 <a href="https://github.com/geograhic/page-go-live" style="color:#fff;text-decoration:underline;">GitHub 仓库</a> 查看源码与提交记录。</p>
+                <p>Endril 在线网页工具站是一个免费、实用的网页工具集合，专注 GIS 地理信息、KML/SHP 坐标转换与地图可视化。本站工具列表由 JavaScript 动态加载，请启用 JavaScript 以浏览全部工具；或前往 <a href="https://github.com/geograhic/page-go-live" style="color:#fff;text-decoration:underline;">GitHub 仓库</a> 查看源码与提交记录。</p>
             </div>
         </noscript>
         <header>
             <h1><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="28" height="28" style="vertical-align:middle;margin-right:6px;" aria-label="tools" role="img"><path fill="#ffffff" stroke="#ffffff" stroke-width="1.2" stroke-linejoin="round" d="M34 15h-3.362c-.324-1.369-.864-2.651-1.582-3.814l2.379-2.379c.781-.781.781-2.048 0-2.829l-1.414-1.414c-.781-.781-2.047-.781-2.828 0l-2.379 2.379C23.65 6.225 22.369 5.686 21 5.362V2c0-1.104-.896-2-2-2h-2c-1.104 0-2 .896-2 2v3.362c-1.369.324-2.651.864-3.814 1.582L8.808 4.565c-.781-.781-2.048-.781-2.828 0L4.565 5.979c-.781.781-.781 2.048-.001 2.829l2.379 2.379C6.225 12.35 5.686 13.632 5.362 15H2c-1.104 0-2 .896-2 2v2c0 1.104.896 2 2 2h3.362c.324 1.368.864 2.65 1.582 3.813l-2.379 2.379c-.78.78-.78 2.048.001 2.829l1.414 1.414c.78.78 2.047.78 2.828 0l2.379-2.379c1.163.719 2.445 1.258 3.814 1.582V34c0 1.104.896 2 2 2h2c1.104 0 2-.896 2-2v-3.362c1.368-.324 2.65-.864 3.813-1.582l2.379 2.379c.781.781 2.047.781 2.828 0l1.414-1.414c.781-.781.781-2.048 0-2.829l-2.379-2.379c.719-1.163 1.258-2.445 1.582-3.814H34c1.104 0 2-.896 2-2v-2C36 15.896 35.104 15 34 15zM18 26c-4.418 0-8-3.582-8-8s3.582-8 8-8 8 3.582 8 8-3.582 8-8 8z"/></svg>在线网页工具站</h1>
-            <p>免费托管并分享你的在线网页工具或本地页面，让更多人看到、用到你的网页</p>
+            <p>高效实用的在线工具集合</p>
             <div class="header-actions">
                 <button id="themeToggle" class="theme-toggle" title="切换背景" aria-label="切换背景" type="button">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -537,8 +537,8 @@
         // ====== Internationalization (i18n) ======
         const I18N = {
             'zh-CN': {
-                siteTitle: '在线网页工具站 | 托管·分享你的网页',
-                siteDesc: '免费托管并分享你的在线网页工具或本地页面，让更多人看到、用到你的网页',
+                siteTitle: '在线网页工具站',
+                siteDesc: '高效实用的在线工具集合',
                 searchPlaceholder: '\u641c\u7d22\u5de5\u5177\u540d\u79f0\u6216\u63cf\u8ff0...',
                 loading: '\u52a0\u8f7d\u5de5\u5177\u4e2d...',
                 loadFailed: '\u52a0\u8f7d\u5931\u8d25',
@@ -556,14 +556,14 @@
                 viewList: '\u67e5\u770b\u540d\u5355',
                 toolCount: '\u4e2a\u5de5\u5177',
                 langToggle: 'EN',
-                footer: '© 2026 在线网页工具站 | 免费托管·分享你的网页与工具 | 由 GitHub Pages 驱动 | ',
-                submissionName: '提交你的网页或工具',
-                submissionDesc: '你有好的在线网页工具或本地网页？点击下方提交，审核通过后将在本站托管、分享，让更多人看到并用到你的作品。',
+                footer: '© 2026 在线网页工具站 | 由 GitHub Pages 驱动 | ',
+                submissionName: '提交你的网页工具',
+                submissionDesc: '你有好的网页工具？点击下方按钮提交，审核通过后将在本站上线展示。',
                 submissionButton: '我要上线'
             },
             en: {
-                siteTitle: 'Online Web Tools | Host & Share Your Pages',
-                siteDesc: 'Free hosting and sharing for your web tools or local pages — let more people see and use your work.',
+                siteTitle: 'Online Web Tools',
+                siteDesc: 'A collection of efficient & practical web tools',
                 searchPlaceholder: 'Search tools by name or description...',
                 loading: 'Loading tools...',
                 loadFailed: 'Load Failed',
@@ -580,10 +580,34 @@
                 viewList: 'View List',
                 toolCount: 'tools',
                 langToggle: '\u4e2d\u6587',
-                footer: '© 2026 Online Web Tools | Free hosting & sharing for your pages | Powered by GitHub Pages | ',
-                submissionName: 'Submit Your Page or Tool',
-                submissionDesc: 'Have a web tool or a local page? Submit it below. Once approved, we host and share it here so more people can see and use your work.',
-                submissionButton: 'Go Live'
+                footer: '© 2026 Online Web Tools | Powered by GitHub Pages | ',
+                submissionName: 'Submit Your Web Tool',
+                submissionDesc: 'Have a great web tool? Submit it below. Once approved, it will be featured on this site.',
+                submissionButton: 'Submit Now'
+            }
+        };
+
+        // ====== SEO meta i18n (invisible, for search engines / social sharing) ======
+        const SEO_I18N = {
+            'zh-CN': {
+                title: '在线网页工具站 | 免费托管·分享你的网页与工具',
+                description: 'Endril 在线网页工具站：免费托管并分享你的在线网页工具或本地页面，让更多人看到、用到你的网页。提交后审核通过即刻上线（page-go-live）。专注 GIS 地理信息、KML/SHP 坐标转换、地图可视化与开发者效率。',
+                keywords: '在线工具,网页工具,免费工具,网页托管,本地网页,网页上线,网页分享,网页展示,page-go-live,工具托管,GIS工具,坐标转换,KML转换,SHP转换,地图可视化,在线转换,Endril,工具箱,开发者工具',
+                ogTitle: '在线网页工具站 | 免费托管·分享你的网页与工具',
+                ogDescription: 'Endril 在线网页工具站：免费托管并分享你的在线网页工具或本地页面，让更多人看到、用到你的网页。提交后审核通过即刻上线（page-go-live）。',
+                ogImageAlt: 'Endril 在线网页工具站 - 免费托管·分享你的网页与工具，让更多人看到、用到（page-go-live）',
+                twitterTitle: '在线网页工具站 | 免费托管·分享你的网页与工具',
+                twitterDescription: 'Endril 在线网页工具站：免费托管并分享你的在线网页工具或本地页面，让更多人看到、用到你的网页。提交后审核通过即刻上线（page-go-live）。'
+            },
+            en: {
+                title: 'Online Web Tools | Free Hosting & Sharing for Your Pages',
+                description: 'Endril Online Web Tools: free hosting and sharing for your web tools or local pages. Submit your page or tool and go live after review (page-go-live). Focused on GIS, KML/SHP coordinate conversion, map visualization, and developer productivity.',
+                keywords: 'online tools,web tools,free tools,web hosting,host web page,local page,page go live,share web page,web tool hosting,GIS tools,coordinate conversion,KML converter,SHP converter,map visualization,Endril,toolbox,developer tools',
+                ogTitle: 'Online Web Tools | Free Hosting & Sharing for Your Pages',
+                ogDescription: 'Endril Online Web Tools: free hosting and sharing for your web tools or local pages. Submit your page or tool and go live after review (page-go-live).',
+                ogImageAlt: 'Endril Online Web Tools - free hosting and sharing for your web pages and tools (page-go-live)',
+                twitterTitle: 'Online Web Tools | Free Hosting & Sharing for Your Pages',
+                twitterDescription: 'Endril Online Web Tools: free hosting and sharing for your web tools or local pages. Submit your page or tool and go live after review (page-go-live).'
             }
         };
 
@@ -617,10 +641,49 @@
             applyLang();
         }
 
+        function setMeta(attr, key, value) {
+            let el = document.querySelector('meta[' + attr + '="' + key + '"]');
+            if (!el) {
+                el = document.createElement('meta');
+                el.setAttribute(attr, key);
+                document.head.appendChild(el);
+            }
+            el.setAttribute('content', value);
+        }
+
+        function applySeoMeta() {
+            const seo = SEO_I18N[curLang] || SEO_I18N['zh-CN'];
+            const isEn = curLang === 'en';
+
+            // Title tag: keep original Chinese page title, use SEO title for English
+            document.title = isEn ? seo.title : t('siteTitle');
+
+            // Standard meta
+            setMeta('name', 'description', seo.description);
+            setMeta('name', 'keywords', seo.keywords);
+
+            // Open Graph
+            setMeta('property', 'og:title', seo.ogTitle);
+            setMeta('property', 'og:description', seo.ogDescription);
+            setMeta('property', 'og:image:alt', seo.ogImageAlt);
+            setMeta('property', 'og:locale', isEn ? 'en_US' : 'zh_CN');
+            setMeta('property', 'og:site_name', isEn ? 'Endril Online Web Tools' : 'Endril 在线网页工具站');
+
+            // Twitter
+            setMeta('name', 'twitter:title', seo.twitterTitle);
+            setMeta('name', 'twitter:description', seo.twitterDescription);
+
+            // Canonical / og:url reflect current language
+            const pageUrl = 'https://html.endril.com/' + (isEn ? '?lang=en' : '');
+            setMeta('property', 'og:url', pageUrl);
+            const canonicalLink = document.querySelector('link[rel="canonical"]');
+            if (canonicalLink) canonicalLink.setAttribute('href', pageUrl);
+        }
+
         function applyLang() {
-            // Update static elements
-            document.title = t('siteTitle');
+            // Update static elements (page appearance remains unchanged)
             document.documentElement.lang = curLang;
+            applySeoMeta();
             const h1 = document.querySelector('header h1');
             // Preserve gear SVG icon, only update text
             const _gear = h1.querySelector('svg');
