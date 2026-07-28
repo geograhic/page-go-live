@@ -748,13 +748,3 @@ body { -webkit-tap-highlight-color: transparent; }
   .upload-buttons { flex-direction: column; }
   .btn-upload { width: 100%; }
 }
-
-/* 开发者署名栏 */
-.dev-credit {
-  display: flex; justify-content: space-between; align-items: center; gap: 8px;
-  padding: 5px 14px; min-height: 26px;
-  background: var(--bg-panel); border-top: 1px solid var(--border);
-  font-size: 11px; color: var(--text-dim);
-}
-.dev-credit a { color: var(--accent); text-decoration: none; }
-.dev-credit a:hover { text-decoration: underline; }

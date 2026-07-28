@@ -339,13 +339,3 @@ body { -webkit-tap-highlight-color: transparent; }
   .panel-section { padding: 12px 14px; }
   .form-row { gap: 8px; }
 }
-
-/* 开发者署名栏 */
-.dev-credit {
-  display: flex; justify-content: space-between; align-items: center; gap: 8px;
-  padding: 5px 14px; min-height: 26px;
-  background: var(--bg-panel); border-top: 1px solid var(--border);
-  font-size: 11px; color: var(--text-dim);
-}
-.dev-credit a { color: var(--accent); text-decoration: none; }
-.dev-credit a:hover { text-decoration: underline; }
