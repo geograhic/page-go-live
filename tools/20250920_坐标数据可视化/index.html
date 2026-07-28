@@ -63,6 +63,32 @@
                 </div>
                 <input type="file" id="file-input" accept=".xlsx,.xls,.csv,.txt,.tsv,.json" multiple>
 
+                <div id="column-selector" class="form-group hidden" style="margin-top:10px;border:1px solid #e0e0e0;border-radius:6px;padding:10px;background:#fafafa;">
+                    <div style="font-weight:600;margin-bottom:6px" data-i18n="colsel_title">选择经纬度列</div>
+                    <div style="font-size:12px;color:#888;margin-bottom:8px" data-i18n="colsel_desc">请在下拉框中指定每一列对应的字段，再点击“应用列选择”</div>
+                    <div class="row">
+                        <div class="form-group">
+                            <label data-i18n="colsel_lng">经度列</label>
+                            <select id="col-lng"></select>
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="colsel_lat">纬度列</label>
+                            <select id="col-lat"></select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group">
+                            <label data-i18n="colsel_name">名称列</label>
+                            <select id="col-name"></select>
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="colsel_crs">坐标系列</label>
+                            <select id="col-crs"></select>
+                        </div>
+                    </div>
+                    <button id="btn-apply-cols" class="btn btn-block btn-sm btn-primary" data-i18n="colsel_apply">应用列选择</button>
+                </div>
+
                 <div class="form-group" style="margin-top:10px">
                     <label data-i18n="crs_label">数据坐标系</label>
                     <select id="input-crs">
@@ -183,6 +209,7 @@
                 <div class="export-sep"></div>
                 <button id="btn-export-offline" class="btn btn-block btn-sm btn-success" data-i18n="btn_export_offline">导出离线 HTML 地图</button>
                 <button id="btn-download-sample" class="btn btn-block btn-sm btn-secondary" data-i18n="btn_download_sample">下载示例文件包</button>
+                <button id="btn-download-format-sample" class="btn btn-block btn-sm btn-secondary" data-i18n="btn_download_format_sample">下载多格式示例</button>
                 <button id="btn-clear" class="btn btn-block btn-sm btn-warning" data-i18n="btn_clear">清空数据</button>
             </div>
 
