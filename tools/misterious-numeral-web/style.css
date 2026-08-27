@@ -29,19 +29,16 @@
   body { zoom: var(--font-scale); }
 
   html, body {
-    height: 100%;
+    min-height: 100%;
     font-family: 'Press Start 2P', 'Courier New', monospace;
     background: var(--bg-deep);
     color: var(--white);
-    overflow: hidden;
+    overflow-x: hidden;
     -webkit-font-smoothing: none;
     image-rendering: pixelated;
   }
 
   body {
-    display: flex;
-    align-items: center;
-    justify-content: center;
     background-image:
       linear-gradient(rgba(26,28,44,0.9), rgba(26,28,44,0.9)),
       radial-gradient(circle at 20% 30%, rgba(65,166,246,0.08) 0%, transparent 40%),
@@ -104,7 +101,7 @@
   /* ===== 主容器（居中适配） ===== */
   #app {
     width: 100%;
-    height: 100%;
+    min-height: 100vh;
     max-width: 720px;
     display: flex;
     align-items: center;
