@@ -4,6 +4,10 @@
    - Loads Google AdSense (auto ads) ONLY after the user accepts.
    - Stores the choice in localStorage so it is remembered.
    - Provides a floating "Cookie 设置" button to change the choice.
+   - The floating button is freely draggable (pointer drag), so
+     visitors can move it anywhere on screen instead of being
+     stuck in the bottom-right corner. A real click (no drag)
+     re-opens the consent banner.
    Publisher ID is defined in ONE place below.
    ============================================================ */
 (function () {
@@ -108,19 +112,91 @@
     });
   }
 
+  /* Make an element freely draggable via pointer events (mouse + touch).
+     `onClick` runs only on a genuine click that did NOT turn into a drag. */
+  function makeDraggable(el, onClick) {
+    var dragging = false;
+    var moved = false;
+    var startX = 0;
+    var startY = 0;
+    var origX = 0;
+    var origY = 0;
+
+    el.style.touchAction = "none";
+
+    el.addEventListener("pointerdown", function (e) {
+      dragging = true;
+      moved = false;
+      var rect = el.getBoundingClientRect();
+      // Switch from right/bottom anchoring to explicit left/top so we
+      // can move the element relative to the viewport.
+      el.style.left = rect.left + "px";
+      el.style.top = rect.top + "px";
+      el.style.right = "auto";
+      el.style.bottom = "auto";
+      startX = e.clientX;
+      startY = e.clientY;
+      origX = rect.left;
+      origY = rect.top;
+      try {
+        el.setPointerCapture(e.pointerId);
+      } catch (_) {}
+    });
+
+    el.addEventListener("pointermove", function (e) {
+      if (!dragging) return;
+      var dx = e.clientX - startX;
+      var dy = e.clientY - startY;
+      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) moved = true;
+      var w = el.offsetWidth;
+      var h = el.offsetHeight;
+      var nx = origX + dx;
+      var ny = origY + dy;
+      // Keep the whole button within the viewport.
+      nx = Math.max(0, Math.min(nx, window.innerWidth - w));
+      ny = Math.max(0, Math.min(ny, window.innerHeight - h));
+      el.style.left = nx + "px";
+      el.style.top = ny + "px";
+    });
+
+    function endDrag(e) {
+      if (!dragging) return;
+      dragging = false;
+      try {
+        el.releasePointerCapture(e.pointerId);
+      } catch (_) {}
+    }
+
+    el.addEventListener("pointerup", endDrag);
+    el.addEventListener("pointercancel", endDrag);
+
+    el.addEventListener("click", function (e) {
+      // If the press turned into a drag, swallow the synthesized click
+      // so we don't also reopen the consent banner.
+      if (moved) {
+        e.stopPropagation();
+        e.preventDefault();
+        moved = false;
+        return;
+      }
+      if (typeof onClick === "function") onClick();
+    });
+  }
+
   function showSettingsButton() {
     if (document.getElementById("endril-consent-settings")) return;
     var s = document.createElement("button");
     s.id = "endril-consent-settings";
     s.className = "endril-consent-settings";
     s.type = "button";
+    s.title = "Cookie 设置（可拖动）";
     s.textContent = "🍪 Cookie 设置";
-    s.addEventListener("click", function () {
+    document.body.appendChild(s);
+    makeDraggable(s, function () {
       setConsent(null);
       removeBanner();
       showBanner();
     });
-    document.body.appendChild(s);
   }
 
   function init() {

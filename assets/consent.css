@@ -2,6 +2,10 @@
    Endril Cookie Consent + AdSense helper
    Shared across html.endril.com (root pages + /tools/* subpages)
    Loaded via absolute path /assets/consent.css
+
+   Design: simple white surface, no rounded corners, no purple
+   gradient. The floating "Cookie 设置" button is white, compact,
+   and freely draggable (see consent.js).
    ============================================================ */
 
 /* --- Cookie consent banner (fixed bottom) --- */
@@ -13,7 +17,8 @@
   z-index: 99999;
   background: #ffffff;
   color: #1f2430;
-  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.18);
+  border-top: 1px solid #e5e7eb;
+  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.12);
   padding: 16px 20px;
   display: flex;
   flex-wrap: wrap;
@@ -32,7 +37,7 @@
 }
 
 .endril-consent .ec-text a {
-  color: #5b3fb0;
+  color: #2563eb;
   text-decoration: underline;
 }
 
@@ -46,7 +51,7 @@
 .endril-consent button {
   border: none;
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: 0;
   padding: 9px 18px;
   font-size: 14px;
   font-weight: 600;
@@ -54,7 +59,7 @@
 }
 
 .endril-consent .ec-accept {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: #1f2937;
   color: #fff;
 }
 
@@ -65,30 +70,43 @@
 
 .endril-consent .ec-more {
   background: transparent;
-  color: #5b3fb0;
+  color: #2563eb;
   text-decoration: underline;
   padding: 9px 8px;
 }
 
-/* --- Floating re-consent / cookie settings button --- */
+/* --- Floating re-consent / cookie settings button ---
+   Compact, white, and freely draggable (pointer drag handled in
+   consent.js). position:fixed with right/bottom as the default
+   anchor; JS switches to left/top while dragging. */
 .endril-consent-settings {
   position: fixed;
   right: 14px;
   bottom: 14px;
   z-index: 99998;
-  background: rgba(40, 40, 60, 0.85);
-  color: #fff;
-  border: none;
-  cursor: pointer;
-  border-radius: 6px;
-  padding: 8px 12px;
-  font-size: 13px;
+  background: #ffffff;
+  color: #1f2937;
+  border: 1px solid #d0d5dd;
+  cursor: grab;
+  border-radius: 0;
+  padding: 5px 10px;
+  font-size: 12px;
+  line-height: 1.4;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.18);
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  white-space: nowrap;
 }
 
 .endril-consent-settings:hover {
-  background: rgba(40, 40, 60, 0.95);
+  background: #f5f6f8;
+}
+
+.endril-consent-settings:active {
+  cursor: grabbing;
 }
 
 /* --- Shared site footer (added to tool pages) --- */
@@ -103,7 +121,7 @@
 }
 
 .endril-site-footer a {
-  color: #5b3fb0;
+  color: #2563eb;
   text-decoration: none;
 }
 
