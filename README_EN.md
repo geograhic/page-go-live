@@ -162,6 +162,52 @@ Add a link back to the homepage in the tool:
 <a href="/">← Back to home</a>
 ```
 
+## 🧩 Opt-in injection for tool pages (footer / Cookie consent)
+
+The site's homepage and the privacy / about / contact pages show Endril's
+footer and Cookie consent bar by default. **Sub-tool pages do NOT receive any
+Endril UI automatically** — whether they appear is up to each tool author.
+
+`/assets/consent.js` and `/assets/consent.css` activate on demand via two
+`<meta>` tags in `<head>`:
+
+| meta tag | effect |
+|----------|--------|
+| `<meta name="endril-consent" content="on">` | injects the Cookie consent banner + draggable "Cookie 设置" button + (after accept) Google AdSense |
+| `<meta name="endril-footer" content="on">` | injects the standard Endril footer (privacy / about / contact links) at the end of the page |
+
+**By default (no meta tag) the script is a complete no-op** — your tool page
+is not modified and no ad script is loaded.
+
+### Enable on a tool page (example)
+
+```html
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My web tool</title>
+    <!-- pick one or both -->
+    <meta name="endril-consent" content="on">   <!-- Cookie consent bar -->
+    <meta name="endril-footer"  content="on">   <!-- Endril footer -->
+    <link rel="stylesheet" href="/assets/consent.css">
+</head>
+<body>
+    <!-- your tool content -->
+    <script src="/assets/consent.js" defer></script>
+</body>
+```
+
+- Want only the Cookie bar: add the `endril-consent` meta.
+- Want only the footer: add the `endril-footer` meta (the script still loads, but only injects the footer).
+- Want neither: your tool page stays 100% independent from Endril.
+
+> Note: footer and Cookie links use **absolute URLs** (e.g.
+> `https://html.endril.com/privacy.html`) so they resolve correctly even when
+> the tool lives under `/tools/your-tool/`. A tool that already hand-wrote a
+> `<div class="endril-site-footer">` will not get a duplicate; to let the site
+> maintain it instead, remove the hand-written block and use the `endril-footer`
+> meta.
+
 ## 🔄 Workflows
 
 Two GitHub Actions are built into the repo:

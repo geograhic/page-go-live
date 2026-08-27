@@ -161,6 +161,44 @@
 <a href="/">← 返回首页</a>
 ```
 
+## 🧩 工具页可选注入（页脚 / Cookie 同意）
+
+本站首頁、隐私、关于、联系页默认带有 Endril 的页脚与 Cookie 同意条。
+**但子工具页默认不会自动注入任何 Endril UI**——是否出现由工具作者自己决定。
+
+`/assets/consent.js` 与 `/assets/consent.css` 通过这两类 `<head>` 里的 `<meta>` 标签按需激活：
+
+| meta 标签 | 作用 |
+|-----------|------|
+| `<meta name="endril-consent" content="on">` | 注入 Cookie 同意横幅 + 可拖动的「Cookie 设置」按钮 + （接受后）Google AdSense |
+| `<meta name="endril-footer" content="on">` | 在页面底部注入标准 Endril 页脚（隐私政策 / 关于我们 / 联系我们链接） |
+
+**默认（不加任何 meta）= 脚本完全不生效**，你的工具页不会被插入任何元素、不会被加载广告脚本。
+
+### 在工具页中启用（示例）
+
+```html
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的网页工具</title>
+    <!-- 按需二选一 / 都加 -->
+    <meta name="endril-consent" content="on">   <!-- Cookie 同意条 -->
+    <meta name="endril-footer"  content="on">   <!-- Endril 页脚 -->
+    <link rel="stylesheet" href="/assets/consent.css">
+</head>
+<body>
+    <!-- 你的工具内容 -->
+    <script src="/assets/consent.js" defer></script>
+</body>
+```
+
+- 只想要 Cookie 条：加 `endril-consent` meta。
+- 只想要页脚：加 `endril-footer` meta（脚本仍会加载，但仅注入页脚）。
+- 两个都不加：工具页与 Endril 完全无关，作者拥有 100% 页面控制权。
+
+> 说明：页脚与 Cookie 链接均为**绝对地址**（如 `https://html.endril.com/privacy.html`），因此即便工具位于 `/tools/你的工具/` 子路径下也能正确跳转。已有工具若此前**手写了** `<div class="endril-site-footer">`，脚本不会重复注入；若想改为由本站统一维护，可删掉手写部分并改用 `endril-footer` meta。
+
 ## 🔄 工作流说明
 
 仓库内置两条 GitHub Actions：

@@ -1,14 +1,28 @@
 /* ============================================================
-   Endril Cookie Consent + AdSense loader
-   - Shows a consent banner on first visit.
-   - Loads Google AdSense (auto ads) ONLY after the user accepts.
-   - Stores the choice in localStorage so it is remembered.
-   - Provides a floating "Cookie 设置" button to change the choice.
-   - The floating button is freely draggable (pointer drag), so
-     visitors can move it anywhere on screen instead of being
-     stuck in the bottom-right corner. A real click (no drag)
-     re-opens the consent banner.
-   Publisher ID is defined in ONE place below.
+   Endril Consent + Page Kit  (shared: /assets/consent.js)
+   Loaded on html.endril.com root pages AND /tools/* subpages.
+
+   OPT-IN BY DESIGN  (default = NOTHING injected)
+   ------------------------------------------------------------
+   This script only activates when the host page explicitly opts
+   in via a <meta> tag in <head>. That way a tool contributor can
+   decide whether any Endril UI appears on their page, and a page
+   that does not opt in is left completely untouched.
+
+     <meta name="endril-consent" content="on">
+         -> Cookie consent banner + draggable "Cookie 设置"
+            button + Google AdSense (loaded only after accept)
+
+     <meta name="endril-footer" content="on">
+         -> Standard Endril site footer (links to privacy /
+            about / contact), appended at the end of <body>
+
+   Without either meta this script is a no-op.
+
+   The site's own pages (index / about / privacy / contact)
+   include <meta name="endril-consent" content="on">, so they
+   keep working exactly as before. Tool pages get nothing unless
+   their author adds the meta(s).
    ============================================================ */
 (function () {
   "use strict";
@@ -18,6 +32,14 @@
   var ADS_SRC =
     "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=" +
     PUB_ID;
+
+  /* Is an opt-in <meta name="..."> present and "on"? */
+  function metaOn(name) {
+    var m = document.querySelector('meta[name="' + name + '"]');
+    if (!m) return false;
+    var v = (m.getAttribute("content") || "").trim().toLowerCase();
+    return v === "" || v === "on" || v === "true" || v === "1" || v === "yes";
+  }
 
   function getConsent() {
     try {
@@ -199,16 +221,41 @@
     });
   }
 
+  /* Inject the standard Endril site footer at the end of <body>.
+     Uses absolute URLs because tool pages live under /tools/. */
+  function injectFooter() {
+    if (document.querySelector(".endril-site-footer")) return; // already there
+    var f = document.createElement("div");
+    f.className = "endril-site-footer";
+    f.innerHTML =
+      '<p>&copy; 2026 在线网页站 | 由 GitHub Pages 驱动 | ' +
+      '<a href="https://endril.com" target="_blank" rel="noopener">Endril</a> &nbsp;|&nbsp; ' +
+      '<a href="https://html.endril.com/privacy.html" target="_blank" rel="noopener">隐私政策</a> &nbsp;·&nbsp; ' +
+      '<a href="https://html.endril.com/about.html" target="_blank" rel="noopener">关于我们</a> &nbsp;·&nbsp; ' +
+      '<a href="https://html.endril.com/contact.html" target="_blank" rel="noopener">联系我们</a></p>';
+    document.body.appendChild(f);
+  }
+
   function init() {
-    if (consent === "accepted") {
-      loadAds();
-    } else if (consent === "rejected") {
-      // Do not load any ad script.
-    } else {
-      showBanner();
+    var consentOn = metaOn("endril-consent");
+    var footerOn = metaOn("endril-footer");
+
+    // Default: no opt-in meta -> this script does nothing.
+    if (!consentOn && !footerOn) return;
+
+    if (consentOn) {
+      if (consent === "accepted") {
+        loadAds();
+      } else if (consent === null) {
+        showBanner();
+      }
+      // Always allow the visitor to revisit their choice.
+      showSettingsButton();
     }
-    // Always allow the user to revisit their choice.
-    showSettingsButton();
+
+    if (footerOn) {
+      injectFooter();
+    }
   }
 
   if (document.readyState === "loading") {

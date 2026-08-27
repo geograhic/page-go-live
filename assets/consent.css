@@ -1,11 +1,18 @@
 /* ============================================================
-   Endril Cookie Consent + AdSense helper
+   Endril Cookie Consent + Page Kit styles
    Shared across html.endril.com (root pages + /tools/* subpages)
    Loaded via absolute path /assets/consent.css
 
    Design: simple white surface, no rounded corners, no purple
    gradient. The floating "Cookie 设置" button is white, compact,
    and freely draggable (see consent.js).
+
+   OPT-IN: consent.js only injects the cookie banner/button and/or
+   the site footer when the host page includes the corresponding
+   <meta> tag in <head>:
+     <meta name="endril-consent" content="on">  -> banner + button + ads
+     <meta name="endril-footer"  content="on">  -> .endril-site-footer
+   Without these metas, nothing is injected (tool pages unaffected).
    ============================================================ */
 
 /* --- Cookie consent banner (fixed bottom) --- */
