@@ -437,6 +437,62 @@
   (mq.addEventListener ? mq.addEventListener('change', initView) : mq.addListener(initView));
 })();
 </script>
+
+<!-- ====== SEO/GEO 内容区（解决 thin content + GEO 语义化）====== -->
+<section class="tool-content" aria-label="工具介绍与帮助">
+  <article class="tc-block">
+    <h2 class="tc-title">关于 SHP 转 KML 工具</h2>
+    <p>这是一个<strong>纯浏览器运行</strong>的在线 SHP 转 KML 工具（SHP to KML Converter），由 Endril 开发。上传 Shapefile（.shp/.shx/.dbf/.prj）后自动识别全部组件，支持 CGCS2000 / WGS84 / UTM 等坐标系转换，可选字形标注与样式自定义，一键生成 KML 或按字段分割打包下载。所有处理在本地完成，<strong>数据不上传服务器</strong>。</p>
+    <p>典型应用：将 CGCS2000 投影的国土调查数据转为 WGS84 KML 供 Google Earth 查看、按行政区字段将省级 Shapefile 拆分为市县独立 KML、为要素添加中文字体标注、批量转换 UTM 投影数据等。</p>
+  </article>
+
+  <article class="tc-block">
+    <h2 class="tc-title">使用步骤（How to use）</h2>
+    <ol class="tc-steps">
+      <li><strong>上传 Shapefile</strong>：选择 .shp 文件，工具自动识别同目录的 .shx/.dbf/.prj 组件。</li>
+      <li><strong>设置源坐标系</strong>：根据 .prj 自动检测，或手动指定 CGCS2000 / WGS84 / UTM 分带。</li>
+      <li><strong>选择目标坐标系</strong>：通常为 WGS84（KML 标准），也可保持源坐标系。</li>
+      <li><strong>样式与标注（可选）</strong>：选择线/面颜色、透明度，按字段生成中文字体标注。</li>
+      <li><strong>输出方式</strong>：单一 KML，或按某属性字段分割为多个 KML 并打包为 ZIP。</li>
+      <li><strong>生成并下载</strong>：点击生成，处理完成后下载结果。</li>
+    </ol>
+  </article>
+
+  <article class="tc-block" id="faq">
+    <h2 class="tc-title">常见问题（FAQ）</h2>
+    <details class="tc-faq"><summary>Shapefile 包含哪些文件？</summary><p>一个完整 Shapefile 至少包含 .shp（几何）、.shx（索引）、.dbf（属性）、.prj（投影定义）。本工具会自动识别这些组件，缺一不可。</p></details>
+    <details class="tc-faq"><summary>支持哪些坐标系？</summary><p>支持 CGCS2000（国家大地坐标系）、WGS84（国际通用）、UTM（通用横轴墨卡托）及其分带，依赖 proj4 进行投影转换。</p></details>
+    <details class="tc-faq"><summary>能否按字段分割为多个 KML？</summary><p>可以。在输出方式中选择「按字段分割」，指定一个属性字段（如行政区代码），工具会为每个不同值生成独立 KML 并打包为 ZIP。</p></details>
+    <details class="tc-faq"><summary>中文字体标注如何实现？</summary><p>工具内置 SimHei、Microsoft YaHei、SimSun、DejaVuSans 等字体，选择标注字段后会用 OpenType.js 将文字渲染为 KML 几何标注，确保 Google Earth 等客户端正确显示中文。</p></details>
+    <details class="tc-faq"><summary>数据会上传吗？</summary><p>不会。全部在浏览器本地解析与转换，Shapefile 不经过任何服务器，适合处理涉密测绘数据。</p></details>
+    <details class="tc-faq"><summary>转换后 KML 在 Google Earth 坐标偏移怎么办？</summary><p>确保目标坐标系选择 WGS84（Google Earth 默认）。若源是 CGCS2000 国内数据，转换后即可正常显示。</p></details>
+  </article>
+
+  <article class="tc-block">
+    <h2 class="tc-title">相关工具</h2>
+    <ul class="tc-related">
+      <li><a href="https://html.endril.com/tools/kml-merge-split/">KML 合并/分割工具</a> — 合并与按属性/几何等 6 种方式分割 KML</li>
+      <li><a href="https://html.endril.com/tools/kml-spatial-split/">KML 按位置分割工具</a> — 按空间关系或地图框选拆分 KML</li>
+      <li><a href="https://html.endril.com/">Endril 在线网页站</a> — 更多免费、纯浏览器运行的地理工具</li>
+    </ul>
+  </article>
+</section>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"Shapefile 包含哪些文件？","acceptedAnswer":{"@type":"Answer","text":"一个完整 Shapefile 至少包含 .shp（几何）、.shx（索引）、.dbf（属性）、.prj（投影定义）。本工具会自动识别这些组件，缺一不可。"}},
+    {"@type":"Question","name":"支持哪些坐标系？","acceptedAnswer":{"@type":"Answer","text":"支持 CGCS2000（国家大地坐标系）、WGS84（国际通用）、UTM（通用横轴墨卡托）及其分带，依赖 proj4 进行投影转换。"}},
+    {"@type":"Question","name":"能否按字段分割为多个 KML？","acceptedAnswer":{"@type":"Answer","text":"可以。在输出方式中选择按字段分割，指定一个属性字段（如行政区代码），工具会为每个不同值生成独立 KML 并打包为 ZIP。"}},
+    {"@type":"Question","name":"中文字体标注如何实现？","acceptedAnswer":{"@type":"Answer","text":"工具内置 SimHei、Microsoft YaHei、SimSun、DejaVuSans 等字体，选择标注字段后会用 OpenType.js 将文字渲染为 KML 几何标注，确保 Google Earth 等客户端正确显示中文。"}},
+    {"@type":"Question","name":"数据会上传吗？","acceptedAnswer":{"@type":"Answer","text":"不会。全部在浏览器本地解析与转换，Shapefile 不经过任何服务器，适合处理涉密测绘数据。"}},
+    {"@type":"Question","name":"转换后 KML 在 Google Earth 坐标偏移怎么办？","acceptedAnswer":{"@type":"Answer","text":"确保目标坐标系选择 WGS84（Google Earth 默认）。若源是 CGCS2000 国内数据，转换后即可正常显示。"}}
+  ]
+}
+</script>
+
     <div class="endril-site-footer">
       <p>&copy; 2026 Endril &middot; <a href="https://html.endril.com/" target="_blank" rel="noopener">在线网页站</a> &nbsp;|&nbsp; <a href="https://html.endril.com/privacy.html" target="_blank" rel="noopener">隐私政策</a> &nbsp;&middot;&nbsp; <a href="https://html.endril.com/about.html" target="_blank" rel="noopener">关于我们</a> &nbsp;&middot;&nbsp; <a href="https://html.endril.com/contact.html" target="_blank" rel="noopener">联系我们</a></p>
     </div>

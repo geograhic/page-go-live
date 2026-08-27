@@ -21,8 +21,9 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 html, body {
-  height: 100%;
-  overflow: hidden;
+  min-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 body {
@@ -36,6 +37,7 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  min-height: 100vh;
 }
 
 /* Header */
@@ -748,3 +750,44 @@ body { -webkit-tap-highlight-color: transparent; }
   .upload-buttons { flex-direction: column; }
   .btn-upload { width: 100%; }
 }
+
+/* ====== SEO/GEO 内容区样式（深色主题协调）====== */
+.tool-content {
+  max-width: 880px; margin: 0 auto; padding: 32px 24px 48px;
+  color: var(--text); line-height: 1.7;
+}
+.tc-block { margin-bottom: 36px; }
+.tc-title {
+  font-size: 1.35em; color: var(--text-bright); margin-bottom: 14px;
+  padding-bottom: 8px; border-bottom: 1px solid var(--border);
+}
+.tool-content p { margin-bottom: 12px; color: var(--text); }
+.tool-content strong { color: var(--text-bright); font-weight: 600; }
+.tool-content a { color: var(--accent); text-decoration: none; }
+.tool-content a:hover { text-decoration: underline; }
+.tc-steps { margin: 12px 0 12px 22px; }
+.tc-steps li { margin-bottom: 10px; color: var(--text); }
+.tc-steps strong { color: var(--accent); }
+.tc-related { list-style: none; margin-left: 0; }
+.tc-related li { margin-bottom: 8px; padding-left: 18px; position: relative; color: var(--text-dim); }
+.tc-related li::before { content: "→"; position: absolute; left: 0; color: var(--accent); }
+.tc-related a { color: var(--text); }
+.tc-related a:hover { color: var(--accent); }
+.tc-faq {
+  background: var(--bg-panel); border: 1px solid var(--border); border-radius: 6px;
+  margin-bottom: 10px; padding: 0; overflow: hidden;
+}
+.tc-faq summary {
+  cursor: pointer; padding: 14px 18px; color: var(--text-bright); font-weight: 500;
+  list-style: none; display: flex; align-items: center;
+}
+.tc-faq summary::-webkit-details-marker { display: none; }
+.tc-faq summary::before { content: "+"; margin-right: 10px; color: var(--accent); font-weight: 700; }
+.tc-faq[open] summary::before { content: "−"; }
+.tc-faq summary:hover { background: var(--bg-hover); }
+.tc-faq p { padding: 0 18px 16px 32px; color: var(--text); margin: 0; }
+@media (max-width: 768px) {
+  .tool-content { padding: 24px 16px 36px; }
+  .tc-title { font-size: 1.2em; }
+}
+

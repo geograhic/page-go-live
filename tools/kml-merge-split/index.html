@@ -360,6 +360,61 @@
   (mq.addEventListener ? mq.addEventListener('change', initView) : mq.addListener(initView));
 })();
 </script>
+
+<!-- ====== SEO/GEO 内容区（解决 thin content + GEO 语义化）====== -->
+<section class="tool-content" aria-label="工具介绍与帮助">
+  <article class="tc-block">
+    <h2 class="tc-title">关于 KML 合并/分割工具</h2>
+    <p>这是一个<strong>纯浏览器运行</strong>的在线 KML / KMZ 合并与分割工具（KML Merge &amp; Split Tool），由 Endril 开发。所有文件处理在本地完成，<strong>不上传到服务器</strong>，适合处理包含敏感地理信息的数据。支持合并多个 KML/KMZ 文件、按属性字段/名称/文件夹/几何类型/地理范围/数量等 6 种方式分割，并提供 WGS84⇋GCJ02 坐标转换与 KMZ 压缩导出。</p>
+    <p>常见使用场景包括：将多个区域 KML 合并为一个完整数据集、按行政区划字段拆分大文件、按几何类型分类整理混合要素、为不同颜色分配生成专题图层、以及在 WGS84 与 GCJ02（火星坐标）之间转换以适配国内地图平台。</p>
+  </article>
+
+  <article class="tc-block">
+    <h2 class="tc-title">使用步骤（How to use）</h2>
+    <ol class="tc-steps">
+      <li><strong>上传 KML/KMZ</strong>：拖拽或点击选择一个或多个文件，工具会自动解析要素数量与属性字段。</li>
+      <li><strong>选择操作</strong>：在「合并」与「分割」之间切换。分割时可选择按属性字段、名称、文件夹、几何类型、地理范围或数量等分。</li>
+      <li><strong>坐标系转换（可选）</strong>：如需适配国内地图平台，选择 WGS84→GCJ02 或反向转换。</li>
+      <li><strong>输出设置</strong>：选择 KML 或 KMZ（压缩包）格式，设置文件名前缀。</li>
+      <li><strong>执行并下载</strong>：点击「执行操作」，处理完成后一键下载结果。</li>
+    </ol>
+  </article>
+
+  <article class="tc-block" id="faq">
+    <h2 class="tc-title">常见问题（FAQ）</h2>
+    <details class="tc-faq"><summary>KML 和 KMZ 有什么区别？</summary><p>KML 是基于 XML 的开放地理标记格式，KMZ 是 KML 的 ZIP 压缩包，体积更小且可包含图片等资源。本工具同时支持两种格式的输入与输出。</p></details>
+    <details class="tc-faq"><summary>我的数据会被上传到服务器吗？</summary><p>不会。本工具完全在浏览器本地运行，您的 KML/KMZ 文件不会经过任何服务器，关闭页面后数据即被丢弃，适合处理涉密地理信息。</p></details>
+    <details class="tc-faq"><summary>支持哪些分割方式？</summary><p>共 6 种：按 ExtendedData 属性字段、按 Placemark 名称、按 Folder 文件夹结构、按几何类型（点/线/面）、按地理范围裁剪、按数量等分。</p></details>
+    <details class="tc-faq"><summary>WGS84 和 GCJ02 坐标转换有什么作用？</summary><p>WGS84 是国际通用坐标系（GPS、Google Earth 使用），GCJ02 是中国国测局坐标系（高德、腾讯等国内地图使用）。转换可避免在国内地图平台上出现坐标偏移。</p></details>
+    <details class="tc-faq"><summary>合并时如何为不同文件分配颜色？</summary><p>在「样式处理」中选择「按文件分配不同颜色」，工具会自动为每个来源文件生成不同颜色的样式，便于在地图上区分来源。</p></details>
+    <details class="tc-faq"><summary>支持多大的文件？</summary><p>取决于浏览器内存，一般可处理数万要素级别的 KML。如遇性能瓶颈，建议先用「按数量等分」拆分为小文件。</p></details>
+  </article>
+
+  <article class="tc-block">
+    <h2 class="tc-title">相关工具</h2>
+    <ul class="tc-related">
+      <li><a href="https://html.endril.com/tools/kml-spatial-split/">KML 按位置分割与选择导出</a> — 按空间关系（相交/包含/质心）批量拆分 KML</li>
+      <li><a href="https://html.endril.com/tools/shp-to-kml/">SHP 转 KML 工具</a> — 将 Shapefile 转换为 KML，支持坐标系转换</li>
+      <li><a href="https://html.endril.com/">Endril 在线网页站</a> — 更多免费、纯浏览器运行的地理工具</li>
+    </ul>
+  </article>
+</section>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"KML 和 KMZ 有什么区别？","acceptedAnswer":{"@type":"Answer","text":"KML 是基于 XML 的开放地理标记格式，KMZ 是 KML 的 ZIP 压缩包，体积更小且可包含图片等资源。本工具同时支持两种格式的输入与输出。"}},
+    {"@type":"Question","name":"我的数据会被上传到服务器吗？","acceptedAnswer":{"@type":"Answer","text":"不会。本工具完全在浏览器本地运行，您的 KML/KMZ 文件不会经过任何服务器，关闭页面后数据即被丢弃，适合处理涉密地理信息。"}},
+    {"@type":"Question","name":"支持哪些分割方式？","acceptedAnswer":{"@type":"Answer","text":"共 6 种：按 ExtendedData 属性字段、按 Placemark 名称、按 Folder 文件夹结构、按几何类型（点/线/面）、按地理范围裁剪、按数量等分。"}},
+    {"@type":"Question","name":"WGS84 和 GCJ02 坐标转换有什么作用？","acceptedAnswer":{"@type":"Answer","text":"WGS84 是国际通用坐标系（GPS、Google Earth 使用），GCJ02 是中国国测局坐标系（高德、腾讯等国内地图使用）。转换可避免在国内地图平台上出现坐标偏移。"}},
+    {"@type":"Question","name":"合并时如何为不同文件分配颜色？","acceptedAnswer":{"@type":"Answer","text":"在样式处理中选择按文件分配不同颜色，工具会自动为每个来源文件生成不同颜色的样式，便于在地图上区分来源。"}},
+    {"@type":"Question","name":"支持多大的文件？","acceptedAnswer":{"@type":"Answer","text":"取决于浏览器内存，一般可处理数万要素级别的 KML。如遇性能瓶颈，建议先按数量等分拆分为小文件。"}}
+  ]
+}
+</script>
+
     <div class="endril-site-footer">
       <p>&copy; 2026 Endril &middot; <a href="https://html.endril.com/" target="_blank" rel="noopener">在线网页站</a> &nbsp;|&nbsp; <a href="https://html.endril.com/privacy.html" target="_blank" rel="noopener">隐私政策</a> &nbsp;&middot;&nbsp; <a href="https://html.endril.com/about.html" target="_blank" rel="noopener">关于我们</a> &nbsp;&middot;&nbsp; <a href="https://html.endril.com/contact.html" target="_blank" rel="noopener">联系我们</a></p>
     </div>

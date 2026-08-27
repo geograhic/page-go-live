@@ -388,6 +388,61 @@
   (mq.addEventListener ? mq.addEventListener('change', initView) : mq.addListener(initView));
 })();
 </script>
+
+<!-- ====== SEO/GEO 内容区（解决 thin content + GEO 语义化）====== -->
+<section class="tool-content" aria-label="工具介绍与帮助">
+  <article class="tc-block">
+    <h2 class="tc-title">关于 KML 按位置分割与选择导出</h2>
+    <p>这是一个<strong>纯浏览器运行</strong>的在线 KML 按位置分割与选择导出工具（KML Spatial Split &amp; Selection Export），由 Endril 开发。上传格网与区域边界 KML，按空间关系（相交、完全包含、质心在内）批量拆分；也可在地图上框选、多边形选择要素并一键导出。所有处理在本地完成，<strong>数据不上传服务器</strong>，适合涉密地理信息场景。</p>
+    <p>典型应用：将格网 KML 按行政边界拆分到各区、从大面积要素中提取与某区域相交的部分、按地图框选导出指定范围要素、为不同子区域生成独立 KML 文件等。</p>
+  </article>
+
+  <article class="tc-block">
+    <h2 class="tc-title">使用步骤（How to use）</h2>
+    <ol class="tc-steps">
+      <li><strong>上传主 KML</strong>：拖入或选择要拆分的主数据（如格网、地块）。</li>
+      <li><strong>上传边界 KML（可选）</strong>：提供区域边界用于按空间关系拆分。</li>
+      <li><strong>选择分割模式</strong>：相交（与边界有交集）、完全包含（要素在边界内）、质心在内（要素中心点在边界内）。</li>
+      <li><strong>或在地图框选</strong>：用矩形框选、多边形手绘工具直接在地图上选取要素。</li>
+      <li><strong>导出</strong>：一键导出选中要素为独立 KML 文件。</li>
+    </ol>
+  </article>
+
+  <article class="tc-block" id="faq">
+    <h2 class="tc-title">常见问题（FAQ）</h2>
+    <details class="tc-faq"><summary>「相交」「完全包含」「质心在内」有什么区别？</summary><p>相交：要素与边界有任何重叠即选中；完全包含：整个要素必须在边界内；质心在内：仅判断要素中心点是否在边界内（适合大面积要素的归属判定）。</p></details>
+    <details class="tc-faq"><summary>能否按多个区域一次性拆分？</summary><p>可以。上传含多个 Polygon 的边界 KML，工具会按每个 Polygon 作为独立区域，将主数据中满足空间关系的要素分组导出。</p></details>
+    <details class="tc-faq"><summary>地图框选导出后，要素会被切割吗？</summary><p>框选模式下默认保留完整要素（筛选），不切割几何。如需按框选范围裁剪几何，可在设置中切换「裁剪」模式。</p></details>
+    <details class="tc-faq"><summary>支持哪些地图底图？</summary><p>内置高德地图、高德卫星、OpenStreetMap、Google 地图、Google 卫星，并支持自定义瓦片 URL。</p></details>
+    <details class="tc-faq"><summary>数据是否会上传？</summary><p>不会。全部在浏览器本地运算，KML 文件不经过任何服务器，关闭页面即丢弃，适合处理敏感地理信息。</p></details>
+    <details class="tc-faq"><summary>能否处理大文件？</summary><p>取决于浏览器内存，一般可处理数万要素。建议先按数量等分（见 KML 合并/分割工具）拆分后再做空间分割。</p></details>
+  </article>
+
+  <article class="tc-block">
+    <h2 class="tc-title">相关工具</h2>
+    <ul class="tc-related">
+      <li><a href="https://html.endril.com/tools/kml-merge-split/">KML 合并/分割工具</a> — 合并与按属性/名称/几何等 6 种方式分割 KML</li>
+      <li><a href="https://html.endril.com/tools/shp-to-kml/">SHP 转 KML 工具</a> — Shapefile 转 KML，支持坐标系转换</li>
+      <li><a href="https://html.endril.com/">Endril 在线网页站</a> — 更多免费、纯浏览器运行的地理工具</li>
+    </ul>
+  </article>
+</section>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"「相交」「完全包含」「质心在内」有什么区别？","acceptedAnswer":{"@type":"Answer","text":"相交：要素与边界有任何重叠即选中；完全包含：整个要素必须在边界内；质心在内：仅判断要素中心点是否在边界内（适合大面积要素的归属判定）。"}},
+    {"@type":"Question","name":"能否按多个区域一次性拆分？","acceptedAnswer":{"@type":"Answer","text":"可以。上传含多个 Polygon 的边界 KML，工具会按每个 Polygon 作为独立区域，将主数据中满足空间关系的要素分组导出。"}},
+    {"@type":"Question","name":"地图框选导出后，要素会被切割吗？","acceptedAnswer":{"@type":"Answer","text":"框选模式下默认保留完整要素（筛选），不切割几何。如需按框选范围裁剪几何，可在设置中切换裁剪模式。"}},
+    {"@type":"Question","name":"支持哪些地图底图？","acceptedAnswer":{"@type":"Answer","text":"内置高德地图、高德卫星、OpenStreetMap、Google 地图、Google 卫星，并支持自定义瓦片 URL。"}},
+    {"@type":"Question","name":"数据是否会上传？","acceptedAnswer":{"@type":"Answer","text":"不会。全部在浏览器本地运算，KML 文件不经过任何服务器，关闭页面即丢弃，适合处理敏感地理信息。"}},
+    {"@type":"Question","name":"能否处理大文件？","acceptedAnswer":{"@type":"Answer","text":"取决于浏览器内存，一般可处理数万要素。建议先按数量等分拆分后再做空间分割。"}}
+  ]
+}
+</script>
+
     <div class="endril-site-footer">
       <p>&copy; 2026 Endril &middot; <a href="https://html.endril.com/" target="_blank" rel="noopener">在线网页站</a> &nbsp;|&nbsp; <a href="https://html.endril.com/privacy.html" target="_blank" rel="noopener">隐私政策</a> &nbsp;&middot;&nbsp; <a href="https://html.endril.com/about.html" target="_blank" rel="noopener">关于我们</a> &nbsp;&middot;&nbsp; <a href="https://html.endril.com/contact.html" target="_blank" rel="noopener">联系我们</a></p>
     </div>
