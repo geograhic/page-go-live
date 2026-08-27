@@ -17,25 +17,25 @@
   {
     "name": "坐标数据可视化地图工作室",
     "description": "坐标数据可视化地图工作室：支持 Excel / CSV / TXT 数据导入、度分秒坐标解析、WGS84 / GCJ-02 / BD-09 坐标转换、多种地图图源切换、点样式自定义，以及 GeoJSON / KML / Shapefile 矢量导出。",
-    "path": "/tools/xyz/index.html",
+    "path": "/tools/20250920_坐标数据可视化/index.html",
     "htmlFile": "index.html"
   },
   {
     "name": "KML 按位置分割与选择导出",
-    "description": "在线 KML 按位置分割与选择导出工具：上传格网与区域边界 KML，按空间关系（相交 / 完全包含 / 质心在内）批量拆分；或在地图上框选、多边形选择要素并一键导出。支持多种底图与样式自定义，纯浏览器运行。开发者：李义洵（Endril）。",
-    "path": "/tools/kml按位置分割工具/",
+    "description": "在线 KML 按位置分割与选择导出工具 (KML Spatial Split & Selection Export)：上传格网与区域边界 KML，按空间关系（相交 / 完全包含 / 质心在内）批量拆分；或在地图上框选、多边形选择要素并一键导出。支持多种底图与样式自定义，纯浏览器运行。开发者：李义洵（Endril）。",
+    "path": "/tools/kml-spatial-split/",
     "htmlFile": "index.html"
   },
   {
     "name": "KML 合并/分割工具",
-    "description": "在线 KML / KMZ 合并与分割工具：支持按属性字段、名称、文件夹、几何类型、地理范围或数量等分拆分；合并时可统一或按文件分配颜色；支持 WGS84⇋GCJ02 坐标转换与 KMZ 压缩导出。纯浏览器运行，数据不出本地。开发者：李义洵（Endril）。",
-    "path": "/tools/kml合并分割工具/",
+    "description": "在线 KML / KMZ 合并与分割工具 (KML Merge & Split Tool)：支持按属性字段、名称、文件夹、几何类型、地理范围或数量等分拆分；合并时可统一或按文件分配颜色；支持 WGS84⇋GCJ02 坐标转换与 KMZ 压缩导出。纯浏览器运行，数据不出本地。开发者：李义洵（Endril）。",
+    "path": "/tools/kml-merge-split/",
     "htmlFile": "index.html"
   },
   {
     "name": "SHP → KML 转换工具",
-    "description": "在线 SHP 转 KML 工具：上传 Shapefile（.shp/.shx/.dbf/.prj）自动识别全部组件，支持 CGCS2000 / WGS84 / UTM 等坐标系转换，可选字形标注与样式自定义，一键生成 KML 或按字段分割打包。纯浏览器运行。开发者：李义洵（Endril）。",
-    "path": "/tools/shp转kml工具/",
+    "description": "在线 SHP 转 KML 工具 (SHP to KML Converter)：上传 Shapefile（.shp/.shx/.dbf/.prj）自动识别全部组件，支持 CGCS2000 / WGS84 / UTM 等坐标系转换，可选字形标注与样式自定义，一键生成 KML 或按字段分割打包。纯浏览器运行。开发者：李义洵（Endril）。",
+    "path": "/tools/shp-to-kml/",
     "htmlFile": "index.html"
   },
   {

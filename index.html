@@ -521,7 +521,7 @@
         <div id="contributorsPanel" class="contributors-panel"></div>
 
         <footer>
-            <p>&copy; 2026 在线网页站 | 由 GitHub Pages 驱动 | <a href="https://endril.com" target="_blank" style="color:inherit;text-decoration:underline;">Endril</a></p>
+            <p>&copy; 2026 在线网页站 | 由 GitHub Pages 驱动 | <a href="https://endril.com" target="_blank" style="color:inherit;text-decoration:underline;">Endril</a> &nbsp;|&nbsp; <a href="privacy.html" style="color:inherit;text-decoration:underline;">隐私政策</a> &nbsp;·&nbsp; <a href="about.html" style="color:inherit;text-decoration:underline;">关于我们</a> &nbsp;·&nbsp; <a href="contact.html" style="color:inherit;text-decoration:underline;">联系我们</a></p>
         </footer>
     </div>
 
@@ -709,7 +709,10 @@
             // Update footer
             const fp = document.querySelector('footer p');
             if (fp) {
-                fp.innerHTML = t('footer') + '<a href="https://endril.com" target="_blank" style="color:inherit;text-decoration:underline;">Endril</a>';
+                const policyLinks = curLang === 'en'
+                    ? '<a href="privacy.html" style="color:inherit;text-decoration:underline;">Privacy</a> &nbsp;·&nbsp; <a href="about.html" style="color:inherit;text-decoration:underline;">About</a> &nbsp;·&nbsp; <a href="contact.html" style="color:inherit;text-decoration:underline;">Contact</a>'
+                    : '<a href="privacy.html" style="color:inherit;text-decoration:underline;">隐私政策</a> &nbsp;·&nbsp; <a href="about.html" style="color:inherit;text-decoration:underline;">关于我们</a> &nbsp;·&nbsp; <a href="contact.html" style="color:inherit;text-decoration:underline;">联系我们</a>';
+                fp.innerHTML = t('footer') + '<a href="https://endril.com" target="_blank" style="color:inherit;text-decoration:underline;">Endril</a> &nbsp;|&nbsp; ' + policyLinks;
             }
         }
 
