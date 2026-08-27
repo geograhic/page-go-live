@@ -54,6 +54,7 @@ body {
 .back-link { display: inline-block; margin-top: 28px; padding: 8px 18px; background: rgba(255,255,255,0.18); border-radius: 6px; text-decoration: none; color: #fff; }
 .back-link:hover { background: rgba(255,255,255,0.28); }
 </style>
+    <link rel="stylesheet" href="/assets/consent.css">
 </head>
 <body>
 <div class="container">
@@ -76,7 +77,8 @@ body {
   <p>这些日志仅用于安全防护、流量统计与性能优化，不与个人身份关联。</p>
 
   <h2>3. Cookie 与本地存储</h2>
-  <p>本站首页与各工具页可能使用浏览器的 localStorage / sessionStorage 保存用户偏好（如语言选择、工具设置、最近使用记录），这些数据仅存储在您的浏览器中，不发送给我们。本站不使用跟踪类 Cookie。</p>
+  <p>本站首页与各工具页可能使用浏览器的 localStorage / sessionStorage 保存用户偏好（如语言选择、工具设置、最近使用记录），这些数据仅存储在您的浏览器中，不发送给我们。</p>
+  <p>在您通过页面底部的同意横幅点击「接受」后，本站会加载 Google AdSense 广告服务，该服务可能在您的设备上设置广告相关 Cookie（如用于个性化广告投放与效果衡量的 NID、IDE 等），以展示与您更相关的广告。若您选择「拒绝」或未作出选择，则不会加载广告脚本，也不会设置此类 Cookie。您可以随时点击右下角「Cookie 设置」撤回或更改同意。</p>
 
   <h2>4. 第三方服务</h2>
   <p>本站页面可能加载以下第三方资源，这些服务方可能根据其自身隐私政策处理数据：</p>
@@ -88,8 +90,9 @@ body {
   </ul>
   <p>若这些服务收集了您的数据，受其各自隐私政策约束，建议您查阅对应方的政策。</p>
 
-  <h2>5. 第三方广告</h2>
-  <p>本站拟接入第三方广告服务（如 Google AdSense）。若接入，广告服务可能使用 Cookie 收集您设备的信息（如 IP、浏览器特征）以展示相关广告并衡量广告效果。您可通过浏览器设置管理或禁用 Cookie，或访问广告服务商的退出页面。Google 的隐私政策与个性化广告设置见 <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener">Google 广告隐私政策</a>。</p>
+  <h2>5. 第三方广告（Google AdSense）</h2>
+  <p>本站使用 Google AdSense 在首页与各工具页展示广告。AdSense 可能使用 Cookie 及类似技术收集您设备的信息（如 IP 地址、浏览器与设备特征、大致地理位置）以投放个性化或非个性化广告，并衡量广告效果。AdSense 仅在您同意（点击「接受」）后加载；您拒绝后将不展示个性化广告，也不会加载广告脚本。</p>
+  <p>您可通过以下方式管理广告偏好或退出个性化广告：Google 广告设置（<a href="https://www.google.com/settings/ads" target="_blank" rel="noopener">ads.google.com/settings/ads</a>）、Google 广告技术与隐私政策（<a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener">policies.google.com/technologies/ads</a>），或通过浏览器设置禁用 Cookie。对于欧盟（GDPR）与加利福尼亚州（CCPA）用户，您有权拒绝广告 Cookie 且不影响本站工具的正常使用。</p>
 
   <h2>6. 数据安全</h2>
   <p>由于本站不存储用户上传数据，不存在数据泄露风险。基础设施日志由 GitHub / Cloudflare 按其安全标准保护。</p>
@@ -108,5 +111,6 @@ body {
 
   <a href="index.html" class="back-link">← 返回首页</a>
 </div>
+    <script src="/assets/consent.js" defer></script>
 </body>
 </html>
