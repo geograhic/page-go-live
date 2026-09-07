@@ -10,11 +10,16 @@
  *  - 站点固定页面（关于/隐私/联系）显式收录（priority 0.3, yearly）
  *  - 跳过外部提交入口（isSubmission）与站外工具（isExternal 且 http(s) 路径）
  *
- * 注意：lastmod 一律取「生成当天」，不用文件 mtime —— CI 里 checkout 出来的
- * 文件 mtime 全部等于检出时刻，写进 sitemap 没有意义。
+ * lastmod 规则（2026-09-08 改）：
+ *  - 取该 URL 对应路径在 git 里的**最后一次真实提交日期**（git log -1 -- <path>）
+ *  - 首页取全仓最后一次提交（首页卡片随工具清单变动，任何提交都可能影响它）
+ *  - 拿不到 git 信息（浅克隆 / 非 git 环境 / 路径无提交）时回退到「生成当天」
+ *  - 不用文件 mtime：CI checkout 出来的 mtime 全等于检出时刻，没有意义
+ *  - 需要完整历史：workflow 的 actions/checkout 必须带 fetch-depth: 0
  */
 const fs = require('fs');
 const path = require('path');
+const { execFileSync } = require('child_process');
 
 const ROOT = __dirname.replace(/[\\/]scripts$/, '');
 const read = (p) => fs.readFileSync(p, 'utf8');
@@ -54,10 +59,29 @@ function escapeLoc(s) {
     .replace(/"/g, '&quot;');
 }
 
-// 收集 URL
-const urls = new Set();
-urls.add(BASE + '/');
+// 取某路径最后一次提交的日期（YYYY-MM-DD）；拿不到返回 null
+// target 为 null 时取全仓最后一次提交
+function gitLastMod(target) {
+  const args = ['log', '-1', '--format=%cd', '--date=short'];
+  if (target) args.push('--', target);
+  try {
+    const out = execFileSync('git', args, {
+      cwd: ROOT,
+      encoding: 'utf8',
+      timeout: 15000,
+      stdio: ['ignore', 'pipe', 'ignore']
+    });
+    const d = out.trim().split('\n')[0].trim();
+    return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : null;
+  } catch (e) {
+    return null;
+  }
+}
 
+// target 为 null 表示跟随全仓最后一次提交（首页）
+const toolEntries = [];
+
+const seen = new Set([BASE + '/']);
 for (const t of tools) {
   if (!t || typeof t.path !== 'string') continue;
   if (t.isSubmission) continue;                       // 跳过 GitHub 提交入口
@@ -66,18 +90,28 @@ for (const t of tools) {
   if (!p.startsWith('/')) continue;                   // 仅收录本站相对路径
   let u = BASE + p;
   if (u.endsWith('/index.html')) u = u.slice(0, -'index.html'.length); // 规范为目录 URL
-  urls.add(u);
+  if (seen.has(u)) continue;
+  seen.add(u);
+  toolEntries.push({ loc: u, target: p.replace(/^\//, ''), changefreq: 'monthly', priority: '0.8' });
 }
 
-const urlItems = [
-  `    <url>\n      <loc>${escapeLoc(BASE + '/')}</loc>\n      <lastmod>${today}</lastmod>\n      <changefreq>weekly</changefreq>\n      <priority>1.0</priority>\n    </url>`,
-  ...[...urls].filter(u => u !== BASE + '/').sort().map(u =>
-    `    <url>\n      <loc>${escapeLoc(u)}</loc>\n      <lastmod>${today}</lastmod>\n      <changefreq>monthly</changefreq>\n      <priority>0.8</priority>\n    </url>`
-  ),
-  ...STATIC_PAGES.map(p =>
-    `    <url>\n      <loc>${escapeLoc(BASE + p.path)}</loc>\n      <lastmod>${today}</lastmod>\n      <changefreq>${p.changefreq}</changefreq>\n      <priority>${p.priority}</priority>\n    </url>`
-  )
+toolEntries.sort((a, b) => a.loc.localeCompare(b.loc));
+
+const entries = [
+  { loc: BASE + '/', target: null, changefreq: 'weekly', priority: '1.0' },
+  ...toolEntries,
+  ...STATIC_PAGES.map(sp => ({
+    loc: BASE + sp.path,
+    target: sp.path.replace(/^\//, ''),
+    changefreq: sp.changefreq,
+    priority: sp.priority
+  }))
 ];
+
+const urlItems = entries.map(e => {
+  const lastmod = gitLastMod(e.target) || today;
+  return `    <url>\n      <loc>${escapeLoc(e.loc)}</loc>\n      <lastmod>${lastmod}</lastmod>\n      <changefreq>${e.changefreq}</changefreq>\n      <priority>${e.priority}</priority>\n    </url>`;
+});
 
 const xml =
 `<?xml version="1.0" encoding="UTF-8"?>
@@ -87,4 +121,4 @@ ${urlItems.join('\n')}
 `;
 
 fs.writeFileSync(path.join(ROOT, 'sitemap.xml'), xml, 'utf8');
-console.log(`sitemap.xml 已生成：${urls.size} 个工具/首页 URL + ${STATIC_PAGES.length} 个站点页面`);
+console.log(`sitemap.xml 已生成：${entries.length} 条 URL，lastmod 取自各路径 git 真实提交日期`);

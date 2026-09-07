@@ -27,6 +27,9 @@ jobs:
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
+        with:
+          # 需要完整历史：sitemap 的 lastmod 按路径取 git 真实提交日期
+          fetch-depth: 0
 
       - name: 安装 Node.js
         uses: actions/setup-node@v4
