@@ -2,67 +2,61 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
       <loc>https://html.endril.com/</loc>
-      <lastmod>2026-08-27</lastmod>
+      <lastmod>2026-09-07</lastmod>
       <changefreq>weekly</changefreq>
       <priority>1.0</priority>
     </url>
     <url>
-      <loc>https://html.endril.com/tools/xyz/</loc>
-      <lastmod>2026-08-27</lastmod>
-      <changefreq>monthly</changefreq>
-      <priority>0.8</priority>
-    </url>
-    <url>
       <loc>https://html.endril.com/tools/kml-merge-split/</loc>
-      <lastmod>2026-08-27</lastmod>
+      <lastmod>2026-09-07</lastmod>
       <changefreq>monthly</changefreq>
       <priority>0.8</priority>
     </url>
     <url>
       <loc>https://html.endril.com/tools/kml-spatial-split/</loc>
-      <lastmod>2026-08-27</lastmod>
+      <lastmod>2026-09-07</lastmod>
       <changefreq>monthly</changefreq>
       <priority>0.8</priority>
     </url>
     <url>
       <loc>https://html.endril.com/tools/misterious-numeral-web/</loc>
-      <lastmod>2026-08-27</lastmod>
+      <lastmod>2026-09-07</lastmod>
       <changefreq>monthly</changefreq>
       <priority>0.8</priority>
     </url>
     <url>
       <loc>https://html.endril.com/tools/shp-to-kml/</loc>
-      <lastmod>2026-08-27</lastmod>
+      <lastmod>2026-09-07</lastmod>
       <changefreq>monthly</changefreq>
       <priority>0.8</priority>
     </url>
     <url>
       <loc>https://html.endril.com/tools/solar-system/</loc>
-      <lastmod>2026-08-27</lastmod>
+      <lastmod>2026-09-07</lastmod>
       <changefreq>monthly</changefreq>
       <priority>0.8</priority>
     </url>
     <url>
-      <loc>https://html.endril.com/tools/example-tool/</loc>
-      <lastmod>2026-08-27</lastmod>
+      <loc>https://html.endril.com/tools/xyz/</loc>
+      <lastmod>2026-09-07</lastmod>
       <changefreq>monthly</changefreq>
-      <priority>0.5</priority>
+      <priority>0.8</priority>
     </url>
     <url>
-      <loc>https://html.endril.com/privacy.html</loc>
-      <lastmod>2026-08-27</lastmod>
+      <loc>https://html.endril.com/about.html</loc>
+      <lastmod>2026-09-07</lastmod>
       <changefreq>yearly</changefreq>
       <priority>0.3</priority>
     </url>
     <url>
-      <loc>https://html.endril.com/about.html</loc>
-      <lastmod>2026-08-27</lastmod>
+      <loc>https://html.endril.com/privacy.html</loc>
+      <lastmod>2026-09-07</lastmod>
       <changefreq>yearly</changefreq>
       <priority>0.3</priority>
     </url>
     <url>
       <loc>https://html.endril.com/contact.html</loc>
-      <lastmod>2026-08-27</lastmod>
+      <lastmod>2026-09-07</lastmod>
       <changefreq>yearly</changefreq>
       <priority>0.3</priority>
     </url>

@@ -9,6 +9,12 @@ on:
       - 'scripts/generate-sitemap.js'
       - 'external-tools.json'
       - 'authors.json'
+      - 'index.html'
+      - 'about.html'
+      - 'privacy.html'
+      - 'contact.html'
+      - 'robots.txt'
+      - 'CNAME'
   workflow_dispatch:
 
 permissions:

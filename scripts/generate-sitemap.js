@@ -7,7 +7,11 @@
  * 规则：
  *  - 首页 https://<base>/ 始终收录（priority 1.0, weekly）
  *  - 每个本地工具（path 以 / 开头）收录为 https://<base><path>（去掉 index.html）
+ *  - 站点固定页面（关于/隐私/联系）显式收录（priority 0.3, yearly）
  *  - 跳过外部提交入口（isSubmission）与站外工具（isExternal 且 http(s) 路径）
+ *
+ * 注意：lastmod 一律取「生成当天」，不用文件 mtime —— CI 里 checkout 出来的
+ * 文件 mtime 全部等于检出时刻，写进 sitemap 没有意义。
  */
 const fs = require('fs');
 const path = require('path');
@@ -34,6 +38,13 @@ try {
 if (!Array.isArray(tools)) tools = [];
 
 const today = new Date().toISOString().slice(0, 10);
+
+// 站点固定页面：不随工具清单变化，新增静态页时在这里补一行
+const STATIC_PAGES = [
+  { path: '/about.html', changefreq: 'yearly', priority: '0.3' },
+  { path: '/privacy.html', changefreq: 'yearly', priority: '0.3' },
+  { path: '/contact.html', changefreq: 'yearly', priority: '0.3' }
+];
 
 function escapeLoc(s) {
   return s
@@ -62,6 +73,9 @@ const urlItems = [
   `    <url>\n      <loc>${escapeLoc(BASE + '/')}</loc>\n      <lastmod>${today}</lastmod>\n      <changefreq>weekly</changefreq>\n      <priority>1.0</priority>\n    </url>`,
   ...[...urls].filter(u => u !== BASE + '/').sort().map(u =>
     `    <url>\n      <loc>${escapeLoc(u)}</loc>\n      <lastmod>${today}</lastmod>\n      <changefreq>monthly</changefreq>\n      <priority>0.8</priority>\n    </url>`
+  ),
+  ...STATIC_PAGES.map(p =>
+    `    <url>\n      <loc>${escapeLoc(BASE + p.path)}</loc>\n      <lastmod>${today}</lastmod>\n      <changefreq>${p.changefreq}</changefreq>\n      <priority>${p.priority}</priority>\n    </url>`
   )
 ];
 
@@ -72,5 +86,5 @@ ${urlItems.join('\n')}
 </urlset>
 `;
 
-fs.writeFileSync(path.join(ROOT, 'sitemap.xml'), xml + '\n', 'utf8');
-console.log(`sitemap.xml 已生成：${urls.size} 个 URL`);
+fs.writeFileSync(path.join(ROOT, 'sitemap.xml'), xml, 'utf8');
+console.log(`sitemap.xml 已生成：${urls.size} 个工具/首页 URL + ${STATIC_PAGES.length} 个站点页面`);
