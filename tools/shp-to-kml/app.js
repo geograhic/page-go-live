@@ -61,6 +61,8 @@ const PROJ_DEFS = {
   4552: '+proj=tmerc +lat_0=0 +lon_0=129 +k=1 +x_0=57500000 +y_0=0 +ellps=GRS80 +units=m +no_defs +type=crs',
   4553: '+proj=tmerc +lat_0=0 +lon_0=132 +k=1 +x_0=58500000 +y_0=0 +ellps=GRS80 +units=m +no_defs +type=crs',
   4554: '+proj=tmerc +lat_0=0 +lon_0=135 +k=1 +x_0=59500000 +y_0=0 +ellps=GRS80 +units=m +no_defs +type=crs',
+  // Web Mercator / 网络墨卡托（ArcGIS: WGS_1984_Web_Mercator_Auxiliary_Sphere）
+  3857: '+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null +wktext +no_defs +type=crs',
   // UTM
   32649: '+proj=utm +zone=49 +datum=WGS84 +units=m +no_defs +type=crs',
   32650: '+proj=utm +zone=50 +datum=WGS84 +units=m +no_defs +type=crs',
@@ -276,6 +278,13 @@ function detectCrsFromCoords(coords) {
     else return 4525;                     // CM 111E (Far South)
   }
 
+  // Web Mercator (EPSG:3857)：中国范围 x≈1.2e7、y≈2.7e6，
+  // 与带号 CGCS2000 (39.5M~60M)、无带号高斯 (x<900k)、UTM (x<900k) 均不重叠。
+  if (minX >= -20040000 && maxX <= 20040000 && avgY > -20050000 && avgY < 20050000 &&
+      (Math.abs(minX) > 1000000 || Math.abs(maxX) > 1000000)) {
+    return 3857;
+  }
+
   // UTM fallback
   if (minX > 100000 && maxX < 900000 && avgY > 0 && avgY < 10000000) {
     const lonApprox = (minX + maxX) / 2 / 1000000;
@@ -420,6 +429,14 @@ function detectCrsFromWkt(wkt) {
   }
   // Projected CRS (PROJCS/PROJCRS) - extract projection params
   if (wktUpper.startsWith('PROJCS') || wktUpper.startsWith('PROJCRS')) {
+    // Web Mercator / 网络墨卡托 (EPSG:3857)
+    // 典型 ESRI WKT: PROJCS["WGS_1984_Web_Mercator_Auxiliary_Sphere",...,
+    // PROJECTION["Mercator_Auxiliary_Sphere"],...,UNIT["Meter",1.0]]
+    if (/web[\s_]*mercator|mercator[\s_]*auxiliary[\s_]*sphere/i.test(wkt) ||
+        /EPSG\s*[:\"]?\s*(3857|900913)\b/i.test(wkt) ||
+        (/PROJECTION\s*\[\s*"?Mercator"?\s*\]/i.test(wkt) && wktUpper.includes('WGS_1984') && !wktUpper.includes('TRANSVERSE_MERCATOR'))) {
+      return 3857;
+    }
     // CGCS2000 3-degree Gauss-Kruger
     if (wkt.includes('CGCS2000') || wkt.includes('China_2000')) {
       // Case-insensitive match for central_meridian / Central_Meridian
