@@ -19,11 +19,13 @@ const state = {
   selectFile: null,
   drawnLayer: null,     // Leaflet FeatureGroup
   drawnShape: null,     // Leaflet polygon/rectangle
+  activeDrawTool: null, // 当前激活的绘制工具（切换投影后需要恢复控件）
   selectedFeatures: [],
 
   // Map
   map: null,
   tileLayer: null,
+  currentTile: null,
   gridLayer: null,
   boundaryLayerGroup: null,
 
@@ -75,7 +77,17 @@ const TILE_SOURCES = {
     maxZoom: 20,
     attribution: '&copy; Google',
   },
+  baidu: {
+    name: '百度地图',
+    url: 'https://maponline{s}.bdimg.com/tile/?qt=tile&x={x}&y={y}&z={z}&styles=pl&scaler=1&p=1',
+    subdomains: '0123',
+    maxZoom: 18,
+    attribution: '&copy; 百度',
+  },
 };
+
+// 百度瓦片使用专用投影，需通过 baidu-crs.js 提供的 CRS 与图层工厂加载
+const BAIDU_TILE_URL = 'https://maponline{s}.bdimg.com/tile/?qt=tile&x={x}&y={y}&z={z}&styles=pl&scaler=1&p=1';
 
 const PALLETTE = ['#4a9eff', '#4caf50', '#ff9800', '#f44336', '#9c27b0', '#00bcd4', '#ff5722', '#8bc34a'];
 
@@ -86,41 +98,77 @@ document.addEventListener('DOMContentLoaded', () => {
   loadSettings();
 });
 
-function initMap() {
+function initMap(opts = {}) {
+  const crs = opts.crs || L.CRS.EPSG3857;
   state.map = L.map('map', {
-    center: [23.13, 113.26],
-    zoom: 10,
+    center: opts.center || [23.13, 113.26],
+    zoom: opts.zoom || 10,
     zoomControl: false,
     attributionControl: false,
+    crs,
   });
 
   L.control.zoom({ position: 'bottomright' }).addTo(state.map);
   L.control.attribution({ position: 'bottomleft', prefix: false }).addTo(state.map);
 
-  setTileSource(state.settings.defaultTile);
+  setTileSource(opts.tile || state.settings.defaultTile);
+  attachMapEvents();
 
+  // 切换投影后重新挂回已有图层
+  if (!state.boundaryLayerGroup) state.boundaryLayerGroup = L.layerGroup();
+  if (!state.gridLayer) state.gridLayer = L.layerGroup();
+  if (!state.drawnLayer) state.drawnLayer = new L.FeatureGroup();
+  state.boundaryLayerGroup.addTo(state.map);
+  state.gridLayer.addTo(state.map);
+  state.drawnLayer.addTo(state.map);
+
+  if (state.activeDrawTool) addDrawControl(state.activeDrawTool);
+  if (state.settings.refScale) applySymbolScale();
+}
+
+function attachMapEvents() {
   // Coordinate display
   state.map.on('mousemove', (e) => {
     document.getElementById('coord-display').textContent =
       `经度 ${e.latlng.lng.toFixed(6)} | 纬度 ${e.latlng.lat.toFixed(6)}`;
   });
 
-  state.boundaryLayerGroup = L.layerGroup().addTo(state.map);
-  state.gridLayer = L.layerGroup().addTo(state.map);
-
   // 参考比例：缩放时按 2^(当前级别-参考级别) 重新计算符号大小
   state.map.on('zoom', () => { if (state.settings.refScale) applySymbolScale(); });
 }
 
 function setTileSource(key) {
+  if (!state.map) return;
+  const baiduCrs = L.ChineseCRS && L.ChineseCRS.CRS_BaiduMercator;
+  const useBaidu = key === 'baidu' && !!baiduCrs;
+  const isBaiduMap = state.map.options.crs === baiduCrs;
+
+  // 百度使用专用投影，切换时必须重建地图；WGS84 要素由 CRS 自动转换，位置不变
+  if (useBaidu !== isBaiduMap) {
+    const center = state.map.getCenter();
+    const zoom = state.map.getZoom();
+    state.map.remove();
+    state.map = null;
+    state.tileLayer = null;
+    initMap({ crs: useBaidu ? baiduCrs : L.CRS.EPSG3857, center, zoom, tile: key });
+    return;
+  }
+
   if (state.tileLayer) state.map.removeLayer(state.tileLayer);
-  const src = TILE_SOURCES[key] || TILE_SOURCES.amap;
-  state.tileLayer = L.tileLayer(src.url, {
-    subdomains: src.subdomains || 'abc',
-    maxZoom: src.maxZoom || 18,
-    attribution: src.attribution || '',
-  }).addTo(state.map);
+  if (useBaidu) {
+    state.tileLayer = L.ChineseCRS.getTileLayer('baidu', BAIDU_TILE_URL, {
+      subdomains: '0123', maxZoom: 18, minZoom: 3, attribution: '&copy; 百度',
+    }).addTo(state.map);
+  } else {
+    const src = TILE_SOURCES[key] || TILE_SOURCES.amap;
+    state.tileLayer = L.tileLayer(src.url, {
+      subdomains: src.subdomains || 'abc',
+      maxZoom: src.maxZoom || 18,
+      attribution: src.attribution || '',
+    }).addTo(state.map);
+  }
   document.getElementById('tile-source').value = key;
+  state.currentTile = key;
 }
 
 /* ====== Event Handlers ====== */
@@ -1052,6 +1100,8 @@ function renderSelectKmlOnMap() {
 }
 
 function activateDrawTool(tool) {
+  state.activeDrawTool = tool;
+
   // Update button states
   document.querySelectorAll('.draw-btn').forEach(b => b.classList.remove('active'));
   document.getElementById(tool === 'rectangle' ? 'btn-draw-rect' : 'btn-draw-poly').classList.add('active');
@@ -1065,6 +1115,11 @@ function activateDrawTool(tool) {
   }
   state.drawnLayer = new L.FeatureGroup().addTo(state.map);
 
+  addDrawControl(tool);
+}
+
+function addDrawControl(tool) {
+  document.querySelector('.leaflet-draw')?.remove();
   const options = {
     position: 'topright',
     draw: {
@@ -1114,6 +1169,7 @@ function activateDrawTool(tool) {
 }
 
 function clearDrawSelection() {
+  state.activeDrawTool = null;
   if (state.drawnLayer) {
     state.map.removeLayer(state.drawnLayer);
     state.drawnLayer = null;
@@ -1434,6 +1490,7 @@ function saveSettings() {
   state.settings.showPointLabels = document.getElementById('setting-show-point-labels').checked;
 
   document.getElementById('map-panel').style.display = state.settings.showMap ? '' : 'none';
+  if (state.settings.defaultTile !== state.currentTile) setTileSource(state.settings.defaultTile);
   if (state.settings.showMap) setTimeout(() => state.map.invalidateSize(), 100);
 
   try {
@@ -1464,6 +1521,7 @@ function loadSettings() {
   document.getElementById('setting-show-point-labels').checked = state.settings.showPointLabels;
   document.getElementById('map-panel').style.display = state.settings.showMap ? '' : 'none';
 
+  if (state.settings.defaultTile !== state.currentTile) setTileSource(state.settings.defaultTile);
   if (state.settings.showMap) setTimeout(() => state.map.invalidateSize(), 100);
   applySymbolScale();
 }
