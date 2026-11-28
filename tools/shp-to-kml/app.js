@@ -11,7 +11,11 @@ const TILE_SOURCES = {
   osm: { name: 'OpenStreetMap', url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', sub: 'abc', attr: '© OpenStreetMap' },
   google_map: { name: 'Google 地图', url: 'https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', sub: '0123', attr: '© Google' },
   google_sat: { name: 'Google 卫星', url: 'https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', sub: '0123', attr: '© Google' },
+  baidu: { name: '百度地图', url: 'https://maponline{s}.bdimg.com/tile/?qt=tile&x={x}&y={y}&z={z}&styles=pl&scaler=1&p=1', sub: '0123', attr: '© 百度' },
 };
+
+// 百度瓦片使用专用投影，需通过 baidu-crs.js 提供的 CRS 与图层工厂加载
+const BAIDU_TILE_URL = 'https://maponline{s}.bdimg.com/tile/?qt=tile&x={x}&y={y}&z={z}&styles=pl&scaler=1&p=1';
 
 // CGCS2000 / 3-degree Gauss-Kruger projections (no false easting prefix)
 const PROJ_DEFS = {
@@ -91,6 +95,7 @@ const state = {
   detectedCrs: null,     // auto-detected EPSG code
   map: null,
   tileLayer: null,
+  currentTile: null,
   dataLayer: null,
   previewLayer: null,
   settings: {
@@ -1351,18 +1356,49 @@ function renderKmlOverlayList() {
 
 // ============ MAP PREVIEW ============
 
-function initMap() {
+function initMap(opts = {}) {
   if (!state.settings.showMap) return;
   if (state.map) return;
 
-  state.map = L.map('map', { zoomControl: true, attributionControl: true }).setView([23.13, 113.26], 10);
-  setTileSource(state.settings.defaultTile);
+  const crs = opts.crs || L.CRS.EPSG3857;
+  const center = opts.center || [23.13, 113.26];
+  const zoom = opts.zoom || 10;
+  state.map = L.map('map', { zoomControl: true, attributionControl: true, crs }).setView(center, zoom);
+  setTileSource(opts.tile || state.settings.defaultTile, opts.customUrl);
+
+  // 切换投影后重新挂回已有数据层
+  if (state.dataLayer) state.dataLayer.addTo(state.map);
+  if (state.previewLayer) state.previewLayer.addTo(state.map);
+  (state.kmlOverlays || []).forEach(ov => { if (ov.visible) ov.layer.addTo(state.map); });
 }
 
 function setTileSource(sourceKey, customUrl) {
   if (!state.map) return;
 
+  const baiduCrs = L.ChineseCRS && L.ChineseCRS.CRS_BaiduMercator;
+  const useBaidu = sourceKey === 'baidu' && !!baiduCrs;
+  const isBaiduMap = state.map.options.crs === baiduCrs;
+
+  // 百度使用专用投影，切换时必须重建地图；WGS84 要素由 CRS 自动转换，位置不变
+  if (useBaidu !== isBaiduMap) {
+    const center = state.map.getCenter();
+    const zoom = state.map.getZoom();
+    state.map.remove();
+    state.map = null;
+    state.tileLayer = null;
+    initMap({ crs: useBaidu ? baiduCrs : L.CRS.EPSG3857, center, zoom, tile: sourceKey, customUrl });
+    return;
+  }
+
   if (state.tileLayer) state.map.removeLayer(state.tileLayer);
+
+  if (useBaidu) {
+    state.tileLayer = L.ChineseCRS.getTileLayer('baidu', BAIDU_TILE_URL, {
+      subdomains: '0123', attribution: '© 百度', maxZoom: 18, minZoom: 3,
+    }).addTo(state.map);
+    state.currentTile = sourceKey;
+    return;
+  }
 
   let url, sub, attr;
   if (sourceKey === 'custom' && customUrl) {
@@ -1382,6 +1418,7 @@ function setTileSource(sourceKey, customUrl) {
     attribution: attr,
     maxZoom: 20,
   }).addTo(state.map);
+  state.currentTile = sourceKey;
 }
 
 function renderMapData() {
@@ -1781,6 +1818,8 @@ function applySettings() {
   } else {
     mapPanel.classList.add('hidden');
   }
+
+  if (state.map && state.settings.defaultTile !== state.currentTile) setTileSource(state.settings.defaultTile);
 
   // Update tile selector
   const tileSelect = document.getElementById('tile-source');
