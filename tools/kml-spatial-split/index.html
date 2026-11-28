@@ -206,6 +206,7 @@
         <option value="osm">OpenStreetMap</option>
         <option value="google">Google 地图</option>
         <option value="google_sat">Google 卫星</option>
+        <option value="baidu">百度地图</option>
         <option value="custom">自定义</option>
       </select>
       <button class="btn-small" id="btn-fit-bounds" title="缩放到数据范围">⊕</button>
@@ -254,6 +255,7 @@
           <option value="osm">OpenStreetMap</option>
           <option value="google">Google 地图</option>
           <option value="google_sat">Google 卫星</option>
+          <option value="baidu">百度地图</option>
         </select>
       </div>
       <div class="form-group">
@@ -359,9 +361,10 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="baidu-crs.js?v=20261128"></script>
 <script src="spatial.js"></script>
 <script src="kml-style.js"></script>
-<script src="app.js"></script>
+<script src="app.js?v=20261128"></script>
 <script>
 /* 移动端「操作 / 地图」视图切换（自包含，不依赖 app.js 内部变量） */
 (function () {
